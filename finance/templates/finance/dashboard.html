@@ -1,0 +1,109 @@
+{% extends 'finance/base.html' %} {% load humanize %} {% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h2 class="fw-bold">Dashboard Keuangan</h2>
+      <p class="text-muted">Ringkasan performa keuangan hari ini.</p>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="row g-4 mb-5">
+    <div class="col-md-3">
+      <div class="card h-100 bg-white border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+              <i class="bi bi-wallet2 text-primary fs-4"></i>
+            </div>
+            <h6 class="card-title text-muted mb-0">Total Aset</h6>
+          </div>
+          <h3 class="card-text fw-bold">Rp {{ total_aset|intcomma }}</h3>
+          <small class="text-success"><i class="bi bi-arrow-up"></i> Baru saja diperbarui</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 bg-white border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-success bg-opacity-10 p-3 rounded-circle me-3">
+              <i class="bi bi-graph-up-arrow text-success fs-4"></i>
+            </div>
+            <h6 class="card-title text-muted mb-0">Pendapatan</h6>
+          </div>
+          <h3 class="card-text fw-bold">Rp {{ total_pendapatan|intcomma }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 bg-white border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-3">
+              <i class="bi bi-cart text-danger fs-4"></i>
+            </div>
+            <h6 class="card-title text-muted mb-0">Beban</h6>
+          </div>
+          <h3 class="card-text fw-bold">Rp {{ total_beban|intcomma }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card h-100 bg-white border-0">
+        <div class="card-body">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-info bg-opacity-10 p-3 rounded-circle me-3">
+              <i class="bi bi-piggy-bank text-info fs-4"></i>
+            </div>
+            <h6 class="card-title text-muted mb-0">Laba Bersih</h6>
+          </div>
+          <h3 class="card-text fw-bold {% if laba_bersih >= 0 %}text-success{% else %}text-danger{% endif %}">Rp {{ laba_bersih|intcomma }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0">
+        <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0">Jurnal Terbaru</h5>
+          <a href="{% url 'jurnal_list' %}" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
+        </div>
+        <div class="card-body px-4">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle table-custom">
+              <thead class="bg-light">
+                <tr>
+                  <th>Tanggal</th>
+                  <th>Uraian</th>
+                  <th>Debit</th>
+                  <th>Kredit</th>
+                  <th class="text-end">Nominal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for jurnal in recent_jurnal %}
+                <tr>
+                  <td>{{ jurnal.tanggal|date:"d M Y" }}</td>
+                  <td>{{ jurnal.uraian }}</td>
+                  <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ jurnal.akun_debit.nama }}</span></td>
+                  <td><span class="badge bg-danger bg-opacity-10 text-danger">{{ jurnal.akun_kredit.nama }}</span></td>
+                  <td class="text-end fw-bold">Rp {{ jurnal.nominal|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="5" class="text-center py-4 text-muted">Belum ada transaksi</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+{% load static %} <!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sistem Akuntansi BMM Cargo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+
+    <style>
+      :root {
+        --primary-color: #0d6efd;
+        --sidebar-bg: #ffffff; /* Warna latar sidebar terang untuk kontras logo */
+        --sidebar-text: #000000; /* Warna teks sidebar */
+        --sidebar-text-active: #e3e3e3; /* Warna teks aktif (biru) */
+        --sidebar-hover: #353535; /* Warna hover */
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f5f8fa; /* Warna latar belakang utama */
+      }
+      .sidebar {
+        width: 250px;
+        height: 100vh;
+        background-color: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        border-right: 1px solid #e3e6f0; /* Garis pemisah sidebar */
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+        position: fixed;
+        top: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: 20px;
+        z-index: 1000; /* Pastikan di atas konten lain */
+      }
+      .main-content {
+        margin-left: 250px; /* Memberi ruang untuk sidebar tetap */
+        padding: 30px;
+        min-height: 100vh;
+      }
+      .sidebar-brand {
+        padding: 0 15px 20px 15px;
+        text-align: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 20px;
+      }
+      /* --- PERBAIKAN LOGO DISINI --- */
+      .logo-container {
+        max-width: 55px; /* Ukuran logo kecil */
+        margin: 0 auto; /* Posisi tengah */
+      }
+      /* --------------------------- */
+
+      .nav-link {
+        color: var(--sidebar-text);
+        padding: 12px 25px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        border-radius: 0 25px 25px 0; /* Membuat sudut kanan membulat saat aktif */
+        margin-right: 10px;
+      }
+      .nav-link:hover {
+        color: var(--sidebar-text-active);
+        background-color: var(--sidebar-hover);
+      }
+      .nav-link.active {
+        color: var(--sidebar-text-active);
+        background-color: var(--primary-color); /* Menggunakan warna biru primer saat aktif */
+        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); /* Efek bayangan */
+      }
+      .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
+      }
+      .card:hover {
+        transform: translateY(-2px); /* Efek naik sedikit saat di-hover */
+      }
+
+      /* Responsif untuk layar kecil (HP) */
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 100%;
+          height: auto;
+          position: relative;
+          padding-bottom: 20px;
+        }
+        .main-content {
+          margin-left: 0;
+          padding: 15px;
+        }
+        .nav-link {
+          border-radius: 5px; /* Ubah style nav link di HP */
+          margin: 5px 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo-container mb-2">
+          <img src="{% static 'finance/img/logo-bmm.png' %}" alt="Logo BMM" class="img-fluid rounded" />
+        </div>
+        <div class="fw-bold text-dark fs-6">BMM CARGO</div>
+        <small class="text-muted">Sistem Informasi Akuntansi</small>
+      </div>
+      <nav class="nav flex-column">
+        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'dashboard' %}"> <i class="bi bi-speedometer2"></i> Dashboard </a>
+        <a class="nav-link {% if 'jurnal' in request.path %}active{% endif %}" href="{% url 'jurnal_list' %}"> <i class="bi bi-pencil-square"></i> Jurnal Umum </a>
+        <a class="nav-link {% if 'buku-besar' in request.path %}active{% endif %}" href="{% url 'buku_besar' %}"> <i class="bi bi-book"></i> Buku Besar </a>
+        <a class="nav-link {% if 'laporan' in request.path %}active{% endif %}" href="{% url 'laporan_keuangan' %}"> <i class="bi bi-file-earmark-bar-graph"></i> Laporan Keuangan </a>
+
+        <hr class="text-secondary mx-3 my-2" />
+
+        <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-gear-wide-connected"></i> Daftar Akun (CoA) </a>
+
+        <!-- User Info & Logout -->
+        <div class="mt-auto px-3 py-3 border-top">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-person-circle me-2 fs-4"></i>
+            <div>
+              <small class="d-block fw-bold">{{ user.username }}</small>
+              <small class="text-muted">{{ user.email|default:"Admin" }}</small>
+            </div>
+          </div>
+          <div class="d-grid gap-2">
+            <a href="{% url 'password_change' %}" class="btn btn-outline-primary btn-sm"> <i class="bi bi-shield-lock me-1"></i> Ganti Password </a>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
+            </form>
+          </div>
+        </div>
+      </nav>
+    </div>
+
+    <div class="main-content">
+      {% if messages %} {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endfor %} {% endif %} {% block content %} {% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
