@@ -2,6 +2,11 @@
 
 Aplikasi web berbasis Django untuk manajemen keuangan (Akuntansi) dan operasional logistik (Inbound, Outbound, Manifest Hutang) untuk CV Borneo Mega Mandiri.
 
+## 🌐 Deployment
+
+Aplikasi telah di-deploy di PythonAnywhere dan dapat diakses melalui link berikut:
+🔗 **[https://bmmcargo.pythonanywhere.com/](https://bmmcargo.pythonanywhere.com/)**
+
 ## 🚀 Fitur Utama
 
 ### 1. Keuangan (Accounting)
