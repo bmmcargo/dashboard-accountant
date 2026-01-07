@@ -53,24 +53,24 @@
                                     <th>Tanggal</th>
                                     <th>Uraian</th>
                                     <th>Lawan Akun</th>
-                                    <th>Debit</th>
-                                    <th>Kredit</th>
-                                    <th>Saldo</th>
+                                    <th>Debit (Rp)</th>
+                                    <th>Kredit (Rp)</th>
+                                    <th>Saldo (Rp)</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td colspan="5" class="text-end fw-bold">Saldo Awal</td>
-                                    <td class="text-end fw-bold">Rp 0</td>
+                                    <td class="text-end fw-bold">0</td>
                                 </tr>
                                 {% for t in transaksi %}
                                 <tr>
                                     <td>{{ t.tanggal|date:"d/m/Y" }}</td>
                                     <td>{{ t.uraian }}</td>
                                     <td>{{ t.lawan }}</td>
-                                    <td class="text-end text-success">{% if t.debit > 0 %}Rp {{ t.debit|intcomma }}{% endif %}</td>
-                                    <td class="text-end text-danger">{% if t.kredit > 0 %}Rp {{ t.kredit|intcomma }}{% endif %}</td>
-                                    <td class="text-end fw-bold">Rp {{ t.saldo|intcomma }}</td>
+                                    <td class="text-end text-success">{% if t.debit > 0 %}{{ t.debit|intcomma }}{% endif %}</td>
+                                    <td class="text-end text-danger">{% if t.kredit > 0 %}{{ t.kredit|intcomma }}{% endif %}</td>
+                                    <td class="text-end fw-bold">{{ t.saldo|intcomma }}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>

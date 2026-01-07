@@ -1,126 +1,104 @@
-# 📖 README - Cara Menjalankan Projek
+# Dashboard Keuangan & Logistik - BMM Cargo
 
-Selamat datang di Sistem Dashboard Penjualan & Akuntansi. Panduan ini akan membantu Anda menjalankan aplikasi ini dari awal, bahkan jika komputer Anda belum terinstall Python.
+Aplikasi web berbasis Django untuk manajemen keuangan (Akuntansi) dan operasional logistik (Inbound, Outbound, Manifest Hutang) untuk CV Borneo Mega Mandiri.
 
----
+## 🚀 Fitur Utama
 
-## 🛠️ Tahap 1: Instalasi Python (Wajib)
+### 1. Keuangan (Accounting)
 
-Aplikasi ini dibuat menggunakan bahasa pemrograman **Python**. Anda harus menginstalnya terlebih dahulu agar aplikasi bisa berjalan.
+- **Jurnal Umum**: Pencatatan transaksi debit/kredit harian.
+- **Buku Besar**: Rekapitulasi transaksi per akun (CoA).
+- **Laporan Keuangan**: Neraca (Balance Sheet) dan Laba Rugi (Income Statement) otomatis.
+- **Manajemen Akun (CoA)**: Tambah, edit, hapus Chart of Accounts.
 
-1.  **Download Python**:
+### 2. Logistik (Operasional)
 
-    - Kunjungi website resmi: [Download Python untuk Windows](https://www.python.org/downloads/)
-    - Klik tombol kuning **"Download Python 3.x.x"**.
+- **Inbound (Barang Masuk)**:
+  - Pencatatan resi masuk, vendor, berat (Kg), dan biaya ongkir.
+  - Perhitungan otomatis Total Biaya.
+  - Pencarian dan Filter data.
+- **Outbound (Barang Keluar)**:
+  - Manajemen pengiriman ke customer/tujuan.
+  - Tracking biaya vendor (Vendor 1 & Vendor 2).
+  - Analisis Profit per resi (Pendapatan - Biaya Vendor).
+  - Status Pembayaran (COD/Transfer/Cash).
+- **Manifest (Hutang Vendor)**:
+  - **Import Otomatis**: Fitur import data manifest dari file CSV (format HULU, KETAPANG, dll) dengan penanganan format kolom dinamis.
+  - **Monitoring Hutang**: Dashboard khusus untuk memantau tagihan vendor yang belum lunas.
+  - **Kategori Rute**: Pengelompokan berdasarkan rute (Hulu, Ketapang, Pantura, dll).
+  - **Smart Parsing**: Deteksi otomatis format mata uang (IDR/USD format) dari data mentah Excel/CSV untuk mencegah kesalahan input nominal.
 
-2.  **Instalasi Python**:
+## 🛠️ Instalasi
 
-    - Buka file installer yang baru saja didownload.
-    - ⚠️ **PENTING**: Pada tampilan awal instalasi, **WAJIB MENCENTANG** opsi `Add Python to PATH` di bagian bawah.
-    - Klik **Install Now**.
-    - Tunggu hingga proses selesai.
+1. **Clone Repository**
 
-3.  **Cek Instalasi**:
-    - Tekan tombol `Windows + R`, ketik `cmd`, lalu tekan Enter.
-    - Ketik perintah berikut lalu Enter:
-      ```cmd
-      python --version
-      ```
-    - Jika muncul tulisan seperti `Python 3.12.0` (atau versi lain), berarti Python sudah siap.
+   ```bash
+   git clone https://github.com/bmmcargo/dashboard-accountant.git
+   cd dashboard-accountant
+   ```
 
----
+2. **Buat Virtual Environment**
 
-## 📂 Tahap 2: Menyiapkan Folder Projek
+   ```bash
+   python -m venv .venv
+   # Windows
+   .venv\Scripts\activate
+   # Linux/Mac
+   source .venv/bin/activate
+   ```
 
-1.  Pastikan Anda sudah memiliki folder projek ini (misalnya hasil ekstrak ZIP).
-2.  Buka terminal (Command Prompt) di dalam folder ini. Caranya:
-    - Buka folder projek di File Explorer.
-    - Klik pada _address bar_ di atas (yang ada tulisan jalur folder), hapus semuanya, ketik `cmd`, lalu Enter.
-    - Akan muncul layar hitam (Command Prompt) yang sudah mengarah ke folder ini.
+3. **Install Dependencies**
 
----
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## ⚡ Tahap 3: Instalasi Kode & Library
+4. **Migrasi Database**
 
-Sebelum aplikasi bisa jalan, kita perlu menginstall "jantung" dan "otak" aplikasi ini (library pendukung).
+   ```bash
+   python manage.py migrate
+   ```
 
-1.  **Buat Virtual Environment** (Ruang khusus agar sistem komputer Anda tetap bersih):
-    Ketik perintah ini di CMD lalu Enter:
+5. **Buat Superuser (Admin)**
+   ```bash
+   python manage.py createsuperuser
+   ```
 
-    ```cmd
-    python -m venv venv
-    ```
+## 📦 Import Data (Setup Awal)
 
-2.  **Aktifkan Virtual Environment**:
-    Ketik perintah ini:
+Jika Anda memulai dengan database kosong atau ingin me-reset data dengan data Excel/CSV terbaru:
 
-    ```cmd
-    venv\Scripts\activate
-    ```
+1. Pastikan file CSV (`Manifest_Bmm_Agustus_2022.csv`, `Ketapang.csv`, dll) ada di folder utama project.
+2. Jalankan perintah custom import:
+   ```bash
+   python manage.py import_from_excel
+   ```
+   _Script ini akan otomatis membaca, membersihkan, dan memvalidasi data dari berbagai format CSV report._
 
-    _(Tanda sukses: Akan muncul tulisan `(venv)` di bagian paling kiri baris perintah)._
+## ▶️ Menjalankan Aplikasi
 
-3.  **Install Library**:
-    Ketik perintah ini (pastikan internet lancar):
-    ```cmd
-    pip install -r requirements.txt
-    ```
+```bash
+python manage.py runserver
+```
 
----
+Buka browser di `http://127.0.0.1:8000/`.
 
-## 🗄️ Tahap 4: Setup Database
+## 📂 Struktur Project
 
-Karena database sudah disertakan (file `db_new.sqlite3`), Anda cukup memastikan sinkronisasi. Namun, jika Anda perlu membuat akun admin baru, ikuti langkah ke-2.
+- `finance/`: App utama django.
+  - `models.py`: Definisi struktur database (Jurnal, Akun, Inbound, Outbound, Manifest).
+  - `views.py`: Logika bisnis dan controller tampilan.
+  - `forms.py`: Validasi input form.
+  - `urls.py`: Routing halaman.
+  - `management/commands/`: Custom scripts (Import Data).
+- `templates/finance/`: File HTML frontend (Bootstrap 5).
 
-1.  **Cek Database**:
+## 📝 Catatan Penting
 
-    ```cmd
-    python manage.py migrate
-    ```
-
-2.  **Buat Akun Admin Baru** (Opsional / Jika database kosong):
-    ```cmd
-    python manage.py createsuperuser
-    ```
-    _(Ikuti instruksi di layar: Masukkan username `adminbmm` dan password sesuai keinginan)._
-
----
-
-## 🚀 Tahap 5: Menjalankan Aplikasi
-
-Sekarang semuanya sudah siap. Mari kita nyalakan mesinnya!
-
-1.  Ketik perintah ini:
-
-    ```cmd
-    python manage.py runserver
-    ```
-
-2.  Akan muncul tulisan banyak, dan di bagian bawah ada tulisan seperti:
-    `Starting development server at http://127.0.0.1:8000/`
-
-3.  Buka browser Anda (Chrome, Edge, atau Firefox).
-4.  Ketik alamat ini di bar: **`http://127.0.0.1:8000/`**
-
-Selamat! Aplikasi sudah berjalan. 🎉
+- **Database**: Menggunakan SQLite (`db_new.sqlite3`).
+- **Format Angka**: Menggunakan library `django.contrib.humanize` untuk format Rupiah di tampilan, namun data tersimpan sebagai Integer/Decimal di database.
+- **Keamanan**: Seluruh fitur manipulasi data (Create/Edit/Delete) dilindungi login (`@login_required`).
 
 ---
 
-## 🔑 Akun Login Default
-
-Jika menggunakan database yang sudah disediakan, gunakan akun administrator berikut:
-
-- **Username**: `adminbmm`
-- **Password**: `testing12345`
-
-_(Password ini bisa diubah nanti di menu Admin)._
-
----
-
-## ❌ Cara Mematikan Aplikasi
-
-Jika sudah selesai menggunakan:
-
-1.  Kembali ke layar hitam (CMD).
-2.  Tekan tombol `Ctrl + C` di keyboard.
-3.  Tutup jendela CMD.
+**CV Borneo Mega Mandiri** - 2026
