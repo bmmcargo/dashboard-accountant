@@ -1,0 +1,158 @@
+{% extends 'finance/base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4">
+  <h1 class="mt-4"><i class="bi bi-pencil-square text-danger"></i> {{ title }}</h1>
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'outbound_list' %}">Outbound</a></li>
+    <li class="breadcrumb-item active">Edit</li>
+  </ol>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-danger">Form Edit Data Outbound</h6>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        
+        <h6 class="text-primary mb-3"><i class="bi bi-info-circle"></i> Info Dasar</h6>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="id_tanggal" class="form-label">Tanggal</label>
+            <input type="date" name="tanggal" id="id_tanggal" class="form-control" 
+                   value="{{ form.tanggal.value|date:'Y-m-d' }}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_no_resi_bmm" class="form-label">No Resi BMM *</label>
+            <input type="text" name="no_resi_bmm" id="id_no_resi_bmm" class="form-control" required
+                   value="{{ form.no_resi_bmm.value|default:'' }}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_pengirim" class="form-label">Pengirim</label>
+            <input type="text" name="pengirim" id="id_pengirim" class="form-control"
+                   value="{{ form.pengirim.value|default:'' }}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_penerima" class="form-label">Penerima</label>
+            <input type="text" name="penerima" id="id_penerima" class="form-control"
+                   value="{{ form.penerima.value|default:'' }}">
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="id_no_hp" class="form-label">No HP</label>
+            <input type="text" name="no_hp" id="id_no_hp" class="form-control"
+                   value="{{ form.no_hp.value|default:'' }}">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label for="id_koli" class="form-label">Koli</label>
+            <input type="number" name="koli" id="id_koli" class="form-control"
+                   value="{{ form.koli.value|default:0 }}">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label for="id_kg" class="form-label">KG</label>
+            <input type="text" name="kg" id="id_kg" class="form-control"
+                   value="{{ form.kg.value|default:'' }}">
+          </div>
+          <div class="col-md-2 mb-3">
+            <label for="id_tarif" class="form-label">Tarif</label>
+            <input type="text" name="tarif" id="id_tarif" class="form-control"
+                   value="{{ form.tarif.value|default:'' }}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_total" class="form-label">Total (Rp)</label>
+            <input type="number" name="total" id="id_total" class="form-control"
+                   value="{{ form.total.value|default:0 }}">
+          </div>
+        </div>
+        
+        <hr>
+        <h6 class="text-info mb-3"><i class="bi bi-truck"></i> Vendor 1</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="id_vendor1_tgl" class="form-label">Tanggal</label>
+            <input type="date" name="vendor1_tgl" id="id_vendor1_tgl" class="form-control"
+                   value="{{ form.vendor1_tgl.value|date:'Y-m-d' }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="id_vendor1_resi" class="form-label">No Resi</label>
+            <input type="text" name="vendor1_resi" id="id_vendor1_resi" class="form-control"
+                   value="{{ form.vendor1_resi.value|default:'' }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="id_vendor1_biaya" class="form-label">Biaya (Rp)</label>
+            <input type="number" name="vendor1_biaya" id="id_vendor1_biaya" class="form-control"
+                   value="{{ form.vendor1_biaya.value|default:0 }}">
+          </div>
+        </div>
+        
+        <h6 class="text-secondary mb-3"><i class="bi bi-truck"></i> Vendor 2</h6>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label for="id_vendor2_tgl" class="form-label">Tanggal</label>
+            <input type="date" name="vendor2_tgl" id="id_vendor2_tgl" class="form-control"
+                   value="{{ form.vendor2_tgl.value|date:'Y-m-d' }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="id_vendor2_resi" class="form-label">No Resi</label>
+            <input type="text" name="vendor2_resi" id="id_vendor2_resi" class="form-control"
+                   value="{{ form.vendor2_resi.value|default:'' }}">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label for="id_vendor2_biaya" class="form-label">Biaya (Rp)</label>
+            <input type="number" name="vendor2_biaya" id="id_vendor2_biaya" class="form-control"
+                   value="{{ form.vendor2_biaya.value|default:0 }}">
+          </div>
+        </div>
+        
+        <hr>
+        <h6 class="text-success mb-3"><i class="bi bi-cash-coin"></i> Status Pembayaran</h6>
+        <div class="row">
+          <div class="col-md-3 mb-3">
+            <label for="id_status" class="form-label">Status</label>
+            <select name="status" id="id_status" class="form-select">
+              <option value="">-- Pilih --</option>
+              <option value="COD" {% if form.status.value == 'COD' %}selected{% endif %}>COD</option>
+              <option value="CASH" {% if form.status.value == 'CASH' %}selected{% endif %}>CASH</option>
+              <option value="TRANSFER" {% if form.status.value == 'TRANSFER' %}selected{% endif %}>TRANSFER</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_tgl_bayar" class="form-label">Tanggal Bayar</label>
+            <input type="date" name="tgl_bayar" id="id_tgl_bayar" class="form-control"
+                   value="{{ form.tgl_bayar.value|date:'Y-m-d' }}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_nama_bayar" class="form-label">Nama Pembayar</label>
+            <input type="text" name="nama_bayar" id="id_nama_bayar" class="form-control"
+                   value="{{ form.nama_bayar.value|default:'' }}">
+          </div>
+          <div class="col-md-3 mb-3">
+            <label for="id_profit" class="form-label">Profit (Rp)</label>
+            <input type="number" name="profit" id="id_profit" class="form-control"
+                   value="{{ form.profit.value|default:0 }}">
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="id_keterangan" class="form-label">Keterangan</label>
+          <textarea name="keterangan" id="id_keterangan" class="form-control" rows="2">{{ form.keterangan.value|default:'' }}</textarea>
+        </div>
+        
+        <hr>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-save me-1"></i> Simpan Perubahan
+          </button>
+          <a href="{% url 'outbound_list' %}" class="btn btn-secondary">
+            <i class="bi bi-x-circle me-1"></i> Batal
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

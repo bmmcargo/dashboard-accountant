@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from decimal import Decimal
-from .models import Akun, Jurnal
+from .models import Akun, Jurnal, InboundTransaction, OutboundTransaction
 from .forms import JurnalForm
 
 def get_saldo_akun(akun, start_date=None, end_date=None):
@@ -337,3 +337,212 @@ def akun_delete(request, pk):
     except:
         messages.error(request, 'Gagal menghapus akun. Mungkin akun ini sudah dipakai di transaksi.')
     return redirect('akun_list')
+
+# --- INBOUND & OUTBOUND VIEWS ---
+
+@login_required
+def inbound_list(request):
+    inbound_data = InboundTransaction.objects.all().order_by('-tanggal_masuk_stt')
+    
+    # Pencarian
+    q = request.GET.get('q', '')
+    if q:
+        inbound_data = inbound_data.filter(
+            Q(no_resi__icontains=q) | 
+            Q(vendor__icontains=q) | 
+            Q(tujuan__icontains=q) |
+            Q(keterangan__icontains=q)
+        )
+    
+    # Hitung Total di Summary
+    total_kilo = inbound_data.aggregate(Sum('kilo'))['kilo__sum'] or 0
+    total_biaya = inbound_data.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
+    
+    context = {
+        'inbounds': inbound_data,
+        'total_kilo': total_kilo,
+        'total_biaya': total_biaya,
+        'q': q,
+    }
+    return render(request, 'finance/inbound_list.html', context)
+
+@login_required
+def outbound_list(request):
+    outbound_data = OutboundTransaction.objects.all().order_by('-tanggal')
+    
+    # Pencarian
+    q = request.GET.get('q', '')
+    if q:
+        outbound_data = outbound_data.filter(
+            Q(no_resi_bmm__icontains=q) | 
+            Q(pengirim__icontains=q) | 
+            Q(penerima__icontains=q) |
+            Q(keterangan__icontains=q)
+        )
+    
+    # Hitung Total di Summary
+    total_pendapatan = outbound_data.aggregate(Sum('total'))['total__sum'] or 0
+    total_biaya_vendor = (outbound_data.aggregate(Sum('vendor1_biaya'))['vendor1_biaya__sum'] or 0) + \
+                         (outbound_data.aggregate(Sum('vendor2_biaya'))['vendor2_biaya__sum'] or 0)
+    total_profit = outbound_data.aggregate(Sum('profit'))['profit__sum'] or 0
+    
+    context = {
+        'outbounds': outbound_data,
+        'total_pendapatan': total_pendapatan,
+        'total_biaya_vendor': total_biaya_vendor,
+        'total_profit': total_profit,
+        'q': q,
+    }
+    return render(request, 'finance/outbound_list.html', context)
+
+# --- INBOUND CRUD ---
+from .forms import InboundForm, OutboundForm, ManifestForm
+
+@login_required
+def inbound_create(request):
+    if request.method == 'POST':
+        form = InboundForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Inbound berhasil ditambahkan!')
+            return redirect('inbound_list')
+    else:
+        form = InboundForm()
+    return render(request, 'finance/inbound_form.html', {'form': form, 'title': 'Tambah Data Inbound'})
+
+@login_required
+def inbound_edit(request, pk):
+    inbound = get_object_or_404(InboundTransaction, pk=pk)
+    if request.method == 'POST':
+        form = InboundForm(request.POST, instance=inbound)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Inbound berhasil diperbarui!')
+            return redirect('inbound_list')
+    else:
+        form = InboundForm(instance=inbound)
+    return render(request, 'finance/inbound_form.html', {'form': form, 'title': f'Edit Inbound: {inbound.no_resi}'})
+
+@login_required
+def inbound_delete(request, pk):
+    inbound = get_object_or_404(InboundTransaction, pk=pk)
+    no_resi = inbound.no_resi
+    inbound.delete()
+    messages.success(request, f'Data Inbound "{no_resi}" berhasil dihapus.')
+    return redirect('inbound_list')
+
+# --- OUTBOUND CRUD ---
+
+@login_required
+def outbound_create(request):
+    if request.method == 'POST':
+        form = OutboundForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Outbound berhasil ditambahkan!')
+            return redirect('outbound_list')
+    else:
+        form = OutboundForm()
+    return render(request, 'finance/outbound_form.html', {'form': form, 'title': 'Tambah Data Outbound'})
+
+@login_required
+def outbound_edit(request, pk):
+    outbound = get_object_or_404(OutboundTransaction, pk=pk)
+    if request.method == 'POST':
+        form = OutboundForm(request.POST, instance=outbound)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Outbound berhasil diperbarui!')
+            return redirect('outbound_list')
+    else:
+        form = OutboundForm(instance=outbound)
+    return render(request, 'finance/outbound_form.html', {'form': form, 'title': f'Edit Outbound: {outbound.no_resi_bmm}'})
+
+@login_required
+def outbound_delete(request, pk):
+    outbound = get_object_or_404(OutboundTransaction, pk=pk)
+    no_resi = outbound.no_resi_bmm
+    outbound.delete()
+    messages.success(request, f'Data Outbound "{no_resi}" berhasil dihapus.')
+    return redirect('outbound_list')
+
+# --- MANIFEST VIEWS (Hutang) ---
+from .models import Manifest
+
+@login_required
+def manifest_list(request):
+    # Urutkan berdasarkan tanggal kirim secara Ascending (Kronologis)
+    manifest_data = Manifest.objects.all().order_by('tanggal_kirim')
+    
+    # Filter kategori
+    kategori = request.GET.get('kategori', '')
+    if kategori:
+        manifest_data = manifest_data.filter(kategori=kategori)
+    
+    # Filter status bayar
+    status = request.GET.get('status', '')
+    if status == 'lunas':
+        manifest_data = manifest_data.filter(status_bayar=True)
+    elif status == 'belum':
+        manifest_data = manifest_data.filter(status_bayar=False)
+    
+    # Pencarian
+    q = request.GET.get('q', '')
+    if q:
+        manifest_data = manifest_data.filter(
+            Q(no_resi__icontains=q) | 
+            Q(pengirim__icontains=q) | 
+            Q(penerima__icontains=q) |
+            Q(tujuan__icontains=q)
+        )
+    
+    # Hitung Total Hutang
+    total_hutang = manifest_data.filter(status_bayar=False).aggregate(Sum('total'))['total__sum'] or 0
+    total_lunas = manifest_data.filter(status_bayar=True).aggregate(Sum('total'))['total__sum'] or 0
+    
+    # Kategori list untuk filter
+    kategori_list = Manifest.KATEGORI_CHOICES
+    
+    context = {
+        'manifests': manifest_data,
+        'total_hutang': total_hutang,
+        'total_lunas': total_lunas,
+        'kategori_list': kategori_list,
+        'selected_kategori': kategori,
+        'selected_status': status,
+        'q': q,
+    }
+    return render(request, 'finance/manifest_list.html', context)
+
+@login_required
+def manifest_create(request):
+    if request.method == 'POST':
+        form = ManifestForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Manifest berhasil ditambahkan!')
+            return redirect('manifest_list')
+    else:
+        form = ManifestForm()
+    return render(request, 'finance/manifest_form.html', {'form': form, 'title': 'Tambah Manifest'})
+
+@login_required
+def manifest_edit(request, pk):
+    manifest = get_object_or_404(Manifest, pk=pk)
+    if request.method == 'POST':
+        form = ManifestForm(request.POST, instance=manifest)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Manifest berhasil diperbarui!')
+            return redirect('manifest_list')
+    else:
+        form = ManifestForm(instance=manifest)
+    return render(request, 'finance/manifest_form.html', {'form': form, 'title': f'Edit Manifest: {manifest.no_resi}'})
+
+@login_required
+def manifest_delete(request, pk):
+    manifest = get_object_or_404(Manifest, pk=pk)
+    no_resi = manifest.no_resi
+    manifest.delete()
+    messages.success(request, f'Data Manifest "{no_resi}" berhasil dihapus.')
+    return redirect('manifest_list')

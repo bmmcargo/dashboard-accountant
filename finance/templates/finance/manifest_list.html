@@ -1,0 +1,211 @@
+{% extends 'finance/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+            <h1 class="mt-4 mb-0"><i class="bi bi-file-earmark-text text-info"></i> Manifest (Hutang Vendor)</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Manifest</li>
+                </ol>
+            </nav>
+        </div>
+        <a href="{% url 'manifest_create' %}" class="btn btn-info text-white">
+            <i class="bi bi-plus-circle me-1"></i> Tambah Data
+        </a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-3 mt-3">
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-info text-white mb-3 shadow">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-white-50 small">Total Data</div>
+                            <div class="fs-4 fw-bold">{{ manifests|length }} Resi</div>
+                        </div>
+                        <i class="bi bi-receipt fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-danger text-white mb-3 shadow">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-white-50 small">Total Hutang (Belum Bayar)</div>
+                            <div class="fs-5 fw-bold">Rp {{ total_hutang|intcomma }}</div>
+                        </div>
+                        <i class="bi bi-exclamation-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-md-6">
+            <div class="card bg-success text-white mb-3 shadow">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-white-50 small">Total Lunas</div>
+                            <div class="fs-5 fw-bold">Rp {{ total_lunas|intcomma }}</div>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search -->
+    <div class="card shadow mb-3">
+        <div class="card-body py-2">
+            <form method="get" action="" class="row g-2 align-items-center">
+                <div class="col-md-3">
+                    <select name="kategori" class="form-select">
+                        <option value="">-- Semua Kategori --</option>
+                        {% for code, name in kategori_list %}
+                        <option value="{{ code }}" {% if selected_kategori == code %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="status" class="form-select">
+                        <option value="">-- Semua Status --</option>
+                        <option value="belum" {% if selected_status == 'belum' %}selected{% endif %}>Belum Bayar</option>
+                        <option value="lunas" {% if selected_status == 'lunas' %}selected{% endif %}>Lunas</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="Cari No Resi, Pengirim, Penerima..." value="{{ q }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-info text-white me-2"><i class="bi bi-filter"></i> Filter</button>
+                    {% if q or selected_kategori or selected_status %}
+                    <a href="{% url 'manifest_list' %}" class="btn btn-secondary"><i class="bi bi-x"></i> Reset</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabel Data -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-2 bg-info text-white">
+            <h6 class="m-0 fw-bold"><i class="bi bi-table me-2"></i>DAFTAR MANIFEST - Hutang ke Vendor</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-dark">
+                        <tr class="text-center">
+                            <th>No</th>
+                            <th>Kategori</th>
+                            <th>Tgl Kirim</th>
+                            <th>No Resi</th>
+                            <th>Pengirim</th>
+                            <th>Tujuan</th>
+                            <th>Koli</th>
+                            <th>Kg</th>
+                            <th>Penerima</th>
+                            <th>Tgl Terima</th>
+                            <th>Tarif (Rp)</th>
+                            <th>Total (Rp)</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in manifests %}
+                        <tr class="{% if item.status_bayar %}table-success{% endif %}">
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td><span class="badge bg-secondary">{{ item.kategori }}</span></td>
+                            <td class="text-nowrap">{{ item.tanggal_kirim|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="fw-bold text-info">{{ item.no_resi }}</td>
+                            <td>{{ item.pengirim|default:"-"|truncatechars:18 }}</td>
+                            <td>{{ item.tujuan|default:"-" }}</td>
+                            <td class="text-center">{{ item.koli }}</td>
+                            <td class="text-end">{{ item.kg|floatformat:0 }}</td>
+                            <td>{{ item.penerima|default:"-"|truncatechars:15 }}</td>
+                            <td class="text-nowrap">{{ item.tanggal_terima|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="text-end">{{ item.tarif|intcomma }}</td>
+                            <td class="text-end fw-bold {% if item.status_bayar %}text-success{% else %}text-danger{% endif %}">{{ item.total|intcomma }}</td>
+                            <td class="text-center">
+                                {% if item.status_bayar %}
+                                <span class="badge bg-success"><i class="bi bi-check"></i> LUNAS</span>
+                                {% else %}
+                                <span class="badge bg-danger">BELUM</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center text-nowrap">
+                                <a href="{% url 'manifest_edit' item.pk %}" class="btn btn-sm btn-warning py-0 px-1" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-danger py-0 px-1" title="Hapus" 
+                                        onclick="confirmDelete('{{ item.no_resi }}', '{% url 'manifest_delete' item.pk %}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="14" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                {% if q or selected_kategori or selected_status %}
+                                Tidak ada data yang cocok dengan filter.
+                                {% else %}
+                                Belum ada data manifest.
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot class="table-dark fw-bold">
+                        <tr>
+                            <td colspan="11" class="text-end">TOTAL HUTANG (Belum Bayar):</td>
+                            <td class="text-end text-danger">{{ total_hutang|intcomma }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Konfirmasi Delete -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Konfirmasi Hapus</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin menghapus data <strong id="deleteItemName"></strong>?</p>
+                <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <a id="deleteConfirmBtn" href="#" class="btn btn-danger">Ya, Hapus</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('deleteConfirmBtn').href = deleteUrl;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+{% endblock %}

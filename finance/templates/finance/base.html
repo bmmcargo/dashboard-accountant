@@ -1,4 +1,5 @@
-{% load static %} <!DOCTYPE html>
+{% load static %}
+<!DOCTYPE html>
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
@@ -11,93 +12,203 @@
     <style>
       :root {
         --primary-color: #0d6efd;
-        --sidebar-bg: #ffffff; /* Warna latar sidebar terang untuk kontras logo */
-        --sidebar-text: #000000; /* Warna teks sidebar */
-        --sidebar-text-active: #e3e3e3; /* Warna teks aktif (biru) */
-        --sidebar-hover: #353535; /* Warna hover */
+        --sidebar-bg: #ffffff;
+        --sidebar-text: #5a5c69;
+        --sidebar-text-hover: #2e59d9;
+        --sidebar-hover-bg: #f8f9fc;
+        --sidebar-active-bg: #4e73df;
+        --sidebar-active-text: #ffffff;
       }
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f5f8fa; /* Warna latar belakang utama */
+        background-color: #f0f2f5;
       }
       .sidebar {
-        width: 250px;
+        width: 260px;
         height: 100vh;
-        background-color: var(--sidebar-bg);
+        background: var(--sidebar-bg);
         color: var(--sidebar-text);
-        border-right: 1px solid #e3e6f0; /* Garis pemisah sidebar */
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
         position: fixed;
         top: 0;
         left: 0;
         display: flex;
         flex-direction: column;
-        padding-top: 20px;
-        z-index: 1000; /* Pastikan di atas konten lain */
+        z-index: 1000;
+        overflow-y: auto;
+        border-right: 1px solid #e3e6f0;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
       }
       .main-content {
-        margin-left: 250px; /* Memberi ruang untuk sidebar tetap */
-        padding: 30px;
+        margin-left: 260px;
+        padding: 25px;
         min-height: 100vh;
+        background-color: #f0f2f5;
       }
       .sidebar-brand {
-        padding: 0 15px 20px 15px;
+        padding: 20px 20px 15px 20px;
         text-align: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        margin-bottom: 20px;
+        border-bottom: 1px solid #e3e6f0;
       }
-      /* --- PERBAIKAN LOGO DISINI --- */
       .logo-container {
-        max-width: 55px; /* Ukuran logo kecil */
-        margin: 0 auto; /* Posisi tengah */
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 10px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 5px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
-      /* --------------------------- */
+      .logo-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .sidebar-brand h5 {
+        color: #2d3748;
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.1rem;
+      }
+      .sidebar-brand small {
+        color: #718096;
+        font-size: 0.75rem;
+      }
 
+      /* Navigation */
+      .sidebar-nav {
+        padding: 15px 0;
+        flex: 1;
+      }
+      .nav-section-title {
+        padding: 15px 20px 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #a0aec0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
       .nav-link {
         color: var(--sidebar-text);
-        padding: 12px 25px;
+        padding: 10px 20px;
         font-weight: 500;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.2s ease;
+        margin: 2px 12px;
+        border-radius: 8px;
+      }
+      .nav-link:hover {
+        color: var(--sidebar-text-hover);
+        background-color: var(--sidebar-hover-bg);
+      }
+      .nav-link.active {
+        color: var(--sidebar-active-text);
+        background: var(--sidebar-active-bg);
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(78, 115, 223, 0.3);
+      }
+      .nav-link i {
+        font-size: 1.1rem;
+        width: 22px;
+        text-align: center;
+      }
+
+      /* User Profile Section */
+      .sidebar-footer {
+        padding: 15px;
+        border-top: 1px solid #e3e6f0;
+        background: #f8f9fc;
+      }
+      .user-info {
         display: flex;
         align-items: center;
         gap: 10px;
-        transition: all 0.3s ease;
-        border-radius: 0 25px 25px 0; /* Membuat sudut kanan membulat saat aktif */
-        margin-right: 10px;
+        margin-bottom: 12px;
+        padding: 10px;
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e3e6f0;
       }
-      .nav-link:hover {
-        color: var(--sidebar-text-active);
-        background-color: var(--sidebar-hover);
+      .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 600;
+        font-size: 1rem;
       }
-      .nav-link.active {
-        color: var(--sidebar-text-active);
-        background-color: var(--primary-color); /* Menggunakan warna biru primer saat aktif */
-        box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3); /* Efek bayangan */
+      .user-details {
+        flex: 1;
+        overflow: hidden;
       }
+      .user-details .name {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .user-details .email {
+        color: #718096;
+        font-size: 0.7rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sidebar-footer .btn {
+        font-size: 0.8rem;
+        padding: 6px 12px;
+      }
+
+      /* Cards */
       .card {
         border: none;
         border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        transition: transform 0.2s, box-shadow 0.2s;
       }
       .card:hover {
-        transform: translateY(-2px); /* Efek naik sedikit saat di-hover */
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
       }
 
-      /* Responsif untuk layar kecil (HP) */
+      /* Table improvements */
+      .table {
+        font-size: 0.85rem;
+      }
+      .table th {
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      /* Responsive */
+      @media (max-width: 992px) {
+        .sidebar {
+          width: 220px;
+        }
+        .main-content {
+          margin-left: 220px;
+        }
+      }
       @media (max-width: 768px) {
         .sidebar {
           width: 100%;
           height: auto;
           position: relative;
-          padding-bottom: 20px;
         }
         .main-content {
           margin-left: 0;
           padding: 15px;
         }
-        .nav-link {
-          border-radius: 5px; /* Ubah style nav link di HP */
-          margin: 5px 15px;
+        .sidebar-footer {
+          position: relative;
         }
       }
     </style>
@@ -105,49 +216,56 @@
   <body>
     <div class="sidebar">
       <div class="sidebar-brand">
-        <div class="logo-container mb-2">
-          <img src="{% static 'finance/img/logo-bmm.png' %}" alt="Logo BMM" class="img-fluid rounded" />
+        <div class="logo-container">
+          <img src="{% static 'finance/img/logo-bmm.png' %}" alt="Logo BMM" />
         </div>
-        <div class="fw-bold text-dark fs-6">BMM CARGO</div>
-        <small class="text-muted">Sistem Informasi Akuntansi</small>
+        <h5>BMM CARGO</h5>
+        <small>CV Borneo Mega Mandiri</small>
       </div>
-      <nav class="nav flex-column">
+
+      <nav class="sidebar-nav">
         <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'dashboard' %}"> <i class="bi bi-speedometer2"></i> Dashboard </a>
-        <a class="nav-link {% if 'jurnal' in request.path %}active{% endif %}" href="{% url 'jurnal_list' %}"> <i class="bi bi-pencil-square"></i> Jurnal Umum </a>
+        <a class="nav-link {% if 'jurnal' in request.path %}active{% endif %}" href="{% url 'jurnal_list' %}"> <i class="bi bi-journal-text"></i> Jurnal Umum </a>
         <a class="nav-link {% if 'buku-besar' in request.path %}active{% endif %}" href="{% url 'buku_besar' %}"> <i class="bi bi-book"></i> Buku Besar </a>
-        <a class="nav-link {% if 'laporan' in request.path %}active{% endif %}" href="{% url 'laporan_keuangan' %}"> <i class="bi bi-file-earmark-bar-graph"></i> Laporan Keuangan </a>
+        <a class="nav-link {% if 'laporan' in request.path %}active{% endif %}" href="{% url 'laporan_keuangan' %}"> <i class="bi bi-bar-chart-line"></i> Laporan Keuangan </a>
 
-        <hr class="text-secondary mx-3 my-2" />
+        <div class="nav-section-title">Logistik</div>
 
-        <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-gear-wide-connected"></i> Daftar Akun (CoA) </a>
+        <a class="nav-link {% if 'inbound' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> <i class="bi bi-box-arrow-in-down"></i> Barang Masuk </a>
+        <a class="nav-link {% if 'outbound' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> <i class="bi bi-box-arrow-up"></i> Barang Keluar </a>
+        <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> <i class="bi bi-file-earmark-text"></i> Manifest (Hutang) </a>
 
-        <!-- User Info & Logout -->
-        <div class="mt-auto px-3 py-3 border-top">
-          <div class="d-flex align-items-center mb-2">
-            <i class="bi bi-person-circle me-2 fs-4"></i>
-            <div>
-              <small class="d-block fw-bold">{{ user.username }}</small>
-              <small class="text-muted">{{ user.email|default:"Admin" }}</small>
-            </div>
-          </div>
-          <div class="d-grid gap-2">
-            <a href="{% url 'password_change' %}" class="btn btn-outline-primary btn-sm"> <i class="bi bi-shield-lock me-1"></i> Ganti Password </a>
-            <form method="post" action="{% url 'logout' %}">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
-            </form>
+        <div class="nav-section-title">Master Data</div>
+
+        <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-list-ul"></i> Daftar Akun (CoA) </a>
+      </nav>
+
+      <!-- User Profile Footer -->
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
+          <div class="user-details">
+            <div class="name">{{ user.username }}</div>
+            <div class="email">{{ user.email|default:"bmmcargo@gmail.com" }}</div>
           </div>
         </div>
-      </nav>
+        <div class="d-flex gap-2">
+          <a href="{% url 'password_change' %}" class="btn btn-outline-primary btn-sm flex-fill"> <i class="bi bi-key"></i> Password </a>
+          <form method="post" action="{% url 'logout' %}" class="flex-fill">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100"><i class="bi bi-power"></i> Logout</button>
+          </form>
+        </div>
+      </div>
     </div>
 
     <div class="main-content">
       {% if messages %} {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-3" role="alert">
         <i class="bi bi-info-circle-fill me-2"></i> {{ message }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
       </div>
-      {% endfor %} {% endif %} {% block content %} {% endblock %}
+      {% endfor %} {% endif %} {% block content %}{% endblock %}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

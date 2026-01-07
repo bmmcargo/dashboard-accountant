@@ -1,0 +1,169 @@
+{% extends 'finance/base.html' %} {% load humanize %} {% block content %}
+<div class="container-fluid px-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+      <h1 class="mt-4 mb-0"><i class="bi bi-box-arrow-in-down text-primary"></i> Monitoring Invoice Inbound</h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+          <li class="breadcrumb-item active">Inbound</li>
+        </ol>
+      </nav>
+    </div>
+    <a href="{% url 'inbound_create' %}" class="btn btn-primary"> <i class="bi bi-plus-circle me-1"></i> Tambah Data </a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="row mb-4 mt-3">
+    <div class="col-xl-4 col-md-6">
+      <div class="card bg-primary text-white mb-3 shadow">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-white-50 small">Total Transaksi</div>
+              <div class="fs-4 fw-bold">{{ inbounds|length }} Resi</div>
+            </div>
+            <i class="bi bi-receipt fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+      <div class="card bg-success text-white mb-3 shadow">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-white-50 small">Total Berat</div>
+              <div class="fs-4 fw-bold">{{ total_kilo|floatformat:0|intcomma }} Kg</div>
+            </div>
+            <i class="bi bi-box-seam fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4 col-md-6">
+      <div class="card bg-warning text-dark mb-3 shadow">
+        <div class="card-body py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <div class="text-dark small opacity-75">Total Pendapatan</div>
+              <div class="fs-4 fw-bold">Rp {{ total_biaya|intcomma }}</div>
+            </div>
+            <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="card shadow mb-3">
+    <div class="card-body py-2">
+      <form method="get" action="" class="row g-2 align-items-center">
+        <div class="col-md-8">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" class="form-control" placeholder="Cari No Resi, Vendor, Tujuan..." value="{{ q }}" />
+          </div>
+        </div>
+        <div class="col-md-4">
+          <button type="submit" class="btn btn-primary me-2"><i class="bi bi-search"></i> Cari</button>
+          {% if q %}
+          <a href="{% url 'inbound_list' %}" class="btn btn-secondary"><i class="bi bi-x"></i> Reset</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabel Data -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 bg-primary text-white">
+      <h6 class="m-0 fw-bold"><i class="bi bi-table me-2"></i>Daftar Barang Masuk (Inbound 2026)</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem">
+          <thead class="table-dark">
+            <tr class="text-center">
+              <th>Tgl Masuk</th>
+              <th>Vendor</th>
+              <th>No Resi</th>
+              <th>Tujuan</th>
+              <th>Koli</th>
+              <th>Kg</th>
+              <th>Tgl Dooring</th>
+              <th>Tgl Kembali</th>
+              <th>Keterangan</th>
+              <th>Tarif/Kg (Rp)</th>
+              <th>Total (Rp)</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in inbounds %}
+            <tr>
+              <td class="text-nowrap">{{ item.tanggal_masuk_stt|date:"d/m/Y"|default:"-" }}</td>
+              <td><span class="badge bg-secondary">{{ item.vendor|default:"-" }}</span></td>
+              <td class="fw-bold text-primary">{{ item.no_resi }}</td>
+              <td>{{ item.tujuan|default:"-" }}</td>
+              <td class="text-center">{{ item.koli }}</td>
+              <td class="text-end">{{ item.kilo|floatformat:0 }}</td>
+              <td class="text-nowrap">{{ item.tanggal_dooring|date:"d/m/Y"|default:"-" }}</td>
+              <td class="text-nowrap">{{ item.tanggal_kembali|date:"d/m/Y"|default:"-" }}</td>
+              <td>{{ item.keterangan|default:"-"|truncatechars:20 }}</td>
+              <td class="text-end">{{ item.tarif_per_kg|default:"-" }}</td>
+              <td class="text-end fw-bold text-success">{{ item.total_biaya|intcomma }}</td>
+              <td class="text-center text-nowrap">
+                <a href="{% url 'inbound_edit' item.pk %}" class="btn btn-sm btn-warning py-0 px-1" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-danger py-0 px-1" title="Hapus" onclick="confirmDelete('{{ item.no_resi }}', '{% url 'inbound_delete' item.pk %}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="12" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                {% if q %}Tidak ada data yang cocok dengan "{{ q }}"{% else %}Belum ada data inbound.{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Konfirmasi Delete -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus data <strong id="deleteItemName"></strong>?</p>
+        <p class="text-muted small mb-0">Tindakan ini tidak dapat dibatalkan.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <a id="deleteConfirmBtn" href="#" class="btn btn-danger">Ya, Hapus</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('deleteConfirmBtn').href = deleteUrl;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+  }
+</script>
+{% endblock %}
