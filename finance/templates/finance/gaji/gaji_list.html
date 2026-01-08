@@ -86,11 +86,11 @@
                 <div class="small text-muted fw-normal" style="font-size: 0.7rem;">{{ row.karyawan.posisi|default:"-" }}</div>
               </td>
               
-              <!-- Gaji Pokok (ReadOnly for Ref) -->
+              <!-- Gaji Pokok (Editable) -->
               <td class="text-end bg-info bg-opacity-10">
-                 <input type="text" class="form-control form-control-sm border-0 bg-transparent text-end fw-bold text-dark" 
-                        value="{{ row.gaji.gaji_pokok|intcomma }}" readonly tabindex="-1">
-                 <input type="hidden" class="gaji-pokok" value="{{ row.gaji.gaji_pokok }}">
+                 <input type="text" name="gaji_pokok_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm border-0 bg-transparent text-end fw-bold text-dark input-calc gaji-pokok" 
+                        value="{{ row.gaji.gaji_pokok|intcomma }}">
               </td>
               
               <!-- INPUTS: Penambah -->
@@ -157,7 +157,7 @@
           <tfoot class="bg-light fw-bold text-end small border-top-2">
              <tr>
                 <td colspan="7" class="text-end pe-3">TOTAL PEMBAYARAN:</td>
-                <td colspan="5" class="text-end px-3 fs-6" id="grandTotal">Rp {{ total_gaji_bersih|intcomma }}</td>
+                <td colspan="4" class="text-end px-3 fs-6" id="grandTotal">Rp {{ total_gaji_bersih|intcomma }}</td>
              </tr>
           </tfoot>
         </table>
@@ -172,16 +172,26 @@ document.addEventListener('DOMContentLoaded', function() {
    const rows = document.querySelectorAll('tbody tr');
 
    function calculateRow(row) {
-      // Get values
-      const gajiPokok = parseFloat(row.querySelector('.gaji-pokok').value) || 0;
+      // Helper parse locale string to float
+      const parseVal = (sel) => {
+         const el = row.querySelector(sel);
+         if (!el) return 0;
+         // Remove dots/commas before parsing if it's text input (like Gaji Pokok which has intcomma)
+         // But type='number' inputs don't have commas in value property usually, unless formatted manually.
+         // Our Gaji Pokok is type="text" with intcomma, so we MUST strip non-digits.
+         let valStr = el.value.replace(/\./g, '').replace(/,/g, ''); 
+         return parseFloat(valStr) || 0;
+      };
+
+      const gajiPokok = parseVal('.gaji-pokok');
       
-      const lembur = parseFloat(row.querySelector('input[name^="lembur_"]').value) || 0;
-      const bonus = parseFloat(row.querySelector('input[name^="bonus_"]').value) || 0;
+      const lembur = parseVal('input[name^="lembur_"]');
+      const bonus = parseVal('input[name^="bonus_"]');
       
-      const potCashbon = parseFloat(row.querySelector('input[name^="potongan_cashbon_"]').value) || 0;
-      const potAbsen = parseFloat(row.querySelector('input[name^="potongan_absen_"]').value) || 0;
-      const potBpjs = parseFloat(row.querySelector('input[name^="potongan_bpjs_"]').value) || 0;
-      const potLain = parseFloat(row.querySelector('input[name^="potongan_lain_"]').value) || 0;
+      const potCashbon = parseVal('input[name^="potongan_cashbon_"]');
+      const potAbsen = parseVal('input[name^="potongan_absen_"]');
+      const potBpjs = parseVal('input[name^="potongan_bpjs_"]');
+      const potLain = parseVal('input[name^="potongan_lain_"]');
 
       // Calc
       const totalPenambah = lembur + bonus;

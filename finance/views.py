@@ -968,28 +968,45 @@ def gaji_save_all(request):
     """
     Simpan data gaji dari grid/spreadsheet view
     """
+    def parse_dec(val):
+        """Helper safely parse string to decimal/int or 0 if empty"""
+        if not val: 
+            return 0
+        try:
+            return int(val.replace('.', '').replace(',', ''))
+        except ValueError:
+            return 0
+
     if request.method == 'POST':
         bulan = request.POST.get('bulan')
         tahun = request.POST.get('tahun')
         
-        # Iterate post data
-        # Format name: lembur_{karyawan_id}, potongan_{karyawan_id}, etc.
         karyawan_ids = request.POST.getlist('karyawan_id')
         
         for k_id in karyawan_ids:
             k = Karyawan.objects.get(id=k_id)
             
             # Get or Create
+            # Defaults penting saat create pertama kali jika belum ada di POST
             gaji_obj, created = Penggajian.objects.get_or_create(
-                karyawan=k, bulan=bulan, tahun=tahun
+                karyawan=k, bulan=bulan, tahun=tahun,
+                defaults={'gaji_pokok': k.gaji_pokok}
             )
             
-            # Update fields
-            gaji_obj.lembur = request.POST.get(f'lembur_{k_id}', 0)
-            gaji_obj.potongan_cashbon = request.POST.get(f'potongan_cashbon_{k_id}', 0)
-            gaji_obj.potongan_absen = request.POST.get(f'potongan_absen_{k_id}', 0)
-            gaji_obj.potongan_bpjs = request.POST.get(f'potongan_bpjs_{k_id}', 0)
-            gaji_obj.potongan_lain = request.POST.get(f'potongan_lain_{k_id}', 0)
+            # Update fields safely
+            # Note: Gaji Pokok juga disimpan jika user mengeditnya di view
+            raw_gaji_pokok = request.POST.get(f'gaji_pokok_{k_id}')
+            if raw_gaji_pokok is not None:
+                gaji_obj.gaji_pokok = parse_dec(raw_gaji_pokok)
+            
+            gaji_obj.lembur = parse_dec(request.POST.get(f'lembur_{k_id}'))
+            gaji_obj.bonus = parse_dec(request.POST.get(f'bonus_{k_id}')) # Add bonus since logic used it
+            
+            gaji_obj.potongan_cashbon = parse_dec(request.POST.get(f'potongan_cashbon_{k_id}'))
+            gaji_obj.potongan_absen = parse_dec(request.POST.get(f'potongan_absen_{k_id}'))
+            gaji_obj.potongan_bpjs = parse_dec(request.POST.get(f'potongan_bpjs_{k_id}'))
+            gaji_obj.potongan_lain = parse_dec(request.POST.get(f'potongan_lain_{k_id}'))
+            
             gaji_obj.catatan = request.POST.get(f'catatan_{k_id}', '')
             
             # Recalculate Total (logic inside save model)
