@@ -15,7 +15,7 @@
                 <option value="{{ t }}" {% if t == tahun %}selected{% endif %}>{{ t }}</option>
                 {% endfor %}
             </select>
-            <a href="{% url 'tagihan_create' %}" class="btn btn-primary btn-sm text-nowrap">
+            <a href="{% url 'tagihan_create' %}" class="btn btn-outline-primary btn-sm text-nowrap">
                 <i class="bi bi-plus-lg"></i> Buat Invoice Baru
             </a>
         </div>

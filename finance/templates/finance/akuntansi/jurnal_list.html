@@ -5,7 +5,7 @@
       <h2 class="fw-bold">Jurnal Umum</h2>
       <p class="text-muted">Catat transaksi keuangan disini.</p>
     </div>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addJurnalModal"><i class="bi bi-plus-lg"></i> Tambah Jurnal</button>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addJurnalModal"><i class="bi bi-plus-lg"></i> Tambah Jurnal</button>
   </div>
 
   <div class="card border-0">
@@ -89,7 +89,7 @@
         <div class="modal-body">{% csrf_token %} {{ form|crispy }}</div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Simpan Transaksi</button>
+          <button type="submit" class="btn btn-outline-primary"><i class="bi bi-check-lg me-1"></i>Simpan Transaksi</button>
         </div>
       </form>
     </div>

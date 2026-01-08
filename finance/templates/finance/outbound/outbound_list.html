@@ -10,8 +10,8 @@
         </ol>
       </nav>
     </div>
-    <div class="w-100 w-md-auto d-flex justify-content-start justify-content-md-end">
-      <a href="{% url 'outbound_create' %}" class="btn btn-danger text-nowrap"> <i class="bi bi-plus-circle me-1"></i> Tambah Data </a>
+    <div class="w-20 w-md-auto d-flex justify-content-start justify-content-md-end">
+      <a href="{% url 'outbound_create' %}" class="btn btn-outline-danger text-nowrap"> <i class="bi bi-plus-circle me-1"></i> Tambah Data </a>
     </div>
   </div>
 
@@ -82,7 +82,7 @@
           </div>
         </div>
         <div class="col-md-4">
-          <button type="submit" class="btn btn-danger me-2"><i class="bi bi-search"></i> Cari</button>
+          <button type="submit" class="btn btn-outline-danger me-2"><i class="bi bi-search"></i> Cari</button>
           {% if q %}
           <a href="{% url 'outbound_list' %}" class="btn btn-secondary"><i class="bi bi-x"></i> Reset</a>
           {% endif %}
@@ -168,10 +168,10 @@
               <td class="text-end fw-bold text-success bg-primary-subtle">{{ item.profit|intcomma }}</td>
               <!-- Aksi -->
               <td class="text-center text-nowrap">
-                <a href="{% url 'outbound_edit' item.pk %}" class="btn btn-sm btn-warning py-0 px-1" title="Edit">
+                <a href="{% url 'outbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning py-0 px-1" title="Edit">
                   <i class="bi bi-pencil"></i>
                 </a>
-                <button type="button" class="btn btn-sm btn-danger py-0 px-1" title="Hapus" data-name="{{ item.no_resi_bmm }}" data-url="{% url 'outbound_delete' item.pk %}" onclick="confirmDelete(this.dataset.name, this.dataset.url)">
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" title="Hapus" data-name="{{ item.no_resi_bmm }}" data-url="{% url 'outbound_delete' item.pk %}" onclick="confirmDelete(this.dataset.name, this.dataset.url)">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
@@ -186,12 +186,12 @@
             {% endfor %}
           </tbody>
           <!-- Footer Totals -->
-          <tfoot class="table-dark fw-bold">
+          <tfoot class="table fw-bold">
             <tr>
               <td colspan="8" class="text-end">TOTAL:</td>
               <td class="text-end">{{ total_pendapatan|intcomma }}</td>
               <td colspan="2"></td>
-              <td class="text-end text-danger">{{ total_biaya_vendor|intcomma }}</td>
+              <td class="text-end text-danger fw-bold">{{ total_biaya_vendor|intcomma }}</td>
               <td colspan="6"></td>
               <td class="text-end text-success">{{ total_profit|intcomma }}</td>
               <td></td>
@@ -217,7 +217,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <a id="deleteConfirmBtn" href="#" class="btn btn-danger">Ya, Hapus</a>
+        <a id="deleteConfirmBtn" href="#" class="btn btn-outline-danger">Ya, Hapus</a>
       </div>
     </div>
   </div>
