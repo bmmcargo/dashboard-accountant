@@ -17,7 +17,7 @@
             <option value="{{ t }}" {% if t == tahun %}selected{% endif %}>{{ t }}</option>
             {% endfor %}
           </select>
-          <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-primary text-nowrap">
+          <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-outline-primary text-nowrap">
             <i class="bi bi-plus-lg"></i> Tambah Data
           </a>
         </div>
@@ -99,7 +99,7 @@
                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                 Belum ada data kas untuk bulan {{ nama_bulan }} {{ tahun }}
                 <br>
-                <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-primary btn-sm mt-3">
+                <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-outline-primary btn-sm mt-3">
                   <i class="bi bi-plus-lg"></i> Tambah Data Pertama
                 </a>
               </td>
