@@ -29,4 +29,4 @@ ENV/
 Thumbs.db
 
 *.xlsx
-# *.csv
+*.csv

@@ -123,39 +123,48 @@
   <body>
     <div class="invoice-container">
       <!-- Header -->
-      <div class="row mb-4 align-items-start">
-        <!-- Ganti mb-5 jadi mb-4 -->
-        <div class="col-6">
-          <!-- LOGO BMM -->
-          <img src="{% static 'finance/img/logo-bmm.png' %}" alt="BMM Cargo Logo" class="logo-img" />
+      <table style="width: 100%; border-bottom: 2px solid #000; margin-bottom: 5px">
+        <tr>
+          <td style="width: 1px; padding-right: 15px; vertical-align: middle">
+            <img src="{% static 'finance/img/logo-bmm.png' %}" style="max-height: 80px; width: auto" />
+          </td>
+          <td style="vertical-align: middle">
+            <div style="font-size: 16px; margin-bottom: 2px; font-weight: bold; color: #000">BMM CARGO</div>
+            <div style="font-size: 11px; color: #000">
+              Jl. Danau Sentarum Pontianak<br />
+              E-Mail: bmmcargo@yahoo.co.id, ajaroh@yahoo.co.id<br />
+              Telp. 081256655558 / 085650006440
+            </div>
+          </td>
+        </tr>
+      </table>
 
-          <div class="company-address">
-            CV. Borneo Mega Mandiri<br />
-            Jasa Pengiriman Barang & Logistik<br />
-            Pontianak, Kalimantan Barat
-          </div>
-        </div>
-        <div class="col-6">
-          <div class="invoice-title">INVOICE</div>
-          <div class="invoice-meta mt-2">
-            <div><strong>No Invoice:</strong> #INV-{{ inbound.id|stringformat:"05d" }}</div>
-            <div><strong>Tanggal:</strong> {{ inbound.tanggal_masuk_stt|date:"d M Y" }}</div>
-            <div><strong>No Resi:</strong> {{ inbound.no_resi }}</div>
-          </div>
-        </div>
+      <!-- Title & Invoice Meta (Separated for Layout) -->
+      <div style="text-align: center; margin-top: 10px; margin-bottom: 20px">
+        <div style="font-size: 24px; font-weight: bold; text-decoration: underline; color: #000">INVOICE</div>
       </div>
 
-      <!-- Bill To -->
-      <div class="row mb-4">
-        <!-- Ganti mb-5 jadi mb-4 -->
-        <div class="col-6">
-          <small class="text-muted text-uppercase fw-bold mb-1 d-block" style="font-size: 0.75rem">Ditagihkan Kepada:</small>
-          <div class="client-info">
-            <h5>{{ inbound.vendor|default:"Pelanggan Umum" }}</h5>
-            <p class="text-muted mb-0">Tujuan: {{ inbound.tujuan|default:"-" }}</p>
-          </div>
-        </div>
-      </div>
+      <!-- Meta Info Table -->
+      <table style="width: 100%; margin-bottom: 20px; font-size: 12px">
+        <tr>
+          <td style="width: 1%; white-space: nowrap; font-weight: bold; padding-right: 20px">Tgl Invoice</td>
+          <td>: {{ inbound.tanggal_masuk_stt|date:"d F Y" }}</td>
+          <td style="width: 1%; white-space: nowrap; font-weight: bold; padding-left: 40px; padding-right: 20px">Tgl Jatuh Tempo</td>
+          <td>: -</td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Nama Customer</td>
+          <td>: <strong>{{ inbound.vendor|default:"Pelanggan Umum" }}</strong></td>
+          <td style="font-weight: bold; padding-left: 40px">No Invoice</td>
+          <td>: <strong>#INV-{{ inbound.id|stringformat:"05d" }}</strong></td>
+        </tr>
+        <tr>
+          <td style="font-weight: bold">Tujuan</td>
+          <td>: {{ inbound.tujuan|default:"-" }}</td>
+          <td style="font-weight: bold; padding-left: 40px">No Resi</td>
+          <td>: <strong>{{ inbound.no_resi }}</strong></td>
+        </tr>
+      </table>
 
       <!-- Table -->
       <div class="table-responsive mb-3">
@@ -206,16 +215,14 @@
 
       <!-- Signature Section -->
       <div class="row mt-5">
-        <div class="col-7">
-        </div>
+        <div class="col-7"></div>
         <div class="col-5 text-center">
-          <div class="mb-2">Pontianak, {{ inbound.tanggal_masuk_stt|date:"d F Y" }}</div>
-          <div class="fw-bold text-dark mb-4">CV. Borneo Mega Mandiri</div>
+          <div class="mb-2">Pontianak, {% now "d F Y" %}</div>
 
           <div style="height: 60px"></div>
 
-          <div class="text-decoration-underline fw-bold text-dark">ADMIN KEUANGAN</div>
-          <small class="text-muted">Finance Dept.</small>
+          <div class="text-decoration-underline fw-bold text-dark">Syakina Hafifah</div>
+          <small class="text-muted">Accounting</small>
         </div>
       </div>
 

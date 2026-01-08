@@ -76,7 +76,7 @@ def jurnal_list(request):
     else:
         form = JurnalForm()
         
-    return render(request, 'finance/jurnal.html', {'jurnals': jurnals, 'form': form})
+    return render(request, 'finance/akuntansi/jurnal_list.html', {'jurnals': jurnals, 'form': form})
 
 @login_required
 def jurnal_delete(request, pk):
@@ -96,7 +96,7 @@ def jurnal_edit(request, pk):
             return redirect('jurnal_list')
     else:
         form = JurnalForm(instance=jurnal)
-    return render(request, 'finance/jurnal_edit.html', {'form': form, 'jurnal': jurnal})
+    return render(request, 'finance/akuntansi/jurnal_edit.html', {'form': form, 'jurnal': jurnal})
 
 @login_required
 def buku_besar(request):
@@ -156,7 +156,7 @@ def buku_besar(request):
         'selected_akun': selected_akun,
         'transaksi': transaksi
     }
-    return render(request, 'finance/buku_besar.html', context)
+    return render(request, 'finance/akuntansi/buku_besar.html', context)
 
 @login_required
 def laporan_keuangan(request):
@@ -293,7 +293,7 @@ def laporan_keuangan(request):
         'total_ak_masuk': total_ak_masuk, 'total_ak_keluar': total_ak_keluar,
         'net_cash_flow': net_cash_flow
     }
-    return render(request, 'finance/laporan.html', context)
+    return render(request, 'finance/laporan/laporan.html', context)
 
 # --- Akun (Master Data) Views ---
 from .forms import AkunForm
@@ -301,7 +301,7 @@ from .forms import AkunForm
 @login_required
 def akun_list(request):
     akuns = Akun.objects.all().order_by('kode')
-    return render(request, 'finance/akun_list.html', {'akuns': akuns})
+    return render(request, 'finance/akuntansi/akun_list.html', {'akuns': akuns})
 
 @login_required
 def akun_create(request):
@@ -313,7 +313,7 @@ def akun_create(request):
             return redirect('akun_list')
     else:
         form = AkunForm()
-    return render(request, 'finance/akun_form.html', {'form': form, 'title': 'Tambah Akun Baru'})
+    return render(request, 'finance/akuntansi/akun_form.html', {'form': form, 'title': 'Tambah Akun Baru'})
 
 @login_required
 def akun_update(request, pk):
@@ -326,7 +326,7 @@ def akun_update(request, pk):
             return redirect('akun_list')
     else:
         form = AkunForm(instance=akun)
-    return render(request, 'finance/akun_form.html', {'form': form, 'title': f'Edit Akun: {akun.nama}'})
+    return render(request, 'finance/akuntansi/akun_form.html', {'form': form, 'title': f'Edit Akun: {akun.nama}'})
 
 @login_required
 def akun_delete(request, pk):
@@ -364,7 +364,7 @@ def inbound_list(request):
         'total_biaya': total_biaya,
         'q': q,
     }
-    return render(request, 'finance/inbound_list.html', context)
+    return render(request, 'finance/inbound/inbound_list.html', context)
 
 @login_required
 def outbound_list(request):
@@ -393,7 +393,7 @@ def outbound_list(request):
         'total_profit': total_profit,
         'q': q,
     }
-    return render(request, 'finance/outbound_list.html', context)
+    return render(request, 'finance/outbound/outbound_list.html', context)
 
 # --- INBOUND CRUD ---
 from .forms import InboundForm, OutboundForm, ManifestForm
@@ -408,7 +408,7 @@ def inbound_create(request):
             return redirect('inbound_list')
     else:
         form = InboundForm()
-    return render(request, 'finance/inbound_form.html', {'form': form, 'title': 'Tambah Data Inbound'})
+    return render(request, 'finance/inbound/inbound_form.html', {'form': form, 'title': 'Tambah Data Inbound'})
 
 @login_required
 def inbound_edit(request, pk):
@@ -421,7 +421,7 @@ def inbound_edit(request, pk):
             return redirect('inbound_list')
     else:
         form = InboundForm(instance=inbound)
-    return render(request, 'finance/inbound_form.html', {'form': form, 'title': f'Edit Inbound: {inbound.no_resi}'})
+    return render(request, 'finance/inbound/inbound_form.html', {'form': form, 'title': f'Edit Inbound: {inbound.no_resi}'})
 
 @login_required
 def inbound_delete(request, pk):
@@ -443,7 +443,7 @@ def outbound_create(request):
             return redirect('outbound_list')
     else:
         form = OutboundForm()
-    return render(request, 'finance/outbound_form.html', {'form': form, 'title': 'Tambah Data Outbound'})
+    return render(request, 'finance/outbound/outbound_form.html', {'form': form, 'title': 'Tambah Data Outbound'})
 
 @login_required
 def outbound_edit(request, pk):
@@ -456,7 +456,7 @@ def outbound_edit(request, pk):
             return redirect('outbound_list')
     else:
         form = OutboundForm(instance=outbound)
-    return render(request, 'finance/outbound_form.html', {'form': form, 'title': f'Edit Outbound: {outbound.no_resi_bmm}'})
+    return render(request, 'finance/outbound/outbound_form.html', {'form': form, 'title': f'Edit Outbound: {outbound.no_resi_bmm}'})
 
 @login_required
 def outbound_delete(request, pk):
@@ -512,7 +512,7 @@ def manifest_list(request):
         'selected_status': status,
         'q': q,
     }
-    return render(request, 'finance/manifest_list.html', context)
+    return render(request, 'finance/manifest/manifest_list.html', context)
 
 @login_required
 def manifest_create(request):
@@ -524,7 +524,7 @@ def manifest_create(request):
             return redirect('manifest_list')
     else:
         form = ManifestForm()
-    return render(request, 'finance/manifest_form.html', {'form': form, 'title': 'Tambah Manifest'})
+    return render(request, 'finance/manifest/manifest_form.html', {'form': form, 'title': 'Tambah Manifest'})
 
 @login_required
 def manifest_edit(request, pk):
@@ -537,7 +537,7 @@ def manifest_edit(request, pk):
             return redirect('manifest_list')
     else:
         form = ManifestForm(instance=manifest)
-    return render(request, 'finance/manifest_form.html', {'form': form, 'title': f'Edit Manifest: {manifest.no_resi}'})
+    return render(request, 'finance/manifest/manifest_form.html', {'form': form, 'title': f'Edit Manifest: {manifest.no_resi}'})
 
 @login_required
 def manifest_delete(request, pk):
@@ -617,7 +617,7 @@ def kas_harian_list(request):
         'total_kredit': total_kredit,
         'saldo_akhir': saldo_akhir,
     }
-    return render(request, 'finance/kas_harian_list.html', context)
+    return render(request, 'finance/kas/kas_harian_list.html', context)
 
 @login_required
 def kas_harian_create(request):
@@ -634,7 +634,7 @@ def kas_harian_create(request):
             return redirect(f'/kas-harian/?bulan={saved_date.month}&tahun={saved_date.year}')
     else:
         form = KasHarianForm()
-    return render(request, 'finance/kas_harian_form.html', {
+    return render(request, 'finance/kas/kas_harian_form.html', {
         'form': form, 
         'title': 'Tambah Kas Harian',
         'bulan': bulan,
@@ -652,7 +652,7 @@ def kas_harian_edit(request, pk):
             return redirect(f'/kas-harian/?bulan={kas.tanggal.month}&tahun={kas.tanggal.year}')
     else:
         form = KasHarianForm(instance=kas)
-    return render(request, 'finance/kas_harian_form.html', {
+    return render(request, 'finance/kas/kas_harian_form.html', {
         'form': form, 
         'title': f'Edit Kas Harian',
         'bulan': kas.tanggal.month,
@@ -671,16 +671,18 @@ def kas_harian_delete(request, pk):
 @login_required
 def invoice_inbound(request, pk):
     inbound = get_object_or_404(InboundTransaction, pk=pk)
-    return render(request, 'finance/invoice_inbound.html', {'inbound': inbound})
+    return render(request, 'finance/inbound/invoice_inbound.html', {'inbound': inbound})
 
 @login_required
 def buku_piutang(request):
-    data = InboundTransaction.objects.all().order_by('-tanggal_masuk_stt')
-    total = data.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
-    return render(request, 'finance/buku_pembantu_list.html', {
-        'title': 'Buku Pembantu Piutang',
+    # CLIENT REQUEST: Link dari Invoice Tagihan
+    data = InvoiceTagihan.objects.all().order_by('-tanggal', '-no_invoice')
+    total = data.aggregate(Sum('total'))['total__sum'] or 0
+    
+    return render(request, 'finance/akuntansi/buku_pembantu_list.html', {
+        'title': 'Buku Pembantu Piutang (Invoice)',
         'items': data,
-        'type': 'piutang',
+        'type': 'piutang', # type piutang kini pakai model InvoiceTagihan
         'total': total,
         'icon': 'bi-arrow-down-left-circle'
     })
@@ -689,7 +691,7 @@ def buku_piutang(request):
 def buku_hutang(request):
     data = Manifest.objects.all().order_by('-tanggal_kirim')
     total = data.aggregate(Sum('total'))['total__sum'] or 0
-    return render(request, 'finance/buku_pembantu_list.html', {
+    return render(request, 'finance/akuntansi/buku_pembantu_list.html', {
         'title': 'Buku Pembantu Hutang',
         'items': data,
         'type': 'hutang',
@@ -707,36 +709,50 @@ def tagihan_create(request):
         if customer and selected_ids:
             # Generate No Invoice (INV/BM2-PNK/BulanRomawi/Tahun)
             # Format User: 06/INV/BM2-PNK/VIII/2025
-            last_inv = InvoiceTagihan.objects.last()
+            
+            # Cek invoice terakhir berdasarkan ID untuk menentukan urutan selanjutnya
+            last_inv = InvoiceTagihan.objects.order_by('id').last()
             new_id = (last_inv.id if last_inv else 0) + 1
             
             now = timezone.now()
             roman_month = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][now.month]
-            no_inv = f"{new_id:02d}/INV/BM2-PNK/{roman_month}/{now.year}"
+            
+            # Loop retry mechanism in case of collision
+            while True:
+                no_inv = f"{new_id:02d}/INV/BM2-PNK/{roman_month}/{now.year}"
+                if not InvoiceTagihan.objects.filter(no_invoice=no_inv).exists():
+                    break
+                new_id += 1
             
             # Hitung total
             inbounds = InboundTransaction.objects.filter(id__in=selected_ids)
             total = inbounds.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
             
-            inv = InvoiceTagihan.objects.create(
-                no_invoice=no_inv,
-                customer=customer,
-                jatuh_tempo=jatuh_tempo if jatuh_tempo else None,
-                total=total
-            )
-            
-            # Update inbounds
-            inbounds.update(invoice=inv)
-            
-            messages.success(request, f'Tagihan {no_inv} berhasil dibuat!')
-            return redirect('invoice_tagihan_print', pk=inv.pk)
+            try:
+                inv = InvoiceTagihan.objects.create(
+                    no_invoice=no_inv,
+                    customer=customer,
+                    jatuh_tempo=jatuh_tempo if jatuh_tempo else None,
+                    total=total
+                )
+                
+                # Update inbounds
+                inbounds.update(invoice=inv)
+                
+                messages.success(request, f'Tagihan {no_inv} berhasil dibuat!')
+                return redirect('invoice_tagihan_print', pk=inv.pk)
+
+            except Exception as e:
+                messages.error(request, f"Gagal membuat invoice: {e}")
+                # Fallback to form (re-render not shown here for brevity, usually redirect back or pass error)
+                return redirect('tagihan_create')
     
     # Get distinct customers from pending inbounds
     # SQLite tidak support distinct on field, jadi kita manipulasi di python atau values_list
     pending_inbounds = InboundTransaction.objects.filter(invoice__isnull=True).order_by('vendor', '-tanggal_masuk_stt')
     customers = sorted(list(set(i.vendor for i in pending_inbounds if i.vendor)))
     
-    return render(request, 'finance/tagihan_form.html', {
+    return render(request, 'finance/tagihan/tagihan_form.html', {
         'customers': customers,
         'inbounds': pending_inbounds
     })
@@ -744,7 +760,7 @@ def tagihan_create(request):
 @login_required
 def invoice_tagihan_print(request, pk):
     inv = get_object_or_404(InvoiceTagihan, pk=pk)
-    return render(request, 'finance/invoice_tagihan_print.html', {'invoice': inv})
+    return render(request, 'finance/tagihan/invoice_tagihan_print.html', {'invoice': inv})
 
 @login_required
 def invoice_list(request):
@@ -778,7 +794,7 @@ def invoice_list(request):
     
     nama_bulan = dict(bulan_list).get(bulan)
 
-    return render(request, 'finance/invoice_list.html', {
+    return render(request, 'finance/tagihan/invoice_list.html', {
         'invoices': invoices,
         'bulan': bulan,
         'tahun': tahun,
@@ -787,4 +803,17 @@ def invoice_list(request):
         'tahun_list': tahun_list,
         'total_tagihan': total_tagihan,
     })
+
+@login_required
+def tagihan_delete(request, pk):
+    inv = get_object_or_404(InvoiceTagihan, pk=pk)
+    
+    # Detach inbound items (balikin jadi belum ditagih)
+    inv.inbound_items.update(invoice=None)
+    
+    no_inv = inv.no_invoice
+    inv.delete()
+    
+    messages.success(request, f'Invoice {no_inv} berhasil dihapus. Item resi telah dikembalikan ke status belum ditagih.')
+    return redirect('invoice_list')
 

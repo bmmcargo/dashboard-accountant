@@ -329,3 +329,25 @@ class KasHarian(models.Model):
     @property
     def tahun(self):
         return self.tanggal.year
+
+@receiver(post_save, sender=InboundTransaction)
+def update_invoice_total_on_save(sender, instance, **kwargs):
+    """
+    Update total tagihan invoice jika inbound diedit atau ditambahkan ke invoice.
+    """
+    if instance.invoice:
+        from django.db.models import Sum
+        total = instance.invoice.inbound_items.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
+        instance.invoice.total = total
+        instance.invoice.save()
+
+@receiver(post_delete, sender=InboundTransaction)
+def update_invoice_total_on_delete(sender, instance, **kwargs):
+    """
+    Update total tagihan invoice jika inbound dihapus.
+    """
+    if instance.invoice:
+        from django.db.models import Sum
+        total = instance.invoice.inbound_items.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
+        instance.invoice.total = total
+        instance.invoice.save()

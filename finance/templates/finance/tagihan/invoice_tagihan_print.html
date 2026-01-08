@@ -153,16 +153,22 @@
       <!-- Meta Info -->
       <table class="meta-table">
         <tr>
-          <td width="15%">Tgl Invoice</td>
-          <td width="35%">: {{ invoice.tanggal|date:"d F Y" }}</td>
-          <td width="20%" class="col-right">Tgl Jatuh Tempo</td>
-          <td width="30%">: {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}</td>
+          <td style="width: 1%; white-space: nowrap; padding-right: 20px">Tgl Invoice</td>
+          <td>: {{ invoice.tanggal|date:"d F Y" }}</td>
+          <td style="width: 1%; white-space: nowrap; padding-left: 40px; padding-right: 20px">Tgl Jatuh Tempo</td>
+          <td>: {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}</td>
         </tr>
         <tr>
-          <td>Nama Customer</td>
-          <td>: <strong>{{ invoice.customer }}</strong></td>
-          <td class="col-right">No Invoice</td>
-          <td>: <strong>{{ invoice.no_invoice }}</strong></td>
+          <td style="white-space: nowrap">Nama Customer</td>
+          <td style="font-weight: bold">: {{ invoice.customer }}</td>
+          <td style="white-space: nowrap; padding-left: 40px">No Invoice</td>
+          <td style="font-weight: bold">: {{ invoice.no_invoice }}</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td></td>
+          <td class="col-right" style="white-space: nowrap; padding-left: 40px">Halaman</td>
+          <td>: 1</td>
         </tr>
       </table>
 

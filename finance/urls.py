@@ -45,6 +45,7 @@ urlpatterns = [
     path('tagihan/', views.invoice_list, name='invoice_list'),
     path('tagihan/baru/', views.tagihan_create, name='tagihan_create'),
     path('tagihan/print/<int:pk>/', views.invoice_tagihan_print, name='invoice_tagihan_print'),
+    path('tagihan/delete/<int:pk>/', views.tagihan_delete, name='tagihan_delete'),
 
     # Buku Pembantu
     path('buku-piutang/', views.buku_piutang, name='buku_piutang'),
