@@ -1,0 +1,252 @@
+{% load static %} {% load humanize %}
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Invoice {{ invoice.no_invoice }}</title>
+    <style>
+      @page {
+        size: A4;
+        margin: 10mm;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: #000;
+      }
+      .container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+      }
+
+      /* Header */
+      .header-table {
+        width: 100%;
+        border-bottom: 2px solid #000;
+        margin-bottom: 5px;
+      }
+      .header-table td {
+        vertical-align: top;
+        padding: 5px;
+      }
+      .logo {
+        max-height: 80px;
+      }
+      .company-info {
+        font-size: 14px;
+        font-weight: bold;
+      }
+      .company-detail {
+        font-size: 11px;
+        font-weight: normal;
+      }
+
+      .invoice-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        color: #000; /* Warna biru tua di gambar: #1a428a, tapi user minta mirip */
+        text-transform: uppercase;
+        margin: 10px 0;
+        text-shadow: 1px 1px 0 #ccc; /* Style mirip wordart */
+      }
+
+      /* Meta Info */
+      .meta-table {
+        width: 100%;
+        margin-bottom: 10px;
+        border-collapse: collapse;
+      }
+      .meta-table td {
+        padding: 2px 5px;
+      }
+      .meta-label {
+        font-weight: bold;
+        width: 100px;
+      }
+
+      /* Main Table */
+      .main-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+        font-size: 11px;
+      }
+      .main-table th {
+        background-color: #5b9bd5; /* Warna biru header excel */
+        color: #fff;
+        border: 1px solid #000;
+        padding: 5px;
+        text-align: center;
+      }
+      .main-table td {
+        border: 1px solid #000;
+        padding: 4px;
+        vertical-align: middle;
+      }
+      .col-center {
+        text-align: center;
+      }
+      .col-right {
+        text-align: right;
+      }
+
+      /* Footer */
+      .footer-total {
+        border: 2px solid #000;
+        font-weight: bold;
+        padding: 5px;
+        text-align: right;
+        background: #fff;
+      }
+
+      .bank-info {
+        margin-top: 20px;
+        font-size: 12px;
+      }
+      .bank-table {
+        width: 60%;
+        float: left;
+      }
+      .bank-table td {
+        padding: 2px;
+      }
+
+      .signature-box {
+        width: 35%;
+        float: right;
+        text-align: center;
+        margin-top: 20px;
+      }
+      .sign-space {
+        height: 80px;
+      }
+
+      .clear {
+        clear: both;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <table class="header-table">
+        <tr>
+          <td style="width: 1px; padding-right: 15px; vertical-align: middle">
+            <img src="{% static 'finance/img/logo-bmm.png' %}" class="logo" style="max-height: 80px; width: auto" />
+          </td>
+          <td style="vertical-align: middle">
+            <div class="company-info" style="font-size: 16px; margin-bottom: 2px">BMM CARGO</div>
+            <div class="company-detail">
+              Jl. Danau Sentarum Pontianak<br />
+              E-Mail: bmmcargo@yahoo.co.id, ajaroh@yahoo.co.id<br />
+              Telp. 081256655558 / 085650006440
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Title -->
+      <div class="invoice-title">INVOICE</div>
+
+      <!-- Meta Info -->
+      <table class="meta-table">
+        <tr>
+          <td width="15%">Tgl Invoice</td>
+          <td width="35%">: {{ invoice.tanggal|date:"d F Y" }}</td>
+          <td width="20%" class="col-right">Tgl Jatuh Tempo</td>
+          <td width="30%">: {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}</td>
+        </tr>
+        <tr>
+          <td>Nama Customer</td>
+          <td>: <strong>{{ invoice.customer }}</strong></td>
+          <td class="col-right">No Invoice</td>
+          <td>: <strong>{{ invoice.no_invoice }}</strong></td>
+        </tr>
+      </table>
+
+      <!-- Main Table -->
+      <table class="main-table">
+        <thead>
+          <tr>
+            <th width="5%">No</th>
+            <th width="20%">AWB</th>
+            <th width="15%">Asal</th>
+            <th width="15%">Tujuan</th>
+            <th width="5%">Koli</th>
+            <th width="8%">Kilo</th>
+            <th width="12%">Handling</th>
+            <th width="20%">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.inbound_items.all %}
+          <tr>
+            <td class="col-center">{{ forloop.counter }}</td>
+            <td class="col-center">{{ item.no_resi }}</td>
+            <td class="col-center">{{ item.vendor|truncatechars:15 }}</td>
+            <!-- Asumsi Asal = Vendor -->
+            <td class="col-center">{{ item.tujuan }}</td>
+            <td class="col-center">{{ item.koli }}</td>
+            <td class="col-center">{{ item.kilo }}</td>
+            <td class="col-right">-</td>
+            <!-- Handling Kosong -->
+            <td class="col-right">{{ item.total_biaya|floatformat:0|intcomma }}</td>
+          </tr>
+          {% endfor %}
+          <!-- Empty Rows Filler (Optional, to match Excel look) -->
+          {% with remaining=22|add:"-1" %}
+          <!-- Just simulation, hard to do accurate math in template loop range -->
+          <!-- Skip filler for now to avoid empty pages -->
+          {% endwith %}
+
+          <!-- Total Row at Bottom of Table Body ? No, separate box in image -->
+          <tr>
+            <td colspan="6" style="border: none"></td>
+            <td style="border: 2px solid #000; font-weight: bold; text-align: center">TOTAL</td>
+            <td style="border: 2px solid #000; font-weight: bold; text-align: right">{{ invoice.total|floatformat:0|intcomma }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Terbilang Box (Optional matches visual black bar?) -->
+      <div style="border: 2px solid #000; height: 25px; margin-bottom: 20px"></div>
+
+      <!-- Footer Info -->
+      <div class="bank-info">
+        <div class="bank-table">
+          <strong>Mohon dikirim ke Rekening:</strong>
+          <table>
+            <tr>
+              <td>Nomor Rekening</td>
+              <td>: 6465539899</td>
+            </tr>
+            <tr>
+              <td>Bank</td>
+              <td>: BCA Cabang Pontianak</td>
+            </tr>
+            <tr>
+              <td>Atas Nama</td>
+              <td>: Borneo Mega Mandiri CV</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="signature-box">
+          <div>Pontianak, {{ invoice.tanggal|date:"d F Y" }}</div>
+          <div class="sign-space"></div>
+          <div style="font-weight: bold; text-decoration: underline">Syakina Hafifah</div>
+          <div>Accounting</div>
+        </div>
+        <div class="clear"></div>
+      </div>
+    </div>
+
+    <script>
+      window.onload = function () {
+        window.print();
+      };
+    </script>
+  </body>
+</html>

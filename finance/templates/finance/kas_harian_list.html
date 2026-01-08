@@ -1,0 +1,138 @@
+{% extends 'finance/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="fw-bold mb-1">Kas Harian</h2>
+          <p class="text-muted mb-0">Catatan kas harian per bulan (standalone)</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <!-- Dropdown Tahun -->
+          <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href='?bulan={{ bulan }}&tahun=' + this.value">
+            {% for t in tahun_list %}
+            <option value="{{ t }}" {% if t == tahun %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+          </select>
+          <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Tambah Data
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigasi Bulan (Seperti Tab Sheet Excel) -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-2">
+      <div class="d-flex flex-wrap gap-1" style="overflow-x: auto;">
+        {% for b_num, b_name in bulan_list %}
+        <a href="?bulan={{ b_num }}&tahun={{ tahun }}" 
+           class="btn btn-sm {% if b_num == bulan %}btn-primary{% else %}btn-outline-secondary{% endif %}"
+           style="min-width: 80px;">
+          {{ b_name|slice:":3" }}
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Bulan Aktif -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header py-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">
+          <i class="bi bi-calendar3"></i> Kas Harian - {{ nama_bulan }} {{ tahun }}
+        </h5>
+        <div class="d-flex gap-3">
+          <span class="badge bg-success fs-6">Masuk: Rp {{ total_debit|intcomma }}</span>
+          <span class="badge bg-danger fs-6">Keluar: Rp {{ total_kredit|intcomma }}</span>
+          <span class="badge bg-{% if saldo_akhir >= 0 %}info{% else %}warning{% endif %} fs-6">Saldo: Rp {{ saldo_akhir|intcomma }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 50px;">No</th>
+              <th style="width: 120px;">Tanggal</th>
+              <th>Keterangan</th>
+              <th class="text-end" style="width: 150px;">Debit (Masuk)</th>
+              <th class="text-end" style="width: 150px;">Kredit (Keluar)</th>
+              <th class="text-end" style="width: 150px;">Saldo</th>
+              <th class="text-center" style="width: 100px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for kas in kas_list %}
+            <tr>
+              <td class="text-center">{{ forloop.counter }}</td>
+              <td>{{ kas.tanggal|date:"d M Y" }}</td>
+              <td>{{ kas.keterangan }}</td>
+              <td class="text-end {% if kas.debit > 0 %}text-success fw-bold{% endif %}">
+                {% if kas.debit > 0 %}Rp {{ kas.debit|intcomma }}{% else %}-{% endif %}
+              </td>
+              <td class="text-end {% if kas.kredit > 0 %}text-danger fw-bold{% endif %}">
+                {% if kas.kredit > 0 %}Rp {{ kas.kredit|intcomma }}{% else %}-{% endif %}
+              </td>
+              <td class="text-end fw-bold {% if kas.saldo >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                Rp {{ kas.saldo|intcomma }}
+              </td>
+              <td class="text-center">
+                <a href="{% url 'kas_harian_edit' kas.id %}" class="btn btn-sm btn-outline-primary" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'kas_harian_delete' kas.id %}" class="btn btn-sm btn-outline-danger" title="Hapus"
+                   onclick="return confirm('Yakin hapus data ini?')">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                Belum ada data kas untuk bulan {{ nama_bulan }} {{ tahun }}
+                <br>
+                <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-primary btn-sm mt-3">
+                  <i class="bi bi-plus-lg"></i> Tambah Data Pertama
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          {% if kas_list %}
+          <tfoot class="table-secondary">
+            <tr class="fw-bold">
+              <td colspan="3" class="text-end">TOTAL</td>
+              <td class="text-end text-success">Rp {{ total_debit|intcomma }}</td>
+              <td class="text-end text-danger">Rp {{ total_kredit|intcomma }}</td>
+              <td class="text-end {% if saldo_akhir >= 0 %}text-primary{% else %}text-danger{% endif %}">
+                Rp {{ saldo_akhir|intcomma }}
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        <strong>Catatan:</strong> Kas Harian ini bersifat standalone dan tidak terhubung dengan Jurnal Umum. 
+        Gunakan navigasi bulan di atas untuk melihat data per bulan.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

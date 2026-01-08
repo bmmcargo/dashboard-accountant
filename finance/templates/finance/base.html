@@ -225,14 +225,29 @@
 
       <nav class="sidebar-nav">
         <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'dashboard' %}"> <i class="bi bi-speedometer2"></i> Dashboard </a>
+        <a class="nav-link {% if 'kas-harian' in request.path %}active{% endif %}" href="{% url 'kas_harian_list' %}"> <i class="bi bi-cash-coin"></i> Kas Harian </a>
         <a class="nav-link {% if 'jurnal' in request.path %}active{% endif %}" href="{% url 'jurnal_list' %}"> <i class="bi bi-journal-text"></i> Jurnal Umum </a>
         <a class="nav-link {% if 'buku-besar' in request.path %}active{% endif %}" href="{% url 'buku_besar' %}"> <i class="bi bi-book"></i> Buku Besar </a>
         <a class="nav-link {% if 'laporan' in request.path %}active{% endif %}" href="{% url 'laporan_keuangan' %}"> <i class="bi bi-bar-chart-line"></i> Laporan Keuangan </a>
+
+        <!-- Buku Pembantu Dropdown -->
+        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBukuPembantu" aria-expanded="false" aria-controls="collapseBukuPembantu">
+          <i class="bi bi-book"></i>
+          <span>Buku Pembantu</span>
+        </a>
+        <div id="collapseBukuPembantu" class="collapse" aria-labelledby="headingBukuPembantu" data-bs-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            <a class="collapse-item nav-link" href="{% url 'buku_piutang' %}" style="padding-left: 2.5rem; font-size: 0.85rem"> <i class="bi bi-arrow-down-left-circle"></i> Buku Piutang </a>
+            <a class="collapse-item nav-link" href="{% url 'buku_hutang' %}" style="padding-left: 2.5rem; font-size: 0.85rem"> <i class="bi bi-arrow-up-right-circle"></i> Buku Hutang </a>
+          </div>
+        </div>
 
         <div class="nav-section-title">Logistik</div>
 
         <a class="nav-link {% if 'inbound' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> <i class="bi bi-box-arrow-in-down"></i> Barang Masuk </a>
         <a class="nav-link {% if 'outbound' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> <i class="bi bi-box-arrow-up"></i> Barang Keluar </a>
+
+        <a class="nav-link {% if 'tagihan' in request.path %}active{% endif %}" href="{% url 'invoice_list' %}"> <i class="bi bi-receipt"></i> Daftar Tagihan </a>
         <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> <i class="bi bi-file-earmark-text"></i> Manifest (Hutang) </a>
 
         <div class="nav-section-title">Master Data</div>

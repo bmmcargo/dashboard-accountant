@@ -1,5 +1,5 @@
 from django import forms
-from .models import Jurnal, Akun, InboundTransaction, OutboundTransaction, Penerimaan, Manifest
+from .models import Jurnal, Akun, InboundTransaction, OutboundTransaction, Penerimaan, Manifest, KasHarian
 
 class JurnalForm(forms.ModelForm):
     class Meta:
@@ -136,4 +136,23 @@ class ManifestForm(forms.ModelForm):
             'tarif': 'Tarif (Rp)',
             'total': 'Total Hutang (Rp)',
             'status_bayar': 'Sudah Dibayar',
+        }
+
+class KasHarianForm(forms.ModelForm):
+    class Meta:
+        model = KasHarian
+        fields = ['tanggal', 'keterangan', 'debit', 'kredit', 'catatan']
+        widgets = {
+            'tanggal': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'keterangan': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Keterangan transaksi'}),
+            'debit': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}),
+            'kredit': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': '0'}),
+            'catatan': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Catatan tambahan (opsional)'}),
+        }
+        labels = {
+            'tanggal': 'Tanggal',
+            'keterangan': 'Keterangan',
+            'debit': 'Debit / Kas Masuk (Rp)',
+            'kredit': 'Kredit / Kas Keluar (Rp)',
+            'catatan': 'Catatan',
         }

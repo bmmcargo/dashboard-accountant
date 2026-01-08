@@ -78,7 +78,7 @@
 
   <!-- Tabel Data -->
   <div class="card shadow mb-4">
-    <div class="card-header py-3 bg-primary text-white">
+    <div class="card-header py-4">
       <h6 class="m-0 fw-bold"><i class="bi bi-table me-2"></i>Daftar Barang Masuk (Inbound 2026)</h6>
     </div>
     <div class="card-body p-0">
@@ -115,10 +115,13 @@
               <td class="text-end">{{ item.tarif_per_kg|default:"-" }}</td>
               <td class="text-end fw-bold text-success">{{ item.total_biaya|intcomma }}</td>
               <td class="text-center text-nowrap">
+                <a href="{% url 'invoice_inbound' item.pk %}" class="btn btn-sm btn-info py-0 px-1 text-white" title="Invoice" target="_blank">
+                  <i class="bi bi-printer"></i>
+                </a>
                 <a href="{% url 'inbound_edit' item.pk %}" class="btn btn-sm btn-warning py-0 px-1" title="Edit">
                   <i class="bi bi-pencil"></i>
                 </a>
-                <button type="button" class="btn btn-sm btn-danger py-0 px-1" title="Hapus" onclick="confirmDelete('{{ item.no_resi }}', '{% url 'inbound_delete' item.pk %}')">
+                <button type="button" class="btn btn-sm btn-danger py-0 px-1" title="Hapus" data-name="{{ item.no_resi }}" data-url="{% url 'inbound_delete' item.pk %}" onclick="confirmDelete(this.dataset.name, this.dataset.url)">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>

@@ -38,14 +38,15 @@ class Command(BaseCommand):
     def import_inbound(self, filepath):
         self.stdout.write(f"\nMulai Import INBOUND dari: {filepath}...")
         
-        # Pastikan akun pendapatan inbound ada
+        # Pastikan akun pendapatan ada
         akun_pendapatan, _ = Akun.objects.get_or_create(
             kode='402', 
-            defaults={'nama': 'Pendapatan Jasa Inbound', 'kategori': 'REVENUE'}
+            defaults={'nama': 'Pendapatan Jasa', 'kategori': 'REVENUE'}
         )
-        akun_kas, _ = Akun.objects.get_or_create(
-            kode='101',
-            defaults={'nama': 'Kas', 'kategori': 'ASSET'}
+        # Jurnal Inbound: Debit Piutang Usaha, Kredit Pendapatan Jasa
+        akun_piutang, _ = Akun.objects.get_or_create(
+            kode='112',
+            defaults={'nama': 'Piutang Usaha', 'kategori': 'ASSET'}
         )
         
         with open(filepath, mode='r', encoding='utf-8-sig') as csv_file:
@@ -93,7 +94,7 @@ class Command(BaseCommand):
                             Jurnal.objects.create(
                                 tanggal=tgl_masuk,
                                 uraian=uraian[:255],
-                                akun_debit=akun_kas,
+                                akun_debit=akun_piutang,
                                 akun_kredit=akun_pendapatan,
                                 nominal=total_val
                             )

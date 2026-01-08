@@ -41,14 +41,15 @@ class Command(BaseCommand):
     def import_inbound_excel(self, filepath):
         self.stdout.write(f"\n📥 Import INBOUND dari Excel: {filepath}")
         
-        # Pastikan akun pendapatan inbound ada
+        # Pastikan akun pendapatan ada
         akun_pendapatan, _ = Akun.objects.get_or_create(
             kode='402', 
-            defaults={'nama': 'Pendapatan Jasa Inbound', 'kategori': 'REVENUE'}
+            defaults={'nama': 'Pendapatan Jasa', 'kategori': 'REVENUE'}
         )
-        akun_kas, _ = Akun.objects.get_or_create(
-            kode='101',
-            defaults={'nama': 'Kas', 'kategori': 'ASSET'}
+        # Jurnal Inbound: Debit Piutang Usaha, Kredit Pendapatan Jasa
+        akun_piutang, _ = Akun.objects.get_or_create(
+            kode='112',
+            defaults={'nama': 'Piutang Usaha', 'kategori': 'ASSET'}
         )
         
         wb = load_workbook(filepath, data_only=True)
@@ -103,7 +104,7 @@ class Command(BaseCommand):
                         Jurnal.objects.create(
                             tanggal=tgl_masuk,
                             uraian=uraian[:255],
-                            akun_debit=akun_kas,
+                            akun_debit=akun_piutang,
                             akun_kredit=akun_pendapatan,
                             nominal=total
                         )

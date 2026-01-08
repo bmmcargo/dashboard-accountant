@@ -20,6 +20,7 @@ urlpatterns = [
     path('inbound/tambah/', views.inbound_create, name='inbound_create'),
     path('inbound/edit/<int:pk>/', views.inbound_edit, name='inbound_edit'),
     path('inbound/delete/<int:pk>/', views.inbound_delete, name='inbound_delete'),
+    path('inbound/invoice/<int:pk>/', views.invoice_inbound, name='invoice_inbound'),
 
     # Outbound
     path('outbound/', views.outbound_list, name='outbound_list'),
@@ -32,4 +33,20 @@ urlpatterns = [
     path('manifest/tambah/', views.manifest_create, name='manifest_create'),
     path('manifest/edit/<int:pk>/', views.manifest_edit, name='manifest_edit'),
     path('manifest/delete/<int:pk>/', views.manifest_delete, name='manifest_delete'),
+
+    # Kas Harian (Standalone per Bulan)
+    path('kas-harian/', views.kas_harian_list, name='kas_harian_list'),
+    path('kas-harian/tambah/', views.kas_harian_create, name='kas_harian_create'),
+    path('kas-harian/edit/<int:pk>/', views.kas_harian_edit, name='kas_harian_edit'),
+    path('kas-harian/delete/<int:pk>/', views.kas_harian_delete, name='kas_harian_delete'),
+    
+    
+    # Tagihan Kolektif
+    path('tagihan/', views.invoice_list, name='invoice_list'),
+    path('tagihan/baru/', views.tagihan_create, name='tagihan_create'),
+    path('tagihan/print/<int:pk>/', views.invoice_tagihan_print, name='invoice_tagihan_print'),
+
+    # Buku Pembantu
+    path('buku-piutang/', views.buku_piutang, name='buku_piutang'),
+    path('buku-hutang/', views.buku_hutang, name='buku_hutang'),
 ]

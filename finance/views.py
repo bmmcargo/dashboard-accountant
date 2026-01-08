@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from decimal import Decimal
-from .models import Akun, Jurnal, InboundTransaction, OutboundTransaction
+from .models import Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest, KasHarian, InvoiceTagihan
 from .forms import JurnalForm
 
 def get_saldo_akun(akun, start_date=None, end_date=None):
@@ -546,3 +546,245 @@ def manifest_delete(request, pk):
     manifest.delete()
     messages.success(request, f'Data Manifest "{no_resi}" berhasil dihapus.')
     return redirect('manifest_list')
+
+# --- KAS HARIAN VIEWS (Standalone per Bulan) ---
+from .models import KasHarian
+from .forms import KasHarianForm
+from datetime import date
+import calendar
+
+NAMA_BULAN = {
+    1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April',
+    5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus',
+    9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+}
+
+@login_required
+def kas_harian_list(request):
+    """View utama Kas Harian dengan navigasi bulan horizontal"""
+    today = date.today()
+    
+    # Ambil bulan dan tahun dari parameter, default ke bulan ini
+    bulan = int(request.GET.get('bulan', today.month))
+    tahun = int(request.GET.get('tahun', today.year))
+    
+    # Validasi
+    if bulan < 1 or bulan > 12:
+        bulan = today.month
+    if tahun < 2020 or tahun > 2100:
+        tahun = today.year
+    
+    # Filter data per bulan
+    kas_data = KasHarian.objects.filter(
+        tanggal__year=tahun,
+        tanggal__month=bulan
+    ).order_by('tanggal', 'created_at')
+    
+    # Hitung total dan saldo akhir
+    total_debit = kas_data.aggregate(Sum('debit'))['debit__sum'] or 0
+    total_kredit = kas_data.aggregate(Sum('kredit'))['kredit__sum'] or 0
+    saldo_akhir = total_debit - total_kredit
+    
+    # Hitung running saldo per baris
+    running_saldo = 0
+    kas_list = []
+    for kas in kas_data:
+        running_saldo += kas.debit - kas.kredit
+        kas_list.append({
+            'id': kas.id,
+            'tanggal': kas.tanggal,
+            'keterangan': kas.keterangan,
+            'debit': kas.debit,
+            'kredit': kas.kredit,
+            'saldo': running_saldo,
+        })
+    
+    # Daftar bulan untuk navigasi tab
+    bulan_list = [(i, NAMA_BULAN[i]) for i in range(1, 13)]
+    
+    # Daftar tahun yang tersedia (dari data atau default)
+    tahun_tersedia = KasHarian.objects.dates('tanggal', 'year')
+    tahun_list = sorted(set([d.year for d in tahun_tersedia] + [today.year]))
+    
+    context = {
+        'kas_list': kas_list,
+        'bulan': bulan,
+        'tahun': tahun,
+        'nama_bulan': NAMA_BULAN[bulan],
+        'bulan_list': bulan_list,
+        'tahun_list': tahun_list,
+        'total_debit': total_debit,
+        'total_kredit': total_kredit,
+        'saldo_akhir': saldo_akhir,
+    }
+    return render(request, 'finance/kas_harian_list.html', context)
+
+@login_required
+def kas_harian_create(request):
+    bulan = request.GET.get('bulan', date.today().month)
+    tahun = request.GET.get('tahun', date.today().year)
+    
+    if request.method == 'POST':
+        form = KasHarianForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Kas Harian berhasil ditambahkan!')
+            # Redirect ke bulan yang sesuai dengan data yang baru ditambahkan
+            saved_date = form.cleaned_data['tanggal']
+            return redirect(f'/kas-harian/?bulan={saved_date.month}&tahun={saved_date.year}')
+    else:
+        form = KasHarianForm()
+    return render(request, 'finance/kas_harian_form.html', {
+        'form': form, 
+        'title': 'Tambah Kas Harian',
+        'bulan': bulan,
+        'tahun': tahun,
+    })
+
+@login_required
+def kas_harian_edit(request, pk):
+    kas = get_object_or_404(KasHarian, pk=pk)
+    if request.method == 'POST':
+        form = KasHarianForm(request.POST, instance=kas)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Kas Harian berhasil diperbarui!')
+            return redirect(f'/kas-harian/?bulan={kas.tanggal.month}&tahun={kas.tanggal.year}')
+    else:
+        form = KasHarianForm(instance=kas)
+    return render(request, 'finance/kas_harian_form.html', {
+        'form': form, 
+        'title': f'Edit Kas Harian',
+        'bulan': kas.tanggal.month,
+        'tahun': kas.tanggal.year,
+    })
+
+@login_required
+def kas_harian_delete(request, pk):
+    kas = get_object_or_404(KasHarian, pk=pk)
+    bulan = kas.tanggal.month
+    tahun = kas.tanggal.year
+    kas.delete()
+    messages.success(request, 'Data Kas Harian berhasil dihapus.')
+    return redirect(f'/kas-harian/?bulan={bulan}&tahun={tahun}')
+
+@login_required
+def invoice_inbound(request, pk):
+    inbound = get_object_or_404(InboundTransaction, pk=pk)
+    return render(request, 'finance/invoice_inbound.html', {'inbound': inbound})
+
+@login_required
+def buku_piutang(request):
+    data = InboundTransaction.objects.all().order_by('-tanggal_masuk_stt')
+    total = data.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
+    return render(request, 'finance/buku_pembantu_list.html', {
+        'title': 'Buku Pembantu Piutang',
+        'items': data,
+        'type': 'piutang',
+        'total': total,
+        'icon': 'bi-arrow-down-left-circle'
+    })
+
+@login_required
+def buku_hutang(request):
+    data = Manifest.objects.all().order_by('-tanggal_kirim')
+    total = data.aggregate(Sum('total'))['total__sum'] or 0
+    return render(request, 'finance/buku_pembantu_list.html', {
+        'title': 'Buku Pembantu Hutang',
+        'items': data,
+        'type': 'hutang',
+        'total': total,
+        'icon': 'bi-arrow-up-right-circle'
+    })
+
+@login_required
+def tagihan_create(request):
+    if request.method == 'POST':
+        customer = request.POST.get('customer')
+        jatuh_tempo = request.POST.get('jatuh_tempo')
+        selected_ids = request.POST.getlist('inbound_ids')
+        
+        if customer and selected_ids:
+            # Generate No Invoice (INV/BM2-PNK/BulanRomawi/Tahun)
+            # Format User: 06/INV/BM2-PNK/VIII/2025
+            last_inv = InvoiceTagihan.objects.last()
+            new_id = (last_inv.id if last_inv else 0) + 1
+            
+            now = timezone.now()
+            roman_month = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"][now.month]
+            no_inv = f"{new_id:02d}/INV/BM2-PNK/{roman_month}/{now.year}"
+            
+            # Hitung total
+            inbounds = InboundTransaction.objects.filter(id__in=selected_ids)
+            total = inbounds.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
+            
+            inv = InvoiceTagihan.objects.create(
+                no_invoice=no_inv,
+                customer=customer,
+                jatuh_tempo=jatuh_tempo if jatuh_tempo else None,
+                total=total
+            )
+            
+            # Update inbounds
+            inbounds.update(invoice=inv)
+            
+            messages.success(request, f'Tagihan {no_inv} berhasil dibuat!')
+            return redirect('invoice_tagihan_print', pk=inv.pk)
+    
+    # Get distinct customers from pending inbounds
+    # SQLite tidak support distinct on field, jadi kita manipulasi di python atau values_list
+    pending_inbounds = InboundTransaction.objects.filter(invoice__isnull=True).order_by('vendor', '-tanggal_masuk_stt')
+    customers = sorted(list(set(i.vendor for i in pending_inbounds if i.vendor)))
+    
+    return render(request, 'finance/tagihan_form.html', {
+        'customers': customers,
+        'inbounds': pending_inbounds
+    })
+
+@login_required
+def invoice_tagihan_print(request, pk):
+    inv = get_object_or_404(InvoiceTagihan, pk=pk)
+    return render(request, 'finance/invoice_tagihan_print.html', {'invoice': inv})
+
+@login_required
+def invoice_list(request):
+    today = timezone.now()
+    try:
+        bulan = int(request.GET.get('bulan', today.month))
+        tahun = int(request.GET.get('tahun', today.year))
+    except ValueError:
+        bulan = today.month
+        tahun = today.year
+
+    # Filter Invoice
+    invoices = InvoiceTagihan.objects.filter(
+        tanggal__year=tahun,
+        tanggal__month=bulan
+    ).order_by('-tanggal', '-no_invoice')
+
+    # Total This Month
+    total_tagihan = invoices.aggregate(Sum('total'))['total__sum'] or 0
+
+    # Lists for dropdown/tabs
+    bulan_list = [
+        (1, 'Januari'), (2, 'Februari'), (3, 'Maret'), (4, 'April'),
+        (5, 'Mei'), (6, 'Juni'), (7, 'Juli'), (8, 'Agustus'),
+        (9, 'September'), (10, 'Oktober'), (11, 'November'), (12, 'Desember')
+    ]
+    
+    # Tahun list: 2 tahun ke belakang sampai 1 tahun ke depan
+    current_year = today.year
+    tahun_list = range(current_year - 2, current_year + 2)
+    
+    nama_bulan = dict(bulan_list).get(bulan)
+
+    return render(request, 'finance/invoice_list.html', {
+        'invoices': invoices,
+        'bulan': bulan,
+        'tahun': tahun,
+        'nama_bulan': nama_bulan,
+        'bulan_list': bulan_list,
+        'tahun_list': tahun_list,
+        'total_tagihan': total_tagihan,
+    })
+

@@ -97,7 +97,7 @@ class Command(BaseCommand):
                     uraian_lower = uraian.lower()
 
                     # Cari akun debit berdasarkan kata kunci
-                    kode_debit = '514'  # Default ke Beban Lain-lain
+                    kode_debit = '514'  # Default ke Biaya Lain-lain
                     for keyword, kode in keyword_map.items():
                         if keyword in uraian_lower:
                             kode_debit = kode
