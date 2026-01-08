@@ -351,3 +351,77 @@ def update_invoice_total_on_delete(sender, instance, **kwargs):
         total = instance.invoice.inbound_items.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
         instance.invoice.total = total
         instance.invoice.save()
+
+# ============================================
+# MODEL GAJI & KARYAWAN
+# ============================================
+class Karyawan(models.Model):
+    nama = models.CharField(max_length=100)
+    posisi = models.CharField(max_length=100, null=True, blank=True)
+    gaji_pokok = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    no_hp = models.CharField(max_length=20, null=True, blank=True)
+    tanggal_masuk = models.DateField(null=True, blank=True)
+    
+    status = models.BooleanField(default=True, verbose_name="Aktif")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nama
+
+class Cashbon(models.Model):
+    karyawan = models.ForeignKey(Karyawan, on_delete=models.CASCADE, related_name='cashbons')
+    tanggal = models.DateField(default=timezone.now)
+    nominal = models.DecimalField(max_digits=15, decimal_places=0)
+    keterangan = models.CharField(max_length=255, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-tanggal']
+        verbose_name = "Cashbon"
+        verbose_name_plural = "Daftar Cashbon"
+
+    def __str__(self):
+        return f"{self.karyawan.nama} - Rp {self.nominal:,}"
+
+class Penggajian(models.Model):
+    """
+    Rekap Gaji Bulanan per Karyawan.
+    Menggabungkan Gaji Pokok, Lembur, dan Potongan-potongan.
+    """
+    karyawan = models.ForeignKey(Karyawan, on_delete=models.CASCADE, related_name='penggajian')
+    bulan = models.IntegerField() # 1-12
+    tahun = models.IntegerField()
+    tanggal_gaji = models.DateField(default=timezone.now)
+    
+    # Komponen
+    gaji_pokok = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    lembur = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    bonus = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    
+    # Potongan
+    potongan_cashbon = models.DecimalField(max_digits=15, decimal_places=0, default=0, help_text="Total Cashbon periode ini")
+    potongan_absen = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    potongan_bpjs = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    potongan_lain = models.DecimalField(max_digits=15, decimal_places=0, default=0, help_text="Hutang Cafe/Kantin dll")
+    
+    total_diterima = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    
+    catatan = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=20, default='DRAFT', choices=[('DRAFT', 'Draft'), ('PAID', 'Sudah Dibayar')])
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['karyawan', 'bulan', 'tahun']
+        ordering = ['-tahun', '-bulan', 'karyawan']
+        verbose_name = "Slip Gaji"
+        verbose_name_plural = "Data Penggajian"
+
+    def __str__(self):
+        return f"Gaji {self.karyawan.nama} - {self.bulan}/{self.tahun}"
+    
+    def save(self, *args, **kwargs):
+        # Auto calculate total manual entries (Cashbon otomatis dihitung di Views/Logic terpisah biasanya, tapi kita simpan nilai final di sini)
+        self.total_diterima = (self.gaji_pokok + self.lembur + self.bonus) - (self.potongan_cashbon + self.potongan_absen + self.potongan_bpjs + self.potongan_lain)
+        super().save(*args, **kwargs)

@@ -250,6 +250,12 @@
         <a class="nav-link {% if 'tagihan' in request.path %}active{% endif %}" href="{% url 'invoice_list' %}"> <i class="bi bi-receipt"></i> Daftar Tagihan </a>
         <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> <i class="bi bi-file-earmark-text"></i> Manifest (Hutang) </a>
 
+        <div class="nav-section-title">Personalia</div>
+
+        <a class="nav-link {% if 'gaji' in request.path %}active{% endif %}" href="{% url 'gaji_list' %}"> <i class="bi bi-people-fill"></i> Gaji & Cashbon </a>
+        <a class="nav-link {% if 'karyawan' in request.path %}active{% endif %}" href="{% url 'karyawan_list' %}"> <i class="bi bi-person-badge"></i> Data Karyawan </a>
+        <a class="nav-link {% if 'cashbon' in request.path %}active{% endif %}" href="{% url 'cashbon_list' %}"> <i class="bi bi-wallet2"></i> Catatan Cashbon </a>
+
         <div class="nav-section-title">Master Data</div>
 
         <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-list-ul"></i> Daftar Akun (CoA) </a>

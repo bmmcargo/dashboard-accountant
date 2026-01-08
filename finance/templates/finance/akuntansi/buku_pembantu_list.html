@@ -61,7 +61,7 @@
               <td>{% if type == 'piutang' %} {{ item.customer|default:"-" }} {% else %} {{ item.kategori }} {% endif %}</td>
 
               <!-- Keterangan -->
-              <td>{% if type == 'piutang' %} Invoice Tagihan {{ item.no_invoice }} {% else %} Manifest HULU ({{ item.keterangan|truncatechars:30 }}) {% endif %}</td>
+              <td>{% if type == 'piutang' %} Invoice Tagihan {{ item.no_invoice }} {% else %} {{ item.keterangan|truncatechars:50|default:"-" }} {% endif %}</td>
 
               <!-- Nominal -->
               <td class="text-end fw-bold">{% if type == 'piutang' %} {{ item.total|intcomma }} {% else %} {{ item.total|intcomma }}{% endif %}</td>

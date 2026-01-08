@@ -50,4 +50,15 @@ urlpatterns = [
     # Buku Pembantu
     path('buku-piutang/', views.buku_piutang, name='buku_piutang'),
     path('buku-hutang/', views.buku_hutang, name='buku_hutang'),
+
+    # Gaji & Karyawan
+    path('karyawan/', views.karyawan_list, name='karyawan_list'),
+    path('karyawan/tambah/', views.karyawan_create, name='karyawan_create'),
+    path('karyawan/edit/<int:pk>/', views.karyawan_edit, name='karyawan_edit'),
+    path('karyawan/hapus/<int:pk>/', views.karyawan_delete, name='karyawan_delete'),
+
+    path('gaji/', views.gaji_list, name='gaji_list'),
+    path('gaji/save/', views.gaji_save_all, name='gaji_save_all'),
+    
+    path('cashbon/', views.cashbon_list, name='cashbon_list'),
 ]

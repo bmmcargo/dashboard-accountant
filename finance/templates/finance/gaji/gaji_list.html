@@ -1,0 +1,208 @@
+{% extends 'finance/base.html' %} 
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid px-2 px-md-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center my-4 gap-3">
+    <div>
+      <h2 class="fw-bold text-dark mb-0">Penggajian & Cashbon</h2>
+      <p class="text-muted mb-0">Periode: <span class="fw-bold text-primary">{{ nama_bulan }} {{ tahun }}</span></p>
+    </div>
+    
+    <!-- Filter Bulan/Tahun -->
+    <form class="d-flex gap-2 bg-white p-1 rounded shadow-sm border" method="get">
+      <select name="bulan" class="form-select border-0 bg-transparent text-end fw-bold" style="width: auto; cursor: pointer;" onchange="this.form.submit()">
+        {% for m_num, m_name in bulan_list %}
+        <option value="{{ m_num }}" {% if m_num == bulan %}selected{% endif %}>{{ m_name }}</option>
+        {% endfor %}
+      </select>
+      <div class="vr my-2"></div>
+      <select name="tahun" class="form-select border-0 bg-transparent fw-bold" style="width: auto; cursor: pointer;" onchange="this.form.submit()">
+        {% for y in tahun_list %}
+        <option value="{{ y }}" {% if y == tahun %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <!-- Main Worksheet Form -->
+  <form method="post" action="{% url 'gaji_save_all' %}" id="payrollForm">
+    {% csrf_token %}
+    <input type="hidden" name="bulan" value="{{ bulan }}">
+    <input type="hidden" name="tahun" value="{{ tahun }}">
+
+    <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+      <!-- Toolbar -->
+      <div class="card-header p-3 d-flex justify-content-between align-items-center">
+         <div class="d-flex gap-2">
+            <span class="badge bg-primary">Editable Mode</span>
+            <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Edit nilai dan klik Simpan Perubahan</small>
+         </div>
+         <button type="submit" class="btn btn-outline-success btn-sm px-4 fw-bold shadow-sm">
+            <i class="bi bi-save me-2"></i>SIMPAN PERUBAHAN
+         </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0" style="font-size: 0.85rem; min-width: 1200px;">
+          <thead class="text-center align-middle bg-light text-secondary fw-bold text-uppercase">
+            <tr>
+              <th rowspan="2" style="width: 50px;" class="bg-white sticky-start">No</th>
+              <th rowspan="2" style="width: 200px;" class="bg-white sticky-start">Nama Karyawan</th>
+              <th rowspan="2" class="bg-info bg-opacity-10 text-dark">Gaji Pokok</th>
+              
+              <!-- Pendapatan -->
+              <th colspan="2" class="bg-success bg-opacity-10 text-success border-bottom-0">Penambah</th>
+              
+              <!-- Pengurang -->
+              <th colspan="5" class="bg-danger bg-opacity-10 text-danger border-bottom-0">Potongan</th>
+              
+              <th rowspan="2" class="bg-primary text-white">Gaji Diterima</th>
+              <th rowspan="2" style="width: 150px;">Keterangan</th>
+            </tr>
+            <tr>
+               <!-- Sub header Penambah -->
+               <th class="bg-success bg-opacity-10 text-success small">Lembur</th>
+               <th class="bg-success bg-opacity-10 text-success small">Bonus</th>
+
+               <!-- Sub header Pengurang -->
+               <th class="bg-warning bg-opacity-25 text-dark small" title="Total Cashbon dicatat manual/otomatis">Cashbon</th>
+               <th class="bg-danger bg-opacity-10 text-danger small">Absen/Alpha</th>
+               <th class="bg-danger bg-opacity-10 text-danger small">BPJS</th>
+               <th class="bg-danger bg-opacity-10 text-danger small">Hutang Kantin</th>
+               <th class="bg-secondary bg-opacity-10 text-dark small">Total Pot</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in data_table %}
+            <tr>
+              <input type="hidden" name="karyawan_id" value="{{ row.karyawan.id }}">
+              
+              <!-- Fixed Info -->
+              <td class="text-center bg-light sticky-start">{{ forloop.counter }}</td>
+              <td class="fw-bold text-dark bg-light sticky-start text-nowrap">
+                {{ row.karyawan.nama }}
+                <div class="small text-muted fw-normal" style="font-size: 0.7rem;">{{ row.karyawan.posisi|default:"-" }}</div>
+              </td>
+              
+              <!-- Gaji Pokok (ReadOnly for Ref) -->
+              <td class="text-end bg-info bg-opacity-10">
+                 <input type="text" class="form-control form-control-sm border-0 bg-transparent text-end fw-bold text-dark" 
+                        value="{{ row.gaji.gaji_pokok|intcomma }}" readonly tabindex="-1">
+                 <input type="hidden" class="gaji-pokok" value="{{ row.gaji.gaji_pokok }}">
+              </td>
+              
+              <!-- INPUTS: Penambah -->
+              <td>
+                 <input type="number" name="lembur_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-end input-calc bg-success bg-opacity-10 border-success-subtle" 
+                        value="{{ row.gaji.lembur }}" placeholder="0">
+              </td>
+              <td> <!-- Bonus placeholder logic if needed in future, currently empty in view but model has it -->
+                 <input type="number" name="bonus_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-end input-calc bg-success bg-opacity-10 border-success-subtle" 
+                        value="{{ row.gaji.bonus }}" placeholder="0">
+              </td>
+
+              <!-- INPUTS: Pengurang -->
+              <!-- Cashbon: Defaulting to Real Cashbon if 0, else saved value -->
+              <td class="position-relative">
+                 <input type="number" name="potongan_cashbon_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-end input-calc bg-warning bg-opacity-10 border-warning-subtle fw-bold" 
+                        value="{{ row.gaji.potongan_cashbon|default:row.real_cashbon }}" title="Real Cashbon: {{ row.real_cashbon|intcomma }}">
+                 {% if row.real_cashbon > 0 and row.real_cashbon != row.gaji.potongan_cashbon %}
+                 <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" title="Nilai berbeda dari catatan cashbon ({{ row.real_cashbon }})">
+                    <span class="visually-hidden">Alert</span>
+                 </span>
+                 {% endif %}
+              </td>
+              
+              <td>
+                 <input type="number" name="potongan_absen_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-end input-calc bg-danger bg-opacity-10 border-danger-subtle" 
+                        value="{{ row.gaji.potongan_absen }}" placeholder="0">
+              </td>
+              <td>
+                 <input type="number" name="potongan_bpjs_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-end input-calc bg-danger bg-opacity-10 border-danger-subtle" 
+                        value="{{ row.gaji.potongan_bpjs }}" placeholder="0">
+              </td>
+              <td>
+                 <input type="number" name="potongan_lain_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-end input-calc bg-danger bg-opacity-10 border-danger-subtle" 
+                        value="{{ row.gaji.potongan_lain }}" placeholder="0">
+              </td>
+              
+              <!-- Subtotal Potongan (JS Calc) -->
+              <td class="text-end bg-secondary bg-opacity-10 text-muted subtotal-potongan font-monospace small">0</td>
+
+              <!-- TOTAL DITERIMA (JS Calc) -->
+              <td class="bg-primary text-white">
+                 <input type="text" class="form-control form-control-sm border-0 bg-transparent text-white text-end fw-bold font-monospace total-gaji" 
+                        value="Rp {{ row.gaji.total_diterima|intcomma }}" readonly>
+              </td>
+              
+              <!-- Catatan -->
+              <td>
+                 <input type="text" name="catatan_{{ row.karyawan.id }}" 
+                        class="form-control form-control-sm text-muted" 
+                        value="{{ row.gaji.catatan|default:'' }}" placeholder="...">
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="12" class="text-center py-5 text-muted">Belum ada karyawan aktif. Tambahkan karyawan terlebih dahulu.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="bg-light fw-bold text-end small border-top-2">
+             <tr>
+                <td colspan="7" class="text-end pe-3">TOTAL PEMBAYARAN:</td>
+                <td colspan="5" class="text-end px-3 fs-6" id="grandTotal">Rp {{ total_gaji_bersih|intcomma }}</td>
+             </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- JavaScript for Live Calculation -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+   const rows = document.querySelectorAll('tbody tr');
+
+   function calculateRow(row) {
+      // Get values
+      const gajiPokok = parseFloat(row.querySelector('.gaji-pokok').value) || 0;
+      
+      const lembur = parseFloat(row.querySelector('input[name^="lembur_"]').value) || 0;
+      const bonus = parseFloat(row.querySelector('input[name^="bonus_"]').value) || 0;
+      
+      const potCashbon = parseFloat(row.querySelector('input[name^="potongan_cashbon_"]').value) || 0;
+      const potAbsen = parseFloat(row.querySelector('input[name^="potongan_absen_"]').value) || 0;
+      const potBpjs = parseFloat(row.querySelector('input[name^="potongan_bpjs_"]').value) || 0;
+      const potLain = parseFloat(row.querySelector('input[name^="potongan_lain_"]').value) || 0;
+
+      // Calc
+      const totalPenambah = lembur + bonus;
+      const totalPotongan = potCashbon + potAbsen + potBpjs + potLain;
+      const totalBersih = (gajiPokok + totalPenambah) - totalPotongan;
+
+      // Update UI
+      row.querySelector('.subtotal-potongan').innerText = totalPotongan.toLocaleString('id-ID');
+      row.querySelector('.total-gaji').value = "Rp " + totalBersih.toLocaleString('id-ID');
+   }
+
+   // Attach events
+   const inputs = document.querySelectorAll('.input-calc');
+   inputs.forEach(input => {
+      input.addEventListener('input', function() {
+         const row = this.closest('tr');
+         calculateRow(row);
+      });
+      // Initial calc
+      calculateRow(input.closest('tr')); 
+   });
+});
+</script>
+{% endblock %}

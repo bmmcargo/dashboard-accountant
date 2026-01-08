@@ -1,4 +1,12 @@
 {% extends 'finance/base.html' %} {% load humanize %} {% block content %}
+<style>
+  .bg-gradient-success-custom {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+  }
+  .bg-gradient-danger-custom {
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+  }
+</style>
 <div class="container-fluid">
   <div class="row mb-4">
     <div class="col-12">
@@ -217,43 +225,141 @@
 
     <!-- Arus Kas -->
     <div class="tab-pane fade" id="pills-ak" role="tabpanel">
-      <div class="card border-0 shadow-sm" style="max-width: 800px; margin: 0 auto">
-        <div class="card-header bg-success text-white text-center py-3">
-          <h4 class="mb-0 fw-bold">LAPORAN ARUS KAS</h4>
-          <small>Metode Langsung</small>
+      <div class="card border-0 shadow-lg" style="max-width: 900px; margin: 0 auto; border-radius: 12px; overflow: hidden">
+        <div class="card-header bg-success text-center py-4 position-relative overflow-hidden">
+          <div class="position-relative z-1">
+            <h4 class="mb-1 fw-bold text-uppercase" style="letter-spacing: 1px">Laporan Arus Kas</h4>
+            <span class="badge bg-white text-success px-3 py-1 rounded-pill fw-normal">Metode Langsung</span>
+          </div>
+          <!-- Decorative Background Element -->
+          <div
+            class="position-absolute top-0 start-0 w-100 h-100 bg-white opacity-10"
+            style="background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.2) 40%, rgba(255, 255, 255, 0.2) 60%, transparent 60%); pointer-events: none"
+          ></div>
         </div>
-        <div class="card-body p-5">
-          <h5 class="fw-bold text-primary mb-3 border-bottom pb-2">ARUS KAS MASUK</h5>
-          {% for item in arus_kas_masuk %}
-          <div class="d-flex justify-content-between mb-2">
-            <span><small class="text-muted">{{ item.tanggal|date:"d/m" }}</small> {{ item.keterangan }}</span>
-            <span>Rp {{ item.nominal|intcomma }}</span>
-          </div>
-          {% empty %}
-          <p class="text-muted fst-italic">Tidak ada transaksi masuk.</p>
-          {% endfor %}
-          <div class="d-flex justify-content-between fw-bold bg-light p-2 mt-2">
-            <span>Total Masuk</span>
-            <span>Rp {{ total_ak_masuk|intcomma }}</span>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <!-- Arus Kas Masuk -->
+          <div class="mb-5">
+            <div class="d-flex align-items-center mb-3">
+              <div class="rounded-circle bg-success bg-opacity-10 text-success p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px">
+                <i class="bi bi-arrow-down-left-circle-fill fs-4"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0 text-success">ARUS KAS MASUK</h5>
+                <small class="text-muted">Penerimaan kas dari aktivitas operasional</small>
+              </div>
+            </div>
+
+            <div class="table-responsive rounded-3 border">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                  <tr>
+                    <th class="ps-4 py-3" style="width: 15%">Tanggal</th>
+                    <th class="py-3">Keterangan Transaksi</th>
+                    <th class="text-end pe-4 py-3" style="width: 25%">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody class="border-top-0">
+                  {% for item in arus_kas_masuk %}
+                  <tr>
+                    <td class="ps-4 text-muted small fw-medium">{{ item.tanggal|date:"d M Y" }}</td>
+                    <td class="fw-medium text-dark">{{ item.keterangan }}</td>
+                    <td class="text-end pe-4 fw-bold text-success font-monospace">Rp {{ item.nominal|intcomma }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-5">
+                      <div class="d-flex flex-column align-items-center">
+                        <i class="bi bi-inbox fs-1 text-muted opacity-25 mb-2"></i>
+                        <span class="fst-italic">Belum ada transaksi masuk.</span>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot class="bg-success bg-opacity-10 text-success">
+                  <tr>
+                    <td colspan="2" class="ps-4 py-3 fw-bold text-uppercase small">Total Penerimaan</td>
+                    <td class="text-end pe-4 py-3 fw-bold fs-6 font-monospace">Rp {{ total_ak_masuk|intcomma }}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
-          <h5 class="fw-bold text-danger mt-4 mb-3 border-bottom pb-2">ARUS KAS KELUAR</h5>
-          {% for item in arus_kas_keluar %}
-          <div class="d-flex justify-content-between mb-2">
-            <span><small class="text-muted">{{ item.tanggal|date:"d/m" }}</small> {{ item.keterangan }}</span>
-            <span>(Rp {{ item.nominal|intcomma }})</span>
-          </div>
-          {% empty %}
-          <p class="text-muted fst-italic">Tidak ada transaksi keluar.</p>
-          {% endfor %}
-          <div class="d-flex justify-content-between fw-bold bg-light p-2 mt-2">
-            <span>Total Keluar</span>
-            <span>(Rp {{ total_ak_keluar|intcomma }})</span>
+          <!-- Arus Kas Keluar -->
+          <div class="mb-5">
+            <div class="d-flex align-items-center mb-3">
+              <div class="rounded-circle bg-danger bg-opacity-10 text-danger p-3 me-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px">
+                <i class="bi bi-arrow-up-right-circle-fill fs-4"></i>
+              </div>
+              <div>
+                <h5 class="fw-bold mb-0 text-danger">ARUS KAS KELUAR</h5>
+                <small class="text-muted">Pengeluaran kas untuk beban & operasional</small>
+              </div>
+            </div>
+
+            <div class="table-responsive rounded-3 border">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                  <tr>
+                    <th class="ps-4 py-3" style="width: 15%">Tanggal</th>
+                    <th class="py-3">Keterangan Transaksi</th>
+                    <th class="text-end pe-4 py-3" style="width: 25%">Nominal</th>
+                  </tr>
+                </thead>
+                <tbody class="border-top-0">
+                  {% for item in arus_kas_keluar %}
+                  <tr>
+                    <td class="ps-4 text-muted small fw-medium">{{ item.tanggal|date:"d M Y" }}</td>
+                    <td class="fw-medium text-dark">{{ item.keterangan }}</td>
+                    <td class="text-end pe-4 fw-bold text-danger font-monospace">(Rp {{ item.nominal|intcomma }})</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="3" class="text-center text-muted py-5">
+                      <div class="d-flex flex-column align-items-center">
+                        <i class="bi bi-wallet2 fs-1 text-muted opacity-25 mb-2"></i>
+                        <span class="fst-italic">Belum ada transaksi keluar.</span>
+                      </div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+                <tfoot class="bg-danger bg-opacity-10 text-danger">
+                  <tr>
+                    <td colspan="2" class="ps-4 py-3 fw-bold text-uppercase small">Total Pengeluaran</td>
+                    <td class="text-end pe-4 py-3 fw-bold fs-6 font-monospace">(Rp {{ total_ak_keluar|intcomma }})</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
 
-          <div class="d-flex justify-content-between fw-bold text-white p-3 mt-4 rounded {% if net_cash_flow >= 0 %}bg-success{% else %}bg-warning{% endif %}">
-            <span class="fs-5">KENAIKAN/(PENURUNAN) KAS BERSIH</span>
-            <span class="fs-5">Rp {{ net_cash_flow|intcomma }}</span>
+          <!-- Net Cash Flow Summary -->
+          <div class="card border-0 text-white shadow-sm overflow-hidden {% if net_cash_flow >= 0 %}bg-gradient-success-custom{% else %}bg-gradient-danger-custom{% endif %}">
+            <div class="card-body p-4 position-relative">
+              <div class="d-flex justify-content-between align-items-center position-relative z-1">
+                <div>
+                  <h6 class="text-white text-uppercase opacity-75 fw-bold mb-1" style="letter-spacing: 1px">Kenaikan/(Penurunan) Kas Bersih</h6>
+                  <h2 class="display-6 fw-bold mb-0">Rp {{ net_cash_flow|intcomma }}</h2>
+                </div>
+                <div class="text-white opacity-25">
+                  {% if net_cash_flow >= 0 %}
+                  <i class="bi bi-graph-up-arrow display-4"></i>
+                  {% else %}
+                  <i class="bi bi-graph-down-arrow display-4"></i>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="position-absolute bottom-0 end-0 mb-n5 me-n5 rounded-circle bg-white" style="width: 15rem; height: 15rem; opacity: 0.1"></div>
+              <div class="position-absolute top-0 start-0 mt-n4 ms-n4 rounded-circle bg-white" style="width: 8rem; height: 8rem; opacity: 0.1"></div>
+            </div>
+          </div>
+
+          <div class="text-center mt-4">
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="bi bi-printer me-2"></i>Cetak Laporan</button>
           </div>
         </div>
       </div>

@@ -156,3 +156,56 @@ class KasHarianForm(forms.ModelForm):
             'kredit': 'Kredit / Kas Keluar (Rp)',
             'catatan': 'Catatan',
         }
+
+# ============================================
+# FORMS GAJI & KARYAWAN
+# ============================================
+from .models import Karyawan, Cashbon, Penggajian
+
+class KaryawanForm(forms.ModelForm):
+    class Meta:
+        model = Karyawan
+        fields = ['nama', 'posisi', 'gaji_pokok', 'no_hp', 'tanggal_masuk', 'status']
+        widgets = {
+            'tanggal_masuk': forms.DateInput(attrs={'type': 'date'}),
+        }
+        labels = {
+            'nama': 'Nama Karyawan',
+            'posisi': 'Jabatan / Posisi',
+            'gaji_pokok': 'Gaji Pokok (Rp)',
+            'no_hp': 'Nomor HP/WA',
+            'tanggal_masuk': 'Tanggal Masuk',
+            'status': 'Status Aktif',
+        }
+
+class CashbonForm(forms.ModelForm):
+    class Meta:
+        model = Cashbon
+        fields = ['karyawan', 'tanggal', 'nominal', 'keterangan']
+        widgets = {
+            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'keterangan': forms.Textarea(attrs={'rows': 2}),
+        }
+        labels = {
+            'karyawan': 'Nama Karyawan',
+            'tanggal': 'Tanggal Pinjam',
+            'nominal': 'Jumlah (Rp)',
+            'keterangan': 'Keterangan Keperluan',
+        }
+
+class PenggajianForm(forms.ModelForm):
+    class Meta:
+        model = Penggajian
+        fields = [
+            'karyawan', 'bulan', 'tahun', 'tanggal_gaji', 
+            'gaji_pokok', 'lembur', 'bonus', 
+            'potongan_cashbon', 'potongan_absen', 'potongan_bpjs', 'potongan_lain', 'catatan', 'status'
+        ]
+        widgets = {
+            'tanggal_gaji': forms.DateInput(attrs={'type': 'date'}),
+            'catatan': forms.Textarea(attrs={'rows': 2}),
+        }
+        labels = {
+            'potongan_cashbon': 'Potongan Cashbon (Rp)',
+            'potongan_lain': 'Potongan Lain-lain (Hutang Kantin dll)',
+        }

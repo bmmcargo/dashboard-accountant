@@ -689,13 +689,64 @@ def buku_piutang(request):
 
 @login_required
 def buku_hutang(request):
-    data = Manifest.objects.all().order_by('-tanggal_kirim')
-    total = data.aggregate(Sum('total'))['total__sum'] or 0
+    # 1. Manifest Data
+    manifests = Manifest.objects.all()
+    
+    # 2. Outbound Data (Vendor Costs)
+    outbounds = OutboundTransaction.objects.filter(Q(vendor1_biaya__gt=0) | Q(vendor2_biaya__gt=0))
+    
+    combined_data = []
+    
+    # Process Manifests
+    for m in manifests:
+        combined_data.append({
+            'tanggal_kirim': m.tanggal_kirim if m.tanggal_kirim else m.created_at.date(),
+            'no_resi': m.no_resi,
+            'kategori': f"Manifest - {m.get_kategori_display()}",
+            'keterangan': f"Pengirim: {m.pengirim}, Tujuan: {m.tujuan}",
+            'total': m.total,
+            'status_bayar': m.status_bayar,
+            'source_type': 'manifest',
+            'id': m.id
+        })
+        
+    # Process Outbounds
+    for o in outbounds:
+        if o.vendor1_biaya > 0:
+            combined_data.append({
+                'tanggal_kirim': o.vendor1_tgl if o.vendor1_tgl else o.tanggal,
+                'no_resi': o.vendor1_resi if o.vendor1_resi else o.no_resi_bmm,
+                'kategori': "Outbound Vendor 1",
+                'keterangan': f"Ref BMM: {o.no_resi_bmm}. {o.keterangan or ''}",
+                'total': o.vendor1_biaya,
+                'status_bayar': False, # Asumsi default belum lunas krn tdk ada field status khusus vendor
+                'source_type': 'outbound',
+                'id': o.id
+            })
+        if o.vendor2_biaya > 0:
+             combined_data.append({
+                'tanggal_kirim': o.vendor2_tgl if o.vendor2_tgl else o.tanggal,
+                'no_resi': o.vendor2_resi if o.vendor2_resi else o.no_resi_bmm,
+                'kategori': "Outbound Vendor 2",
+                'keterangan': f"Ref BMM: {o.no_resi_bmm}. {o.keterangan or ''}",
+                'total': o.vendor2_biaya,
+                'status_bayar': False,
+                'source_type': 'outbound',
+                'id': o.id
+            })
+            
+    # Sort by Date Descending
+    from datetime import date
+    combined_data.sort(key=lambda x: x['tanggal_kirim'] if x['tanggal_kirim'] else date.min, reverse=True)
+    
+    # Calculate Total
+    total_hutang = sum(item['total'] for item in combined_data)
+    
     return render(request, 'finance/akuntansi/buku_pembantu_list.html', {
         'title': 'Buku Pembantu Hutang',
-        'items': data,
+        'items': combined_data,
         'type': 'hutang',
-        'total': total,
+        'total': total_hutang,
         'icon': 'bi-arrow-up-right-circle'
     })
 
@@ -803,6 +854,168 @@ def invoice_list(request):
         'tahun_list': tahun_list,
         'total_tagihan': total_tagihan,
     })
+
+# ============================================
+# VIEWS GAJI & KARYAWAN
+# ============================================
+from .models import Karyawan, Cashbon, Penggajian
+from .forms import KaryawanForm, CashbonForm, PenggajianForm
+
+@login_required
+def karyawan_list(request):
+    karyawan = Karyawan.objects.all().order_by('nama')
+    return render(request, 'finance/karyawan/karyawan_list.html', {'karyawan_list': karyawan})
+
+@login_required
+def karyawan_create(request):
+    if request.method == 'POST':
+        form = KaryawanForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Karyawan berhasil ditambahkan!')
+            return redirect('karyawan_list')
+    else:
+        form = KaryawanForm()
+    return render(request, 'finance/karyawan/karyawan_form.html', {'form': form, 'title': 'Tambah Karyawan'})
+
+@login_required
+def karyawan_edit(request, pk):
+    karyawan = get_object_or_404(Karyawan, pk=pk)
+    if request.method == 'POST':
+        form = KaryawanForm(request.POST, instance=karyawan)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Karyawan diperbarui.')
+            return redirect('karyawan_list')
+    else:
+        form = KaryawanForm(instance=karyawan)
+    return render(request, 'finance/karyawan/karyawan_form.html', {'form': form, 'title': f'Edit {karyawan.nama}'})
+
+@login_required
+def karyawan_delete(request, pk):
+    k = get_object_or_404(Karyawan, pk=pk)
+    k.delete()
+    messages.success(request, 'Data Karyawan dihapus.')
+    return redirect('karyawan_list')
+
+@login_required
+def gaji_list(request):
+    """
+    View spreadsheet untuk Penggajian & Cashbon
+    """
+    today = timezone.now()
+    bulan = int(request.GET.get('bulan', today.month))
+    tahun = int(request.GET.get('tahun', today.year))
+    
+    # Karyawan Aktif
+    karyawan_list = Karyawan.objects.filter(status=True).order_by('nama')
+    
+    # Data Table Generation
+    data_table = []
+    
+    total_gaji_bersih_all = 0
+    total_cashbon_all = 0
+    
+    for k in karyawan_list:
+        # Cari data penggajian bulan ini
+        gaji_obj = Penggajian.objects.filter(karyawan=k, bulan=bulan, tahun=tahun).first()
+        
+        # Hitung Total Cashbon Real (dari tabel Cashbon) untuk validasi/display
+        real_cashbon = Cashbon.objects.filter(
+            karyawan=k, 
+            tanggal__year=tahun, 
+            tanggal__month=bulan
+        ).aggregate(Sum('nominal'))['nominal__sum'] or 0
+        
+        if not gaji_obj:
+            # Init dummy object (not saved) for display
+            gaji_obj = Penggajian(
+                karyawan=k,
+                bulan=bulan, 
+                tahun=tahun,
+                gaji_pokok=k.gaji_pokok,
+                potongan_cashbon=real_cashbon # Auto-fill suggestion
+            )
+            # Auto-calc field logic manually here for display
+            gaji_obj.total_diterima = (gaji_obj.gaji_pokok) - (gaji_obj.potongan_cashbon)
+        
+        data_table.append({
+            'karyawan': k,
+            'gaji': gaji_obj,
+            'real_cashbon': real_cashbon
+        })
+        
+        total_gaji_bersih_all += gaji_obj.total_diterima
+        total_cashbon_all += gaji_obj.potongan_cashbon
+
+    # Navigasi Bulan
+    bulan_list = [(i, NAMA_BULAN[i]) for i in range(1, 13)]
+    tahun_list = range(today.year - 1, today.year + 2)
+
+    return render(request, 'finance/gaji/gaji_list.html', {
+        'data_table': data_table,
+        'bulan': bulan,
+        'tahun': tahun,
+        'nama_bulan': NAMA_BULAN[bulan],
+        'bulan_list': bulan_list,
+        'tahun_list': tahun_list,
+        'total_gaji_bersih': total_gaji_bersih_all,
+        'total_cashbon': total_cashbon_all
+    })
+
+@login_required
+def gaji_save_all(request):
+    """
+    Simpan data gaji dari grid/spreadsheet view
+    """
+    if request.method == 'POST':
+        bulan = request.POST.get('bulan')
+        tahun = request.POST.get('tahun')
+        
+        # Iterate post data
+        # Format name: lembur_{karyawan_id}, potongan_{karyawan_id}, etc.
+        karyawan_ids = request.POST.getlist('karyawan_id')
+        
+        for k_id in karyawan_ids:
+            k = Karyawan.objects.get(id=k_id)
+            
+            # Get or Create
+            gaji_obj, created = Penggajian.objects.get_or_create(
+                karyawan=k, bulan=bulan, tahun=tahun
+            )
+            
+            # Update fields
+            gaji_obj.lembur = request.POST.get(f'lembur_{k_id}', 0)
+            gaji_obj.potongan_cashbon = request.POST.get(f'potongan_cashbon_{k_id}', 0)
+            gaji_obj.potongan_absen = request.POST.get(f'potongan_absen_{k_id}', 0)
+            gaji_obj.potongan_bpjs = request.POST.get(f'potongan_bpjs_{k_id}', 0)
+            gaji_obj.potongan_lain = request.POST.get(f'potongan_lain_{k_id}', 0)
+            gaji_obj.catatan = request.POST.get(f'catatan_{k_id}', '')
+            
+            # Recalculate Total (logic inside save model)
+            gaji_obj.save()
+            
+        messages.success(request, f'Data Gaji Bulan {bulan}/{tahun} berhasil disimpan.')
+        return redirect(f'/gaji/?bulan={bulan}&tahun={tahun}')
+
+    return redirect('gaji_list')
+
+@login_required
+def cashbon_list(request):
+    cashbons = Cashbon.objects.all().order_by('-tanggal')
+    
+    if request.method == 'POST':
+        form = CashbonForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Cashbon dicatat.')
+            return redirect('cashbon_list')
+    else:
+        form = CashbonForm()
+        
+    return render(request, 'finance/gaji/cashbon_list.html', {'cashbons': cashbons, 'form': form})
+
+
 
 @login_required
 def tagihan_delete(request, pk):
