@@ -117,7 +117,7 @@ class ManifestForm(forms.ModelForm):
         model = Manifest
         fields = [
             'kategori', 'tanggal_kirim', 'no_resi', 'pengirim', 'tujuan',
-            'koli', 'kg', 'penerima', 'tanggal_terima', 'tarif', 'total', 'status_bayar'
+            'koli', 'kg', 'penerima', 'tanggal_terima', 'total', 'dp', 'status_bayar'
         ]
         widgets = {
             'tanggal_kirim': forms.DateInput(attrs={'type': 'date'}),
@@ -133,8 +133,8 @@ class ManifestForm(forms.ModelForm):
             'kg': 'Berat (Kg)',
             'penerima': 'Penerima',
             'tanggal_terima': 'Tanggal Terima',
-            'tarif': 'Tarif (Rp)',
             'total': 'Total Hutang (Rp)',
+            'dp': 'Biaya Dibayar Dimuka (DP)',
             'status_bayar': 'Sudah Dibayar',
         }
 

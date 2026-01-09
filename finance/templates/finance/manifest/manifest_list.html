@@ -118,8 +118,8 @@
                             <th>Kg</th>
                             <th>Penerima</th>
                             <th>Tgl Terima</th>
-                            <th>Tarif (Rp)</th>
-                            <th>Total (Rp)</th>
+                            <th>Total Hutang (Rp)</th>
+                            <th>DP (Rp)</th>
                             <th>Status</th>
                             <th>Aksi</th>
                         </tr>
@@ -137,8 +137,8 @@
                             <td class="text-end">{{ item.kg|floatformat:0 }}</td>
                             <td>{{ item.penerima|default:"-"|truncatechars:15 }}</td>
                             <td class="text-nowrap">{{ item.tanggal_terima|date:"d/m/Y"|default:"-" }}</td>
-                            <td class="text-end">{{ item.tarif|intcomma }}</td>
                             <td class="text-end fw-bold {% if item.status_bayar %}text-success{% else %}text-danger{% endif %}">{{ item.total|intcomma }}</td>
+                            <td class="text-end">{{ item.dp|intcomma }}</td>
                             <td class="text-center">
                                 {% if item.status_bayar %}
                                 <span class="badge bg-success"><i class="bi bi-check"></i> LUNAS</span>
@@ -171,9 +171,9 @@
                     </tbody>
                     <tfoot class="table-dark fw-bold">
                         <tr>
-                            <td colspan="11" class="text-end">TOTAL HUTANG (Belum Bayar):</td>
+                            <td colspan="10" class="text-end">TOTAL HUTANG (Belum Bayar):</td>
                             <td class="text-end text-danger">{{ total_hutang|intcomma }}</td>
-                            <td colspan="2"></td>
+                            <td colspan="3"></td>
                         </tr>
                     </tfoot>
                 </table>

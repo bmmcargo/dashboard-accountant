@@ -230,6 +230,7 @@ class Manifest(models.Model):
     kg = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     penerima = models.CharField(max_length=200, null=True, blank=True)
     tanggal_terima = models.DateField(null=True, blank=True)
+    dp = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Biaya Dibayar Dimuka (DP)")
     tarif = models.DecimalField(max_digits=15, decimal_places=0, default=0)
     total = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Total Hutang (Rp)")
     status_bayar = models.BooleanField(default=False, verbose_name="Sudah Dibayar")

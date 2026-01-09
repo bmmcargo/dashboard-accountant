@@ -12,7 +12,7 @@
     
     <!-- Filter Bulan/Tahun -->
     <form class="d-flex gap-2 bg-white p-1 rounded shadow-sm border" method="get">
-      <select name="bulan" class="form-select border-0 bg-transparent text-end fw-bold" style="width: auto; cursor: pointer;" onchange="this.form.submit()">
+      <select name="bulan" class="form-select border-0 bg-transparent text-center fw-bold" style="width: auto; cursor: pointer;" onchange="this.form.submit()">
         {% for m_num, m_name in bulan_list %}
         <option value="{{ m_num }}" {% if m_num == bulan %}selected{% endif %}>{{ m_name }}</option>
         {% endfor %}

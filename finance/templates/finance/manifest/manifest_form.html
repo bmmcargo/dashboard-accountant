@@ -79,14 +79,14 @@
                 
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="id_tarif" class="form-label">Tarif (Rp)</label>
-                        <input type="number" name="tarif" id="id_tarif" class="form-control"
-                               value="{{ form.tarif.value|default:0 }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
                         <label for="id_total" class="form-label">Total Hutang (Rp)</label>
                         <input type="number" name="total" id="id_total" class="form-control"
                                value="{{ form.total.value|default:0 }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_dp" class="form-label">Biaya Dibayar Dimuka (DP)</label>
+                        <input type="number" name="dp" id="id_dp" class="form-control"
+                               value="{{ form.dp.value|default:0 }}">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label">&nbsp;</label>
