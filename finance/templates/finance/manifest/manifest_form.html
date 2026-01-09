@@ -32,19 +32,16 @@
                                value="{{ form.tanggal_kirim.value|date:'Y-m-d' }}">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="id_no_resi" class="form-label">No Resi *</label>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_no_resi" class="form-label">No Manifest *</label>
                         <input type="text" name="no_resi" id="id_no_resi" class="form-control" required
                                value="{{ form.no_resi.value|default:'' }}">
                     </div>
                 </div>
                 
                 <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="id_pengirim" class="form-label">Pengirim</label>
-                        <input type="text" name="pengirim" id="id_pengirim" class="form-control"
-                               value="{{ form.pengirim.value|default:'' }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
+                    <!-- Pengirim Dihapus -->
+                    <div class="col-md-12 mb-3">
                         <label for="id_tujuan" class="form-label">Tujuan</label>
                         <input type="text" name="tujuan" id="id_tujuan" class="form-control"
                                value="{{ form.tujuan.value|default:'' }}">
@@ -63,7 +60,7 @@
                                value="{{ form.kg.value|default:0 }}">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="id_penerima" class="form-label">Penerima</label>
+                        <label for="id_penerima" class="form-label">Vendor</label>
                         <input type="text" name="penerima" id="id_penerima" class="form-control"
                                value="{{ form.penerima.value|default:'' }}">
                     </div>

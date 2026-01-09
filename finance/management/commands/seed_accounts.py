@@ -10,12 +10,15 @@ class Command(BaseCommand):
             ('112', 'Piutang Usaha', 'ASSET'),  # Untuk Jurnal Inbound
             ('113', 'Piutang Karyawan (Kasbon)', 'ASSET'),
             ('114', 'Perlengkapan (ATK)', 'ASSET'),
+            ('115', 'Biaya Dibayar Dimuka', 'ASSET'),  # Untuk DP Manifest
+            ('211', 'Hutang Usaha', 'LIABILITY'),  # Untuk Jurnal Manifest
             ('301', 'Modal Pemilik', 'EQUITY'),
             ('401', 'Pendapatan Jasa', 'REVENUE'),
             ('501', 'Biaya Gaji', 'EXPENSE'),
             ('502', 'Biaya BBM & Tol', 'EXPENSE'),
             ('503', 'Biaya Bongkar Muat', 'EXPENSE'),
             ('504', 'Biaya Sangu Jalan', 'EXPENSE'),
+            ('505', 'Biaya Pengiriman Vendor', 'EXPENSE'),  # Khusus Hutang Manifest
             ('520', 'Biaya Service & Sparepart', 'EXPENSE'), # Request Khusus Client
             ('513', 'Biaya Listrik/Pulsa', 'EXPENSE'),
             ('514', 'Biaya Lain-lain', 'EXPENSE'),

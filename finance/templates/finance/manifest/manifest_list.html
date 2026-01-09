@@ -27,8 +27,8 @@
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-white-50 small">Total Data</div>
-                            <div class="fs-4 fw-bold">{{ manifests|length }} Resi</div>
+                            <div class="text-white fw-bold small">Total Data</div>
+                            <div class="fs-4 fw-bold">{{ manifests|length }} Manifest</div>
                         </div>
                         <i class="bi bi-receipt fs-1 opacity-50"></i>
                     </div>
@@ -40,7 +40,7 @@
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-white-50 small">Total Hutang (Belum Bayar)</div>
+                            <div class="text-white fw-bold small">Total Hutang (Belum Bayar)</div>
                             <div class="fs-5 fw-bold">Rp {{ total_hutang|intcomma }}</div>
                         </div>
                         <i class="bi bi-exclamation-circle fs-1 opacity-50"></i>
@@ -53,7 +53,7 @@
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-white-50 small">Total Lunas</div>
+                            <div class="text-white fw-bold small">Total Lunas</div>
                             <div class="fs-5 fw-bold">Rp {{ total_lunas|intcomma }}</div>
                         </div>
                         <i class="bi bi-check-circle fs-1 opacity-50"></i>
@@ -85,7 +85,7 @@
                 <div class="col-md-4">
                     <div class="input-group">
                         <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" name="q" class="form-control" placeholder="Cari No Resi, Pengirim, Penerima..." value="{{ q }}">
+                        <input type="text" name="q" class="form-control" placeholder="Cari No Manifest, Vendor..." value="{{ q }}">
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -107,16 +107,15 @@
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
                     <thead class="table-dark">
-                        <tr>
+                        <tr class="text-center">
                             <th>No</th>
                             <th>Kategori</th>
                             <th>Tgl Kirim</th>
-                            <th>No Resi</th>
-                            <th>Pengirim</th>
+                            <th>No Manifest</th>
                             <th>Tujuan</th>
                             <th>Koli</th>
                             <th>Kg</th>
-                            <th>Penerima</th>
+                            <th>Vendor</th>
                             <th>Tgl Terima</th>
                             <th>Total Hutang (Rp)</th>
                             <th>DP (Rp)</th>
@@ -128,16 +127,15 @@
                         {% for item in manifests %}
                         <tr class="{% if item.status_bayar %}table-success{% endif %}">
                             <td class="text-center">{{ forloop.counter }}</td>
-                            <td><span class="badge bg-secondary">{{ item.kategori }}</span></td>
-                            <td class="text-nowrap">{{ item.tanggal_kirim|date:"d/m/Y"|default:"-" }}</td>
-                            <td class="fw-bold text-info">{{ item.no_resi }}</td>
-                            <td>{{ item.pengirim|default:"-"|truncatechars:18 }}</td>
-                            <td>{{ item.tujuan|default:"-" }}</td>
+                            <td class="text-center"><span class="badge bg-secondary">{{ item.kategori }}</span></td>
+                            <td class="text-center">{{ item.tanggal_kirim|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="text-center fw-bold text-info">{{ item.no_resi }}</td>
+                            <td class="text-center">{{ item.tujuan|default:"-" }}</td>
                             <td class="text-center">{{ item.koli }}</td>
-                            <td class="text-end">{{ item.kg|floatformat:0 }}</td>
-                            <td>{{ item.penerima|default:"-"|truncatechars:15 }}</td>
+                            <td class="text-center">{{ item.kg|floatformat:0 }}</td>
+                            <td class="text-center">{{ item.penerima|default:"-"|truncatechars:15 }}</td>
                             <td class="text-nowrap">{{ item.tanggal_terima|date:"d/m/Y"|default:"-" }}</td>
-                            <td class="text-end fw-bold {% if item.status_bayar %}text-success{% else %}text-danger{% endif %}">{{ item.total|intcomma }}</td>
+                            <td class="text-center fw-bold {% if item.status_bayar %}text-success{% else %}text-danger{% endif %}">{{ item.total|intcomma }}</td>
                             <td class="text-end">{{ item.dp|intcomma }}</td>
                             <td class="text-center">
                                 {% if item.status_bayar %}

@@ -252,53 +252,119 @@ class Manifest(models.Model):
 def create_or_update_jurnal_manifest(sender, instance, created, **kwargs):
     """
     Otomatis buat/update jurnal saat Manifest disimpan.
-    Debit: Beban Pengiriman/Logistik (5xx)
-    Kredit: Hutang Usaha (211)
+    
+    Jurnal 1 - Hutang:
+        Debit: Beban Pengiriman/Logistik (5xx)
+        Kredit: Hutang Usaha (211)
+    
+    Jurnal 2 - DP (jika ada):
+        Debit: Biaya Dibayar Dimuka (115)
+        Kredit: Kas (101)
     """
-    if instance.total <= 0:
-        return
-
-    # Cari Akun Hutang (211)
-    try:
-        akun_hutang = Akun.objects.get(kode='211') 
-    except Akun.DoesNotExist:
-        akun_hutang = Akun.objects.filter(nama__icontains='Hutang').first()
-        if not akun_hutang: return 
-
-    # Cari Akun Beban Pengiriman
-    # Prioritas: 'Biaya Pengiriman Barang' atau akun dengan nama serupa
-    akun_beban = Akun.objects.filter(nama__icontains='Biaya Pengiriman Barang').first()
-    if not akun_beban:
-        akun_beban = Akun.objects.filter(nama__icontains='Biaya Pengiriman').first()
-    if not akun_beban:
-        akun_beban = Akun.objects.filter(kode__startswith='5').first()
-    if not akun_beban: return
-
-    uraian_jurnal = f"Hutang Manifest: {instance.kategori} - {instance.no_resi}"
     tanggal_jurnal = instance.tanggal_kirim or instance.created_at.date()
+    
+    # =============================================
+    # JURNAL 1: HUTANG MANIFEST (Beban - Hutang)
+    # =============================================
+    if instance.total > 0:
+        # Cari Akun Hutang (211)
+        try:
+            akun_hutang = Akun.objects.get(kode='211') 
+        except Akun.DoesNotExist:
+            akun_hutang = Akun.objects.filter(nama__icontains='Hutang').first()
 
-    # Cek jurnal existing
-    jurnal = Jurnal.objects.filter(uraian=uraian_jurnal).first()
+        # Cari Akun Beban Pengiriman (505 - Biaya Pengiriman Vendor)
+        try:
+            akun_beban = Akun.objects.get(kode='505')
+        except Akun.DoesNotExist:
+            # Fallback 1: Cari by nama
+            akun_beban = Akun.objects.filter(nama__icontains='Biaya Pengiriman Vendor').first()
+            
+        if not akun_beban:
+            # Fallback 2: Biaya Lain-lain (514) daripada masuk Biaya Gaji
+            akun_beban = Akun.objects.filter(kode='514').first()
+            
+        if not akun_beban:
+            # Fallback 3: Cari akun biaya logistik lainnya
+            akun_beban = Akun.objects.filter(nama__icontains='Pengiriman').first()
+        
+        if not akun_beban: return
 
-    if jurnal:
-        jurnal.tanggal = tanggal_jurnal
-        jurnal.akun_debit = akun_beban
-        jurnal.akun_kredit = akun_hutang
-        jurnal.nominal = instance.total
-        jurnal.save()
+        if akun_hutang and akun_beban:
+            uraian_hutang = f"Hutang Manifest: {instance.kategori} - {instance.no_resi}"
+            jurnal_hutang = Jurnal.objects.filter(uraian=uraian_hutang).first()
+
+            if jurnal_hutang:
+                jurnal_hutang.tanggal = tanggal_jurnal
+                jurnal_hutang.akun_debit = akun_beban
+                jurnal_hutang.akun_kredit = akun_hutang
+                jurnal_hutang.nominal = instance.total
+                jurnal_hutang.save()
+            else:
+                Jurnal.objects.create(
+                    tanggal=tanggal_jurnal,
+                    uraian=uraian_hutang,
+                    akun_debit=akun_beban,
+                    akun_kredit=akun_hutang,
+                    nominal=instance.total
+                )
+
+    # =============================================
+    # JURNAL 2: DP / BIAYA DIBAYAR DIMUKA (jika ada)
+    # Debit: Biaya Pengiriman Vendor (505) / Beban
+    # Kredit: Kas (101)
+    # =============================================
+    uraian_dp = f"DP Manifest: {instance.kategori} - {instance.no_resi}"
+    
+    if instance.dp and instance.dp > 0:
+        # Cari Akun Beban (Gunakan logika yang sama dgn Hutang)
+        try:
+            akun_debit_dp = Akun.objects.get(kode='505')
+        except Akun.DoesNotExist:
+            akun_debit_dp = Akun.objects.filter(nama__icontains='Biaya Pengiriman Vendor').first()
+            
+        if not akun_debit_dp:
+             # Fallback ke 514 atau akun beban lainnya
+             akun_debit_dp = Akun.objects.filter(kode='514').first()
+        
+        if not akun_debit_dp:
+             # Last resort asset
+             akun_debit_dp = Akun.objects.filter(kode='115').first()
+
+        # Cari Akun Kas (101)
+        try:
+            akun_kas = Akun.objects.get(kode='101')
+        except Akun.DoesNotExist:
+            akun_kas = Akun.objects.filter(nama__icontains='Kas').first()
+        
+        if akun_debit_dp and akun_kas:
+            jurnal_dp = Jurnal.objects.filter(uraian=uraian_dp).first()
+            
+            if jurnal_dp:
+                jurnal_dp.tanggal = tanggal_jurnal
+                jurnal_dp.akun_debit = akun_debit_dp
+                jurnal_dp.akun_kredit = akun_kas
+                jurnal_dp.nominal = instance.dp
+                jurnal_dp.save()
+            else:
+                Jurnal.objects.create(
+                    tanggal=tanggal_jurnal,
+                    uraian=uraian_dp,
+                    akun_debit=akun_debit_dp,
+                    akun_kredit=akun_kas,
+                    nominal=instance.dp
+                )
     else:
-        Jurnal.objects.create(
-            tanggal=tanggal_jurnal,
-            uraian=uraian_jurnal,
-            akun_debit=akun_beban,
-            akun_kredit=akun_hutang,
-            nominal=instance.total
-        )
+        # Jika DP dihapus/dikosongkan, hapus jurnal DP-nya
+        Jurnal.objects.filter(uraian=uraian_dp).delete()
 
 @receiver(post_delete, sender=Manifest)
 def delete_jurnal_manifest(sender, instance, **kwargs):
-    uraian_jurnal = f"Hutang Manifest: {instance.kategori} - {instance.no_resi}"
-    Jurnal.objects.filter(uraian=uraian_jurnal).delete()
+    """Hapus semua jurnal terkait manifest yang dihapus"""
+    uraian_hutang = f"Hutang Manifest: {instance.kategori} - {instance.no_resi}"
+    uraian_dp = f"DP Manifest: {instance.kategori} - {instance.no_resi}"
+    Jurnal.objects.filter(uraian=uraian_hutang).delete()
+    Jurnal.objects.filter(uraian=uraian_dp).delete()
 
 # ============================================
 # MODEL KAS HARIAN (Standalone - Tidak Link ke Jurnal)
