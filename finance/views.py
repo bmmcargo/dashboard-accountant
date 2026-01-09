@@ -4,7 +4,11 @@ from django.db.models.functions import Coalesce
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
+from django.http import HttpResponse
+from django.template.loader import get_template
 from decimal import Decimal
+from io import BytesIO
+
 from .models import Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest, KasHarian, InvoiceTagihan
 from .forms import JurnalForm
 
@@ -817,6 +821,7 @@ def invoice_tagihan_print(request, pk):
         'invoice': inv,
         'grand_total': grand_total
     })
+
 
 @login_required
 def invoice_list(request):

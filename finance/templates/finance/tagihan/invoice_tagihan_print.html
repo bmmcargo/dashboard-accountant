@@ -3,7 +3,7 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <title>Invoice {{ invoice.no_invoice }}</title>
+    <title>{{ invoice.no_invoice }}_{{ invoice.customer }}_{{ invoice.tanggal|date:"d-m-Y" }}</title>
     <style>
       @page {
         size: A4;
