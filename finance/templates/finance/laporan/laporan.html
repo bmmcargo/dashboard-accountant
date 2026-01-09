@@ -8,10 +8,22 @@
   }
 </style>
 <div class="container-fluid">
-  <div class="row mb-4">
-    <div class="col-12">
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-8">
       <h2 class="fw-bold">Laporan Keuangan</h2>
-      <p class="text-muted">Laporan generated otomatis dan presisi.</p>
+      <p class="text-muted mb-0">Laporan generated otomatis dan presisi.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        <form method="get" class="d-inline-block">
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-calendar-check"></i></span>
+                <select name="tahun" class="form-select border-start-0 ps-0" onchange="this.form.submit()">
+                    {% for t in tahun_list %}
+                    <option value="{{ t }}" {% if t == tahun %}selected{% endif %}>Tahun {{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
     </div>
   </div>
 
@@ -38,7 +50,7 @@
         <div class="card-header bg-primary text-white text-center py-3">
           <h4 class="mb-0 fw-bold">CV. BORNEO MEGA MANDIRI</h4>
           <div>LAPORAN LABA RUGI</div>
-          <small>Periode Berjalan</small>
+          <small>Periode Tahun {{ tahun }}</small>
         </div>
         <div class="card-body p-4">
           <!-- PENGHASILAN -->
@@ -103,7 +115,7 @@
 
           <!-- LABA BERSIH -->
           <div class="d-flex justify-content-between fw-bold text-white p-3 mt-4 rounded {% if laba_rugi >= 0 %}bg-success{% else %}bg-danger{% endif %}">
-            <span class="fs-5">LABA BERSIH</span>
+            <span class="fs-5">LABA BERSIH TAHUN INI</span>
             <span class="fs-5 text-nowrap">Rp {{ laba_rugi|intcomma }}</span>
           </div>
         </div>
@@ -115,7 +127,7 @@
       <div class="card border-0 shadow-sm" style="max-width: 950px; margin: 0 auto">
         <div class="card-header bg-dark text-white text-center py-3">
           <h4 class="mb-0 fw-bold">LAPORAN POSISI KEUANGAN (NERACA)</h4>
-          <small>Per Tanggal Hari Ini</small>
+          <small>Per 31 Desember {{ tahun }}</small>
         </div>
         <div class="card-body p-4">
           <div class="row g-4">
@@ -160,8 +172,12 @@
                   <span class="text-nowrap">Rp {{ m.nominal|intcomma }}</span>
                 </div>
                 {% endfor %}
-                <div class="d-flex justify-content-between mb-2 text-success">
-                  <span class="me-2">Laba/Rugi Berjalan</span>
+                <div class="d-flex justify-content-between mb-2 text-success opacity-75">
+                  <span class="me-2">Laba Ditahan (s.d. Thn Lalu)</span>
+                  <span class="text-nowrap">Rp {{ laba_ditahan_awal|intcomma }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2 text-success fw-bold">
+                  <span class="me-2">Laba Tahun Berjalan</span>
                   <span class="text-nowrap">Rp {{ laba_rugi|intcomma }}</span>
                 </div>
 

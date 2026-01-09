@@ -62,4 +62,6 @@ urlpatterns = [
     path('gaji/save/', views.gaji_save_all, name='gaji_save_all'),
     
     path('cashbon/', views.cashbon_list, name='cashbon_list'),
+    path('cashbon/edit/<int:pk>/', views.cashbon_edit, name='cashbon_edit'),
+    path('cashbon/delete/<int:pk>/', views.cashbon_delete, name='cashbon_delete'),
 ]

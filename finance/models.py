@@ -456,6 +456,62 @@ class Cashbon(models.Model):
     def __str__(self):
         return f"{self.karyawan.nama} - Rp {self.nominal:,}"
 
+@receiver(post_save, sender=Cashbon)
+def create_or_update_jurnal_cashbon(sender, instance, created, **kwargs):
+    """
+    Otomatis buat/update jurnal saat Cashbon disimpan.
+    Debit: Piutang Karyawan (113)
+    Kredit: Kas (101)
+    """
+    if instance.nominal <= 0:
+        return
+
+    # Cari Akun Piutang Karyawan (113)
+    try:
+        akun_piutang = Akun.objects.get(kode='113')
+    except Akun.DoesNotExist:
+        akun_piutang = Akun.objects.filter(nama__icontains='Karyawan').first()
+        if not akun_piutang: return
+
+    # Cari Akun Kas (101)
+    try:
+        akun_kas = Akun.objects.get(kode='101')
+    except Akun.DoesNotExist:
+        akun_kas = Akun.objects.filter(nama__icontains='Kas').first()
+        if not akun_kas: return
+
+    uraian_jurnal = f"Cashbon: {instance.karyawan.nama} - {instance.tanggal}"
+    tanggal_jurnal = instance.tanggal
+
+    # Cek jurnal existing
+    jurnal = Jurnal.objects.filter(uraian=uraian_jurnal, nominal=instance.nominal).first() # Tambah filter nominal biar lebih spesifik jika tgl & nama sama
+    
+    # Karena uraian bisa sama (orang sama, tgl sama), sebaiknya pakai ID unik di uraian atau approach lain.
+    # Approach better: Gunakan uraian dengan ID cashbon untuk avoid duplicate match yg salah
+    uraian_jurnal_unique = f"Cashbon #{instance.id}: {instance.karyawan.nama}"
+    
+    jurnal = Jurnal.objects.filter(uraian=uraian_jurnal_unique).first()
+
+    if jurnal:
+        jurnal.tanggal = tanggal_jurnal
+        jurnal.akun_debit = akun_piutang
+        jurnal.akun_kredit = akun_kas
+        jurnal.nominal = instance.nominal
+        jurnal.save()
+    else:
+        Jurnal.objects.create(
+            tanggal=tanggal_jurnal,
+            uraian=uraian_jurnal_unique,
+            akun_debit=akun_piutang,
+            akun_kredit=akun_kas,
+            nominal=instance.nominal
+        )
+
+@receiver(post_delete, sender=Cashbon)
+def delete_jurnal_cashbon(sender, instance, **kwargs):
+    uraian_jurnal_unique = f"Cashbon #{instance.id}: {instance.karyawan.nama}"
+    Jurnal.objects.filter(uraian=uraian_jurnal_unique).delete()
+
 class Penggajian(models.Model):
     """
     Rekap Gaji Bulanan per Karyawan.
@@ -497,3 +553,89 @@ class Penggajian(models.Model):
         # Auto calculate total manual entries (Cashbon otomatis dihitung di Views/Logic terpisah biasanya, tapi kita simpan nilai final di sini)
         self.total_diterima = (self.gaji_pokok + self.lembur + self.bonus) - (self.potongan_cashbon + self.potongan_absen + self.potongan_bpjs + self.potongan_lain)
         super().save(*args, **kwargs)
+
+@receiver(post_save, sender=Penggajian)
+def create_or_update_jurnal_gaji(sender, instance, created, **kwargs):
+    """
+    Otomatis buat/update jurnal saat Gaji disimpan.
+    Debit: Biaya Gaji (501) - Senilai Total Kotor (Gaji+Lembur+Bonus)
+    Kredit: Piutang Karyawan (113) - Senilai Potongan Cashbon
+    Kredit: Kas (101) - Senilai Total Diterima
+    """
+    total_kotor = instance.gaji_pokok + instance.lembur + instance.bonus
+    if total_kotor <= 0:
+        return
+
+    # 1. Cari Akun Biaya Gaji (501)
+    try:
+        akun_biaya_gaji = Akun.objects.get(kode='501')
+    except Akun.DoesNotExist:
+        akun_biaya_gaji = Akun.objects.filter(nama__icontains='Gaji').first()
+        if not akun_biaya_gaji: return
+
+    # 2. Cari Akun Kas (101)
+    try:
+        akun_kas = Akun.objects.get(kode='101')
+    except Akun.DoesNotExist:
+        akun_kas = Akun.objects.filter(nama__icontains='Kas').first()
+        if not akun_kas: return
+
+    # 3. Cari Akun Piutang Karyawan (113) untuk potongan cashbon
+    akun_piutang = None
+    if instance.potongan_cashbon > 0:
+        try:
+            akun_piutang = Akun.objects.get(kode='113')
+        except Akun.DoesNotExist:
+            akun_piutang = Akun.objects.filter(nama__icontains='Karyawan').first()
+
+    uraian_jurnal = f"Gaji: {instance.karyawan.nama} - {instance.bulan}/{instance.tahun}"
+    tanggal_jurnal = instance.tanggal_gaji
+
+    # Hapus jurnal lama jika ada (cara paling aman untuk update jurnal kompleks multi-kredit)
+    # Atau gunakan flag unik. Disini kita delete-create force update.
+    Jurnal.objects.filter(uraian=uraian_jurnal).delete()
+
+    # Create Jurnal
+    # A. DEBIT BIAYA GAJI (Total Kotor)
+    # Tapi tunggu, jurnal di sistem ini single debit single credit per row (model Jurnal sederhana).
+    # Jadi kita harus pecah menjadi 2 entry jurnal jika ada potongan cashbon.
+    
+    # Entry 1: Biaya Gaji vs Piutang (Pelunasan Cashbon)
+    if instance.potongan_cashbon > 0 and akun_piutang:
+        Jurnal.objects.create(
+            tanggal=tanggal_jurnal,
+            uraian=uraian_jurnal + " (Pot. Kasbon)",
+            akun_debit=akun_biaya_gaji,
+            akun_kredit=akun_piutang,
+            nominal=instance.potongan_cashbon
+        )
+        # Sisa biaya gaji yang akan dilawakna Kas
+        sisa_biaya_gaji = total_kotor - instance.potongan_cashbon
+    else:
+        sisa_biaya_gaji = total_kotor
+
+    # Entry 2: Biaya Gaji vs Kas (Pembayaran Bersih + Potongan Lain jika ada dianggap mengurangi kas keluar/biaya yg dibayar)
+    # Simplifikasi: Anggap potongan lain mengurangi kas yang dikeluarkan, artinya expense tetap full, tapi cash out bekurang.
+    # Tapi karena model Jurnal kita simple (1 Debit, 1 Kredit), kita catat expense sisanya vs Kas.
+    
+    # Kas yang keluar adalah total_diterima.
+    # Expense yang belum dicatat adalah sisa_biaya_gaji.
+    # Jika sisa_biaya_gaji != total_diterima (misal ada potongan lain abseb/bpjs), maka selisihnya kemana?
+    # Potongan absen/lain biasanya mengurangi Biaya atau dianggap Pendapatan Lain.
+    # Untuk simplifikasi saat ini: Kita catat sebesar Kas Keluar saja sebagai Biaya Gaji vs Kas.
+    # (Nanti potongan lain bisa dikembangkan lebih lanjut map ke akun mana).
+    
+    nominal_kas = instance.total_diterima
+    if nominal_kas > 0:
+        Jurnal.objects.create(
+            tanggal=tanggal_jurnal,
+            uraian=uraian_jurnal,
+            akun_debit=akun_biaya_gaji,
+            akun_kredit=akun_kas,
+            nominal=nominal_kas
+        )
+
+@receiver(post_delete, sender=Penggajian)
+def delete_jurnal_gaji(sender, instance, **kwargs):
+    uraian_jurnal = f"Gaji: {instance.karyawan.nama} - {instance.bulan}/{instance.tahun}"
+    Jurnal.objects.filter(uraian__startswith=uraian_jurnal).delete()

@@ -1,0 +1,39 @@
+{% extends 'finance/base.html' %} {% block content %}
+<div class="container-fluid px-4">
+  <div class="row justify-content-center mt-5">
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="fw-bold text-primary mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Cashbon</h5>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">Karyawan</label>
+              {{ form.karyawan }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">Tanggal</label>
+              <input type="date" name="tanggal" class="form-control" value="{{ form.tanggal.value|date:'Y-m-d' }}" required />
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">Nominal (Rp)</label>
+              {{ form.nominal }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-muted small fw-bold">Keterangan</label>
+              {{ form.keterangan }}
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary rounded-pill">Simpan Perubahan</button>
+              <a href="{% url 'cashbon_list' %}" class="btn btn-light rounded-pill">Batal</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

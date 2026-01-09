@@ -164,11 +164,21 @@ def buku_besar(request):
 
 @login_required
 def laporan_keuangan(request):
-    # Laba Rugi
+    import datetime
+    today = datetime.date.today()
+    try:
+        tahun = int(request.GET.get('tahun', today.year))
+    except ValueError:
+        tahun = today.year
+
+    start_date = datetime.date(tahun, 1, 1)
+    end_date = datetime.date(tahun, 12, 31)
+
+    # 1. LABA RUGI (Hanya transaksi tahun ini)
     pendapatan = []
     total_pendapatan = 0
     for a in Akun.objects.filter(kategori='REVENUE'):
-        s = get_saldo_akun(a)
+        s = get_saldo_akun(a, start_date=start_date, end_date=end_date)
         if s != 0:
             pendapatan.append({'nama': a.nama, 'nominal': s})
             total_pendapatan += s
@@ -176,26 +186,37 @@ def laporan_keuangan(request):
     beban = []
     total_beban = 0
     for a in Akun.objects.filter(kategori='EXPENSE'):
-        s = get_saldo_akun(a)
+        s = get_saldo_akun(a, start_date=start_date, end_date=end_date)
         if s != 0:
             beban.append({'nama': a.nama, 'nominal': s})
             total_beban += s
             
-    laba_rugi_sebelum_pajak = total_pendapatan - total_beban
+    # Laba Rugi Tahun Berjalan
+    # Pajak 2% dikembalikan (Sesuai request user)
+    pajak_2_persen = int(total_pendapatan * Decimal('0.02'))
+    laba_kotor = total_pendapatan - pajak_2_persen
     
-    # Perhitungan Pajak 2% (sesuai format BMM)
-    pajak_2_persen = int(total_pendapatan * Decimal('0.02'))  # Pajak 2% dari penghasilan
-    laba_kotor = total_pendapatan - pajak_2_persen  # Laba Kotor setelah pajak penghasilan
-    biaya_pajak = 0  # Biaya pajak lainnya (bisa diisi jika ada)
+    biaya_pajak = 0 
+    laba_rugi_tahun_ini = laba_kotor - total_beban - biaya_pajak
     
-    # Laba Bersih = Laba Kotor - Total Beban - Biaya Pajak
-    laba_rugi = laba_kotor - total_beban - biaya_pajak
-    
-    # Neraca (Balance Sheet)
+    # 2. LABA DITAHAN (Retained Earnings) - Akumulasi Laba dari awal s.d. Tahun Lalu
+    # Hitung semua pendapatan & beban SEBELUM start_date tahun ini
+    total_rev_past = 0
+    for a in Akun.objects.filter(kategori='REVENUE'):
+        total_rev_past += get_saldo_akun(a, end_date=start_date - datetime.timedelta(days=1))
+        
+    total_exp_past = 0
+    for a in Akun.objects.filter(kategori='EXPENSE'):
+        total_exp_past += get_saldo_akun(a, end_date=start_date - datetime.timedelta(days=1))
+        
+    laba_ditahan_awal = total_rev_past - total_exp_past
+
+    # 3. NERACA (Akumulatif sampai end_date)
     aset = []
     total_aset = 0
     for a in Akun.objects.filter(kategori='ASSET'):
-        s = get_saldo_akun(a)
+        # Asset akumulatif dari awal waktu sampai akhir tahun ini
+        s = get_saldo_akun(a, end_date=end_date)
         if s != 0:
             aset.append({'nama': a.nama, 'nominal': s})
             total_aset += s
@@ -203,45 +224,47 @@ def laporan_keuangan(request):
     kewajiban = []
     total_kewajiban = 0
     for a in Akun.objects.filter(kategori='LIABILITY'):
-        s = get_saldo_akun(a)
+        s = get_saldo_akun(a, end_date=end_date)
         if s != 0:
             kewajiban.append({'nama': a.nama, 'nominal': s})
             total_kewajiban += s
             
-    modal_items = [] # Avoid Variable Clash
-    total_modal_awal = 0
-    
+    modal_items = [] 
+    total_modal_setor = 0
     for a in Akun.objects.filter(kategori='EQUITY'):
-        s = get_saldo_akun(a)
+        # FILTER PENTING: Jangan masukkan Akun Laba/Rugi dari Database
+        # Karena kita akan pakai nilai hasil hitungan 'laba_rugi_tahun_ini' dan 'laba_ditahan_awal'
+        # Agar tidak DOUBLE COUNTING.
+        if 'laba' in a.nama.lower() or 'rugi' in a.nama.lower() or 'income' in a.nama.lower():
+            continue
+            
+        s = get_saldo_akun(a, end_date=end_date)
         modal_items.append({'nama': a.nama, 'nominal': s})
-        total_modal_awal += s
+        total_modal_setor += s
         
-    # Saldo Laba (Retained Earnings) = Laba Rugi
-    total_ekuitas = total_modal_awal + laba_rugi
+    # Total Ekuitas = Modal Setor + Laba Ditahan Awal + Laba Tahun Ini
+    total_ekuitas = total_modal_setor + laba_ditahan_awal + laba_rugi_tahun_ini
     
-    # Checks
+    # Balance Check
     balance_check = total_aset - (total_kewajiban + total_ekuitas)
     
-    # Neraca Saldo (Trial Balance)
+    # 4. NERACA SALDO (Kumulatif sampai akhir tahun)
     neraca_saldo = []
     total_ns_debit = 0
     total_ns_kredit = 0
     
+    # Ambil semua akun
     for a in Akun.objects.all().order_by('kode'):
-        saldo = get_saldo_akun(a)
+        saldo = get_saldo_akun(a, end_date=end_date)
         if saldo != 0:
             ns_debit = 0
             ns_kredit = 0
             if a.saldo_normal == 'DEBIT':
-                if saldo >= 0:
-                    ns_debit = saldo
-                else:
-                    ns_kredit = abs(saldo) # Abnormal balance
+                if saldo >= 0: ns_debit = saldo
+                else: ns_kredit = abs(saldo)
             else: # CREDIT
-                if saldo >= 0:
-                    ns_kredit = saldo
-                else:
-                    ns_debit = abs(saldo) # Abnormal balance
+                if saldo >= 0: ns_kredit = saldo
+                else: ns_debit = abs(saldo)
                     
             neraca_saldo.append({
                 'kode': a.kode,
@@ -252,17 +275,20 @@ def laporan_keuangan(request):
             total_ns_debit += ns_debit
             total_ns_kredit += ns_kredit
 
-    # Laporan Arus Kas (Metode Langsung Sederhana)
+    # 5. ARUS KAS (Untuk tahun ini saja)
     arus_kas_masuk = []
     arus_kas_keluar = []
     total_ak_masuk = 0
     total_ak_keluar = 0
     
-    # Asumsi akun Kas/Bank mengandung kata 'Kas' atau 'Bank'
     cash_accounts = Akun.objects.filter(Q(nama__icontains='Kas') | Q(nama__icontains='Bank'))
     
-    # Pemasukan (Debit di Akun Kas)
-    inflows = Jurnal.objects.filter(akun_debit__in=cash_accounts).select_related('akun_kredit').order_by('tanggal')
+    # Filter jurnal kas range tahun ini
+    inflows = Jurnal.objects.filter(
+        akun_debit__in=cash_accounts, 
+        tanggal__range=(start_date, end_date)
+    ).select_related('akun_kredit').order_by('tanggal')
+    
     for tx in inflows:
         arus_kas_masuk.append({
             'tanggal': tx.tanggal,
@@ -271,8 +297,11 @@ def laporan_keuangan(request):
         })
         total_ak_masuk += tx.nominal
         
-    # Pengeluaran (Kredit di Akun Kas)
-    outflows = Jurnal.objects.filter(akun_kredit__in=cash_accounts).select_related('akun_debit').order_by('tanggal')
+    outflows = Jurnal.objects.filter(
+        akun_kredit__in=cash_accounts,
+        tanggal__range=(start_date, end_date)
+    ).select_related('akun_debit').order_by('tanggal')
+    
     for tx in outflows:
         arus_kas_keluar.append({
             'tanggal': tx.tanggal,
@@ -283,14 +312,26 @@ def laporan_keuangan(request):
     
     net_cash_flow = total_ak_masuk - total_ak_keluar
 
+    # List Tahun untuk Filter UI
+    # Ambil distinct year dari Jurnal
+    tahun_db = Jurnal.objects.dates('tanggal', 'year')
+    tahun_list = sorted(set([t.year for t in tahun_db] + [today.year]), reverse=True)
+
     context = {
+        'tahun': tahun,
+        'tahun_list': tahun_list,
         'pendapatan': pendapatan, 'total_pendapatan': total_pendapatan,
         'beban': beban, 'total_beban': total_beban,
-        'pajak_2_persen': pajak_2_persen, 'laba_kotor': laba_kotor,
-        'biaya_pajak': biaya_pajak, 'laba_rugi': laba_rugi,
+        'pajak_2_persen': pajak_2_persen, 
+        'laba_kotor': laba_kotor,
+        'laba_rugi': laba_rugi_tahun_ini, # Laba Rugi Tahun Ini
+        
         'aset': aset, 'total_aset': total_aset,
         'kewajiban': kewajiban, 'total_kewajiban': total_kewajiban,
-        'modal': modal_items, 'total_modal': total_modal_awal, 'total_ekuitas': total_ekuitas,
+        'modal': modal_items, 'total_modal': total_modal_setor,
+        'laba_ditahan_awal': laba_ditahan_awal, # New Item
+        'total_ekuitas': total_ekuitas,
+        
         'balance_check': balance_check,
         'neraca_saldo': neraca_saldo, 'total_ns_debit': total_ns_debit, 'total_ns_kredit': total_ns_kredit,
         'arus_kas_masuk': arus_kas_masuk, 'arus_kas_keluar': arus_kas_keluar,
@@ -1064,6 +1105,31 @@ def cashbon_list(request):
         form = CashbonForm()
         
     return render(request, 'finance/gaji/cashbon_list.html', {'cashbons': cashbons, 'form': form})
+
+@login_required
+def cashbon_edit(request, pk):
+    cashbon = get_object_or_404(Cashbon, pk=pk)
+    if request.method == 'POST':
+        form = CashbonForm(request.POST, instance=cashbon)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data Cashbon diperbarui!')
+            return redirect('cashbon_list')
+    else:
+        form = CashbonForm(instance=cashbon)
+    # Gunakan template yang sama atau terpisah, di sini saya gunakan template list tapi fokus ke form edit
+    # Atau lebih baik buat template simple 'cashbon_form.html' kalau mau rapi.
+    # Untuk cepat, kita pakai template terpisah 'finance/gaji/cashbon_form.html' yang akan kita buat atau pakai structure yang ada.
+    # Agar konsisten dengan UI 'cashbon_list' (sidebar form), agak tricky kalau edit.
+    # Kita buat page edit terpisah saja 'finance/gaji/cashbon_edit.html'
+    return render(request, 'finance/gaji/cashbon_edit.html', {'form': form, 'title': 'Edit Cashbon'})
+
+@login_required
+def cashbon_delete(request, pk):
+    c = get_object_or_404(Cashbon, pk=pk)
+    c.delete()
+    messages.success(request, 'Data Cashbon dihapus.')
+    return redirect('cashbon_list')
 
 
 

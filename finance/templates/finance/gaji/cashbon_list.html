@@ -52,6 +52,7 @@
                 <th class="py-3">Karyawan</th>
                 <th class="py-3">Keterangan</th>
                 <th class="text-end pe-4 py-3">Nominal</th>
+                <th class="text-center py-3">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -61,10 +62,25 @@
                 <td class="fw-bold text-primary">{{ c.karyawan.nama }}</td>
                 <td class="small">{{ c.keterangan|default:"-" }}</td>
                 <td class="text-end pe-4 font-monospace fw-bold text-danger">Rp {{ c.nominal|intcomma }}</td>
+                <td class="text-center">
+                  <a href="{% url 'cashbon_edit' c.pk %}" class="btn btn-sm btn-outline-warning py-0 px-1" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger py-0 px-1"
+                    title="Hapus"
+                    data-name="Cashbon {{ c.karyawan.nama }}"
+                    data-url="{% url 'cashbon_delete' c.pk %}"
+                    onclick="confirmDelete(this.dataset.name, this.dataset.url)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="4" class="text-center py-5 text-muted">Belum ada data cashbon.</td>
+                <td colspan="5" class="text-center py-5 text-muted">Belum ada data cashbon.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -74,4 +90,33 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Konfirmasi Delete -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="deleteModalLabel"><i class="bi bi-exclamation-triangle me-2"></i>Konfirmasi Hapus</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>Apakah Anda yakin ingin menghapus <strong id="deleteItemName"></strong>?</p>
+        <p class="text-muted small mb-0">Tindakan ini juga akan menghapus jurnal terkait.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <a id="deleteConfirmBtn" href="#" class="btn btn-outline-danger">Ya, Hapus</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function confirmDelete(itemName, deleteUrl) {
+    document.getElementById('deleteItemName').textContent = itemName;
+    document.getElementById('deleteConfirmBtn').href = deleteUrl;
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+  }
+</script>
 {% endblock %}
