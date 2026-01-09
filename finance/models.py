@@ -47,6 +47,8 @@ class InvoiceTagihan(models.Model):
     tanggal = models.DateField(default=timezone.now)
     jatuh_tempo = models.DateField(null=True, blank=True)
     total = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    biaya_awb = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Biaya Kirim AWB")
+    biaya_handling = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Biaya Handling")
     status = models.CharField(max_length=20, default='BELUM BAYAR') # BELUM BAYAR, LUNAS
     
     created_at = models.DateTimeField(auto_now_add=True)

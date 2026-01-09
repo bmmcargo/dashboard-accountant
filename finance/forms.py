@@ -1,5 +1,5 @@
 from django import forms
-from .models import Jurnal, Akun, InboundTransaction, OutboundTransaction, Penerimaan, Manifest, KasHarian
+from .models import Jurnal, Akun, InboundTransaction, OutboundTransaction, Penerimaan, Manifest, KasHarian, InvoiceTagihan
 
 class JurnalForm(forms.ModelForm):
     class Meta:
@@ -208,4 +208,23 @@ class PenggajianForm(forms.ModelForm):
         labels = {
             'potongan_cashbon': 'Potongan Cashbon (Rp)',
             'potongan_lain': 'Potongan Lain-lain (Hutang Kantin dll)',
+        }
+
+class InvoiceTagihanForm(forms.ModelForm):
+    class Meta:
+        model = InvoiceTagihan
+        fields = ['no_invoice', 'customer', 'tanggal', 'jatuh_tempo', 'total', 'biaya_awb', 'biaya_handling', 'status']
+        widgets = {
+            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'jatuh_tempo': forms.DateInput(attrs={'type': 'date'}),
+        }
+        labels = {
+            'no_invoice': 'Nomor Invoice',
+            'customer': 'Nama Customer',
+            'tanggal': 'Tanggal Invoice',
+            'jatuh_tempo': 'Jatuh Tempo',
+            'total': 'Total Tagihan (Rp)',
+            'biaya_awb': 'Biaya Kirim AWB (Rp)',
+            'biaya_handling': 'Biaya Handling (Rp)',
+            'status': 'Status Pembayaran'
         }

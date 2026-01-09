@@ -1,0 +1,124 @@
+{% extends 'finance/base.html' %}
+{% load humanize %}
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4"><i class="bi bi-pencil-square text-info"></i> Edit Invoice</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'invoice_list' %}">Data Invoice</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'invoice_tagihan_print' invoice.pk %}">{{ invoice.no_invoice }}</a></li>
+        <li class="breadcrumb-item active">Edit</li>
+    </ol>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-info text-white">
+            <h6 class="m-0 fw-bold">Edit Data Invoice</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_no_invoice" class="form-label fw-bold">Nomor Invoice</label>
+                        <input type="text" name="no_invoice" id="id_no_invoice" class="form-control"
+                               value="{{ form.no_invoice.value }}" required>
+                        <div class="form-text text-muted">Pastikan format nomor sesuai standar perusahaan.</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_customer" class="form-label fw-bold">Nama Customer</label>
+                        <input type="text" name="customer" id="id_customer" class="form-control"
+                               value="{{ form.customer.value }}" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="id_tanggal" class="form-label fw-bold">Tanggal Invoice</label>
+                        <input type="date" name="tanggal" id="id_tanggal" class="form-control"
+                               value="{{ form.tanggal.value|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_jatuh_tempo" class="form-label fw-bold">Jatuh Tempo</label>
+                        <input type="date" name="jatuh_tempo" id="id_jatuh_tempo" class="form-control"
+                               value="{{ form.jatuh_tempo.value|date:'Y-m-d' }}">
+                    </div>
+                     <div class="col-md-4 mb-3">
+                        <label for="id_status" class="form-label fw-bold">Status Pembayaran</label>
+                        <select name="status" id="id_status" class="form-select">
+                            <option value="BELUM BAYAR" {% if form.status.value == 'BELUM BAYAR' %}selected{% endif %}>Belum Bayar</option>
+                            <option value="LUNAS" {% if form.status.value == 'LUNAS' %}selected{% endif %}>Lunas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr class="my-3">
+                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calculator me-2"></i>Detail Biaya</h6>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="id_total" class="form-label fw-bold">Total Tagihan (Rp)</label>
+                        <input type="number" name="total" id="id_total" class="form-control"
+                               value="{{ form.total.value|default:0 }}">
+                        <div class="form-text text-muted">Subtotal dari item-item inbound.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_biaya_handling" class="form-label fw-bold">Biaya Handling (Rp)</label>
+                        <input type="number" name="biaya_handling" id="id_biaya_handling" class="form-control"
+                               value="{{ form.biaya_handling.value|default:0 }}">
+                        <div class="form-text text-muted">Biaya penanganan/tarif per kg.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_biaya_awb" class="form-label fw-bold">Biaya Kirim AWB (Rp)</label>
+                        <input type="number" name="biaya_awb" id="id_biaya_awb" class="form-control"
+                               value="{{ form.biaya_awb.value|default:0 }}">
+                        <div class="form-text text-muted">Biaya pengiriman dokumen fisik.</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold text-success">Grand Total (Rp)</label>
+                        <input type="text" class="form-control fw-bold text-success bg-light" 
+                               id="grandTotalDisplay" readonly 
+                               value="Rp {{ invoice.total|add:invoice.biaya_awb|intcomma }}">
+                        <div class="form-text text-success">Total + Handling + AWB</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i> Perubahan <strong>Nomor Invoice</strong> atau <strong>Tanggal</strong> mungkin mempengaruhi data laporan/pencatatan. Pastikan data sudah benar.
+                </div>
+
+                <hr>
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{% url 'invoice_tagihan_print' invoice.pk %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left me-1"></i> Batal
+                    </a>
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-save me-1"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Live calculation of grand total
+function updateGrandTotal() {
+    const total = parseInt(document.getElementById('id_total').value) || 0;
+    const handling = parseInt(document.getElementById('id_biaya_handling').value) || 0;
+    const awb = parseInt(document.getElementById('id_biaya_awb').value) || 0;
+    const grandTotal = total + handling + awb;
+    document.getElementById('grandTotalDisplay').value = 'Rp ' + grandTotal.toLocaleString('id-ID');
+}
+
+document.getElementById('id_total').addEventListener('input', updateGrandTotal);
+document.getElementById('id_biaya_handling').addEventListener('input', updateGrandTotal);
+document.getElementById('id_biaya_awb').addEventListener('input', updateGrandTotal);
+
+// Run on load
+updateGrandTotal();
+</script>
+{% endblock %}

@@ -61,7 +61,7 @@
                     <tbody>
                         {% for invoice in invoices %}
                         <tr>
-                            <td class="fw-bold text-primary">{{ invoice.no_invoice }}</td>
+                            <td class="fw-bold"><a href="{% url 'invoice_tagihan_print' invoice.pk %}" class="text-decoration-none">{{ invoice.no_invoice }}</a></td>
                             <td>{{ invoice.tanggal|date:"d/m/Y" }}</td>
                             <td>{{ invoice.customer }}</td>
                             <td>
@@ -78,6 +78,9 @@
                                 </span>
                             </td>
                             <td class="text-center">
+                                <a href="{% url 'tagihan_edit' invoice.pk %}" class="btn btn-sm btn-warning text-dark" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                                 <a href="{% url 'invoice_tagihan_print' invoice.pk %}" class="btn btn-sm btn-info text-white" title="Cetak" target="_blank">
                                     <i class="bi bi-printer"></i>
                                 </a>

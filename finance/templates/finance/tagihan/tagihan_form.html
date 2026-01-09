@@ -12,17 +12,22 @@
 
         <div class="row mb-4">
           <div class="col-md-6">
-            <label for="customerSelect" class="form-label fw-bold">Pilih Customer/Vendor</label>
-            <select name="customer" id="customerSelect" class="form-select" required onchange="filterInbounds()">
-              <option value="">-- Pilih Customer --</option>
+            <label for="customerInput" class="form-label fw-bold">Nama Customer/Vendor</label>
+            <input type="text" name="customer" id="customerInput" class="form-control" placeholder="Ketik nama customer atau pilih dari daftar item" required />
+            <div class="form-text text-muted">Ketik manual atau akan otomatis terisi dari item pertama yang dicentang.</div>
+          </div>
+          <div class="col-md-4">
+            <label for="jatuhTempo" class="form-label fw-bold">Tanggal Jatuh Tempo</label>
+            <input type="date" name="jatuh_tempo" id="jatuhTempo" class="form-control" />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-bold">Filter</label>
+            <select id="filterVendor" class="form-select" onchange="filterByVendor()">
+              <option value="">-- Semua --</option>
               {% for c in customers %}
               <option value="{{ c }}">{{ c }}</option>
               {% endfor %}
             </select>
-          </div>
-          <div class="col-md-6">
-            <label for="jatuhTempo" class="form-label fw-bold">Tanggal Jatuh Tempo</label>
-            <input type="date" name="jatuh_tempo" id="jatuhTempo" class="form-control" />
           </div>
         </div>
 
@@ -42,7 +47,7 @@
               {% for item in inbounds %}
               <tr class="inbound-row" data-vendor="{{ item.vendor }}">
                 <td class="text-center">
-                  <input type="checkbox" name="inbound_ids" value="{{ item.pk }}" class="inbound-check" />
+                  <input type="checkbox" name="inbound_ids" value="{{ item.pk }}" class="inbound-check" onchange="updateCustomerField()" />
                 </td>
                 <td>{{ item.tanggal_masuk_stt|date:"d/m/Y" }}</td>
                 <td class="fw-bold">{{ item.no_resi }}</td>
@@ -59,7 +64,11 @@
           </table>
         </div>
 
-        <div class="mt-4 text-end">
+        <div class="mt-4 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="text-muted">Terpilih: <strong id="selectedCount">0</strong> item</span>
+            <span class="ms-3 text-primary fw-bold">Total: Rp <span id="selectedTotal">0</span></span>
+          </div>
           <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-file-earmark-plus"></i> Generate Invoice</button>
         </div>
       </form>
@@ -68,34 +77,62 @@
 </div>
 
 <script>
-  function filterInbounds() {
-    const selectedVendor = document.getElementById('customerSelect').value;
+  // Filter by vendor (optional, for convenience)
+  function filterByVendor() {
+    const selectedVendor = document.getElementById('filterVendor').value;
     const rows = document.querySelectorAll('.inbound-row');
-    let hasVisible = false;
 
     rows.forEach((row) => {
       if (row.dataset.vendor === selectedVendor || selectedVendor === '') {
         row.style.display = '';
-        hasVisible = true;
       } else {
         row.style.display = 'none';
-        // Uncheck hidden items to avoid accidental submission
+        // Uncheck hidden items
         row.querySelector('.inbound-check').checked = false;
       }
     });
 
     // Uncheck 'check all' when filtering
     document.getElementById('checkAll').checked = false;
+    updateCustomerField();
   }
 
+  // Toggle all visible checkboxes
   function toggleAll(source) {
     const checkboxes = document.querySelectorAll('.inbound-row:not([style*="display: none"]) .inbound-check');
     checkboxes.forEach((cb) => (cb.checked = source.checked));
+    updateCustomerField();
   }
 
-  // Run filter on load (hide all initially or show all? Show all is fine, but maybe safer to hide until selected)
-  // Optional: Trigger change to hide irrelevant items initially if needed.
-  // document.getElementById('customerSelect').value = "";
-  // filterInbounds();
+  // Update customer field based on first checked item
+  function updateCustomerField() {
+    const checkedBoxes = document.querySelectorAll('.inbound-check:checked');
+    const customerInput = document.getElementById('customerInput');
+
+    if (checkedBoxes.length > 0) {
+      // Get vendor from first checked item's row
+      const firstRow = checkedBoxes[0].closest('.inbound-row');
+      const vendor = firstRow.dataset.vendor;
+      customerInput.value = vendor;
+    } else {
+      customerInput.value = '';
+    }
+
+    // Update count and total
+    let count = 0;
+    let total = 0;
+
+    checkedBoxes.forEach((cb) => {
+      count++;
+      const row = cb.closest('tr');
+      // Get total from last td (remove Rp and dots for parsing)
+      const totalText = row.querySelector('td:last-child').textContent.trim();
+      const numericVal = parseInt(totalText.replace(/\./g, '').replace(/,/g, '')) || 0;
+      total += numericVal;
+    });
+
+    document.getElementById('selectedCount').textContent = count;
+    document.getElementById('selectedTotal').textContent = total.toLocaleString('id-ID');
+  }
 </script>
 {% endblock %}

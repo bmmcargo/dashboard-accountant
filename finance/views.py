@@ -811,7 +811,12 @@ def tagihan_create(request):
 @login_required
 def invoice_tagihan_print(request, pk):
     inv = get_object_or_404(InvoiceTagihan, pk=pk)
-    return render(request, 'finance/tagihan/invoice_tagihan_print.html', {'invoice': inv})
+    # Calculate grand total (total + biaya_awb + biaya_handling)
+    grand_total = int(inv.total) + int(inv.biaya_awb) + int(inv.biaya_handling)
+    return render(request, 'finance/tagihan/invoice_tagihan_print.html', {
+        'invoice': inv,
+        'grand_total': grand_total
+    })
 
 @login_required
 def invoice_list(request):
@@ -853,6 +858,29 @@ def invoice_list(request):
         'bulan_list': bulan_list,
         'tahun_list': tahun_list,
         'total_tagihan': total_tagihan,
+        'total_tagihan': total_tagihan,
+    })
+
+# --- INVOICE EDIT ---
+from .forms import InvoiceTagihanForm
+
+@login_required
+def tagihan_edit(request, pk):
+    invoice = get_object_or_404(InvoiceTagihan, pk=pk)
+    
+    if request.method == 'POST':
+        form = InvoiceTagihanForm(request.POST, instance=invoice)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Invoice berhasil diperbarui!')
+            return redirect('invoice_tagihan_print', pk=invoice.pk)
+    else:
+        form = InvoiceTagihanForm(instance=invoice)
+        
+    return render(request, 'finance/tagihan/tagihan_edit.html', {
+        'form': form,
+        'invoice': invoice,
+        'title': f'Edit Invoice: {invoice.no_invoice}'
     })
 
 # ============================================

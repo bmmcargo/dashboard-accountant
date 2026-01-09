@@ -44,6 +44,7 @@ urlpatterns = [
     # Tagihan Kolektif
     path('tagihan/', views.invoice_list, name='invoice_list'),
     path('tagihan/baru/', views.tagihan_create, name='tagihan_create'),
+    path('tagihan/edit/<int:pk>/', views.tagihan_edit, name='tagihan_edit'),
     path('tagihan/print/<int:pk>/', views.invoice_tagihan_print, name='invoice_tagihan_print'),
     path('tagihan/delete/<int:pk>/', views.tagihan_delete, name='tagihan_delete'),
 

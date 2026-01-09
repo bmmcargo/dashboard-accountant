@@ -1,4 +1,4 @@
-{% load static %} {% load humanize %}
+{% load static %} {% load humanize %} {% load terbilang_filter %}
 <!DOCTYPE html>
 <html lang="id">
   <head>
@@ -11,7 +11,7 @@
       }
       body {
         font-family: Arial, sans-serif;
-        font-size: 12px;
+        font-size: 11px;
         color: #000;
       }
       .container {
@@ -31,58 +31,56 @@
         padding: 5px;
       }
       .logo {
-        max-height: 80px;
+        max-height: 60px;
       }
       .company-info {
         font-size: 14px;
         font-weight: bold;
       }
       .company-detail {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: normal;
       }
 
       .invoice-title {
         text-align: center;
-        font-size: 24px;
+        font-size: 18px;
         font-weight: bold;
-        color: #000; /* Warna biru tua di gambar: #1a428a, tapi user minta mirip */
+        color: #000;
         text-transform: uppercase;
-        margin: 10px 0;
-        text-shadow: 1px 1px 0 #ccc; /* Style mirip wordart */
+        margin: 8px 0;
+        text-decoration: underline;
       }
 
       /* Meta Info */
       .meta-table {
         width: 100%;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         border-collapse: collapse;
+        font-size: 11px;
       }
       .meta-table td {
-        padding: 2px 5px;
-      }
-      .meta-label {
-        font-weight: bold;
-        width: 100px;
+        padding: 1px 5px;
       }
 
       /* Main Table */
       .main-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
-        font-size: 11px;
+        margin-bottom: 0;
+        font-size: 10px;
       }
       .main-table th {
-        background-color: #5b9bd5; /* Warna biru header excel */
+        background-color: #5b9bd5;
         color: #fff;
         border: 1px solid #000;
-        padding: 5px;
+        padding: 4px 2px;
         text-align: center;
+        font-weight: bold;
       }
       .main-table td {
         border: 1px solid #000;
-        padding: 4px;
+        padding: 3px 4px;
         vertical-align: middle;
       }
       .col-center {
@@ -91,53 +89,93 @@
       .col-right {
         text-align: right;
       }
-
-      /* Footer */
-      .footer-total {
-        border: 2px solid #000;
-        font-weight: bold;
-        padding: 5px;
-        text-align: right;
-        background: #fff;
+      .col-left {
+        text-align: left;
       }
 
+      /* Summary rows */
+      .summary-row td {
+        border: 1px solid #000;
+        padding: 3px 4px;
+      }
+      .no-border {
+        border: none !important;
+      }
+      .total-row td {
+        font-weight: bold;
+      }
+
+      /* Terbilang */
+      .terbilang-box {
+        border: 1px solid #000;
+        padding: 4px 8px;
+        margin: 8px 0;
+        font-size: 10px;
+        text-align: center;
+      }
+
+      /* Bank Info */
       .bank-info {
-        margin-top: 20px;
-        font-size: 12px;
+        margin-top: 15px;
+        font-size: 11px;
       }
       .bank-table {
-        width: 60%;
+        width: 55%;
         float: left;
       }
       .bank-table td {
-        padding: 2px;
+        padding: 1px 0;
       }
 
       .signature-box {
-        width: 35%;
+        width: 40%;
         float: right;
         text-align: center;
-        margin-top: 20px;
       }
       .sign-space {
-        height: 80px;
+        height: 60px;
       }
 
       .clear {
         clear: both;
       }
+
+      @media print {
+        .d-print-none {
+          display: none !important;
+        }
+        /* Force background colors to print */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .main-table th {
+          background-color: #5b9bd5 !important;
+          color: #fff !important;
+        }
+        .total-row td {
+          background-color: #5b9bd5 !important;
+          color: #fff !important;
+        }
+      }
     </style>
   </head>
   <body>
+    <div class="d-print-none" style="position: fixed; top: 10px; right: 10px; z-index: 1000">
+      <a href="{% url 'tagihan_edit' invoice.pk %}" style="text-decoration: none; background: #ffc107; color: #000; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px">Edit Invoice</a>
+      <a href="{% url 'invoice_list' %}" style="text-decoration: none; background: #6c757d; color: #fff; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px; margin-left: 5px">Kembali</a>
+      <a href="javascript:window.print()" style="text-decoration: none; background: #0d6efd; color: #fff; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px; margin-left: 5px">Cetak</a>
+    </div>
+
     <div class="container">
       <!-- Header -->
       <table class="header-table">
         <tr>
-          <td style="width: 1px; padding-right: 15px; vertical-align: middle">
-            <img src="{% static 'finance/img/logo-bmm.png' %}" class="logo" style="max-height: 80px; width: auto" />
+          <td style="width: 70px; padding-right: 10px; vertical-align: middle">
+            <img src="{% static 'finance/img/logo-bmm.png' %}" class="logo" style="max-height: 60px; width: auto" />
           </td>
           <td style="vertical-align: middle">
-            <div class="company-info" style="font-size: 16px; margin-bottom: 2px">BMM CARGO</div>
+            <div class="company-info">BMM CARGO</div>
             <div class="company-detail">
               Jl. Danau Sentarum Pontianak<br />
               E-Mail: bmmcargo@yahoo.co.id, ajaroh@yahoo.co.id<br />
@@ -153,22 +191,16 @@
       <!-- Meta Info -->
       <table class="meta-table">
         <tr>
-          <td style="width: 1%; white-space: nowrap; padding-right: 20px">Tgl Invoice</td>
-          <td>: {{ invoice.tanggal|date:"d F Y" }}</td>
-          <td style="width: 1%; white-space: nowrap; padding-left: 40px; padding-right: 20px">Tgl Jatuh Tempo</td>
+          <td style="width: 100px">Tgl Invoice</td>
+          <td style="width: 180px">: {{ invoice.tanggal|date:"d F Y" }}</td>
+          <td style="width: 100px">Tgl Jatuh Tempo</td>
           <td>: {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}</td>
         </tr>
         <tr>
-          <td style="white-space: nowrap">Nama Customer</td>
+          <td>Nama Customer</td>
           <td style="font-weight: bold">: {{ invoice.customer }}</td>
-          <td style="white-space: nowrap; padding-left: 40px">No Invoice</td>
+          <td>No Invoice</td>
           <td style="font-weight: bold">: {{ invoice.no_invoice }}</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td></td>
-          <td class="col-right" style="white-space: nowrap; padding-left: 40px">Halaman</td>
-          <td>: 1</td>
         </tr>
       </table>
 
@@ -176,14 +208,14 @@
       <table class="main-table">
         <thead>
           <tr>
-            <th width="5%">No</th>
-            <th width="20%">AWB</th>
-            <th width="15%">Asal</th>
-            <th width="15%">Tujuan</th>
-            <th width="5%">Koli</th>
-            <th width="8%">Kilo</th>
-            <th width="12%">Handling</th>
-            <th width="20%">Total</th>
+            <th style="width: 25px">No</th>
+            <th style="width: 80px">No AWB</th>
+            <th style="width: 60px">Asal</th>
+            <th style="width: 60px">Tujuan</th>
+            <th style="width: 35px">Koli</th>
+            <th style="width: 50px">Kilo</th>
+            <th style="width: 60px">Biaya Handling</th>
+            <th style="width: 80px">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -191,33 +223,46 @@
           <tr>
             <td class="col-center">{{ forloop.counter }}</td>
             <td class="col-center">{{ item.no_resi }}</td>
-            <td class="col-center">{{ item.vendor|truncatechars:15 }}</td>
-            <!-- Asumsi Asal = Vendor -->
-            <td class="col-center">{{ item.tujuan }}</td>
+            <td class="col-center">JKT</td>
+            <td class="col-center">{{ item.tujuan|default:"RASAU"|truncatechars:10 }}</td>
             <td class="col-center">{{ item.koli }}</td>
-            <td class="col-center">{{ item.kilo }}</td>
-            <td class="col-right">-</td>
-            <!-- Handling Kosong -->
-            <td class="col-right">{{ item.total_biaya|floatformat:0|intcomma }}</td>
+            <td class="col-center">{{ item.kilo|floatformat:0 }}</td>
+            <td class="col-right">Rp {{ item.tarif_per_kg|default:"-" }}</td>
+            <td class="col-right">Rp {{ item.total_biaya|floatformat:0|intcomma }}</td>
           </tr>
           {% endfor %}
-          <!-- Empty Rows Filler (Optional, to match Excel look) -->
-          {% with remaining=22|add:"-1" %}
-          <!-- Just simulation, hard to do accurate math in template loop range -->
-          <!-- Skip filler for now to avoid empty pages -->
-          {% endwith %}
 
-          <!-- Total Row at Bottom of Table Body ? No, separate box in image -->
-          <tr>
-            <td colspan="6" style="border: none"></td>
-            <td style="border: 2px solid #000; font-weight: bold; text-align: center">TOTAL</td>
-            <td style="border: 2px solid #000; font-weight: bold; text-align: right">{{ invoice.total|floatformat:0|intcomma }}</td>
+          <!-- Summary Rows - Always show in table -->
+          <tr class="summary-row">
+            <td colspan="6" class="no-border"></td>
+            <td class="col-right" style="background: #f0f0f0"></td>
+            <td class="col-right" style="background: #f0f0f0">Rp</td>
+          </tr>
+          <tr class="summary-row">
+            <td colspan="6" class="no-border"></td>
+            <td class="col-left">Biaya Handling</td>
+            <td class="col-right">Rp {{ invoice.biaya_handling|floatformat:0|intcomma }}</td>
+          </tr>
+          <tr class="summary-row">
+            <td colspan="6" class="no-border"></td>
+            <td class="col-left">By Kirim AWB</td>
+            <td class="col-right">Rp {{ invoice.biaya_awb|floatformat:0|intcomma }}</td>
+          </tr>
+          <tr class="summary-row total-row">
+            <td colspan="6" class="no-border"></td>
+            <td class="col-center" style="border: 1px solid #000; font-weight: bold">TOTAL</td>
+            <td class="col-right" style="border: 1px solid #000; font-weight: bold">Rp {{ grand_total|intcomma }}</td>
           </tr>
         </tbody>
       </table>
 
-      <!-- Terbilang Box (Optional matches visual black bar?) -->
-      <div style="border: 2px solid #000; height: 25px; margin-bottom: 20px"></div>
+      <!-- Terbilang Box - aligned with summary columns -->
+      <table style="width: 100%; border-collapse: collapse; margin-top: 5px">
+        <tr>
+          <td style="width: 65%; border: none"></td>
+          <td colspan="2" style="border: 1px solid #000; padding: 4px 8px; font-size: 10px; text-align: center">{{ grand_total|terbilang }}</td>
+        </tr>
+      </table>
 
       <!-- Footer Info -->
       <div class="bank-info">
@@ -225,7 +270,7 @@
           <strong>Mohon dikirim ke Rekening:</strong>
           <table>
             <tr>
-              <td>Nomor Rekening</td>
+              <td style="width: 100px">Nomor Rekening</td>
               <td>: 6465539899</td>
             </tr>
             <tr>
@@ -248,11 +293,5 @@
         <div class="clear"></div>
       </div>
     </div>
-
-    <script>
-      window.onload = function () {
-        window.print();
-      };
-    </script>
   </body>
 </html>
