@@ -265,10 +265,13 @@ def create_or_update_jurnal_manifest(sender, instance, created, **kwargs):
         akun_hutang = Akun.objects.filter(nama__icontains='Hutang').first()
         if not akun_hutang: return 
 
-    # Cari Akun Beban (5xx)
-    # Gunakan akun Beban Operasional atau HPP tergantung kebijakan
-    # Kita cari akun dengan kode awalan 5 (Beban)
-    akun_beban = Akun.objects.filter(kode__startswith='5').first()
+    # Cari Akun Beban Pengiriman
+    # Prioritas: 'Biaya Pengiriman Barang' atau akun dengan nama serupa
+    akun_beban = Akun.objects.filter(nama__icontains='Biaya Pengiriman Barang').first()
+    if not akun_beban:
+        akun_beban = Akun.objects.filter(nama__icontains='Biaya Pengiriman').first()
+    if not akun_beban:
+        akun_beban = Akun.objects.filter(kode__startswith='5').first()
     if not akun_beban: return
 
     uraian_jurnal = f"Hutang Manifest: {instance.kategori} - {instance.no_resi}"

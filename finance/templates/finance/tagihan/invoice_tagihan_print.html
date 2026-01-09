@@ -144,16 +144,12 @@
         .d-print-none {
           display: none !important;
         }
-        /* Force background colors to print */
+        /* Force background colors to print for header only */
         * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
         .main-table th {
-          background-color: #5b9bd5 !important;
-          color: #fff !important;
-        }
-        .total-row td {
           background-color: #5b9bd5 !important;
           color: #fff !important;
         }
@@ -193,14 +189,14 @@
         <tr>
           <td style="width: 100px">Tgl Invoice</td>
           <td style="width: 180px">: {{ invoice.tanggal|date:"d F Y" }}</td>
-          <td style="width: 100px">Tgl Jatuh Tempo</td>
-          <td>: {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}</td>
+          <td style="width: 100px; text-align: right">Tgl Jatuh Tempo</td>
+          <td style="text-align: right">: {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}</td>
         </tr>
         <tr>
           <td>Nama Customer</td>
           <td style="font-weight: bold">: {{ invoice.customer }}</td>
-          <td>No Invoice</td>
-          <td style="font-weight: bold">: {{ invoice.no_invoice }}</td>
+          <td style="text-align: right">No Invoice</td>
+          <td style="font-weight: bold; text-align: right">: {{ invoice.no_invoice }}</td>
         </tr>
       </table>
 
@@ -227,40 +223,30 @@
             <td class="col-center">{{ item.tujuan|default:"RASAU"|truncatechars:10 }}</td>
             <td class="col-center">{{ item.koli }}</td>
             <td class="col-center">{{ item.kilo|floatformat:0 }}</td>
-            <td class="col-right">Rp {{ item.tarif_per_kg|default:"-" }}</td>
-            <td class="col-right">Rp {{ item.total_biaya|floatformat:0|intcomma }}</td>
+            <td class="col-center">Rp {{ item.tarif_per_kg|default:"-" }}</td>
+            <td class="col-center">Rp {{ item.total_biaya|floatformat:0|intcomma }}</td>
           </tr>
           {% endfor %}
 
-          <!-- Summary Rows - Always show in table -->
+          <!-- Summary Rows -->
           <tr class="summary-row">
             <td colspan="6" class="no-border"></td>
-            <td class="col-right" style="background: #f0f0f0"></td>
-            <td class="col-right" style="background: #f0f0f0">Rp</td>
-          </tr>
-          <tr class="summary-row">
-            <td colspan="6" class="no-border"></td>
-            <td class="col-left">Biaya Handling</td>
-            <td class="col-right">Rp {{ invoice.biaya_handling|floatformat:0|intcomma }}</td>
-          </tr>
-          <tr class="summary-row">
-            <td colspan="6" class="no-border"></td>
-            <td class="col-left">By Kirim AWB</td>
-            <td class="col-right">Rp {{ invoice.biaya_awb|floatformat:0|intcomma }}</td>
+            <td class="col-center">By Kirim AWB</td>
+            <td class="col-center">Rp {{ invoice.biaya_awb|floatformat:0|intcomma }}</td>
           </tr>
           <tr class="summary-row total-row">
             <td colspan="6" class="no-border"></td>
             <td class="col-center" style="border: 1px solid #000; font-weight: bold">TOTAL</td>
-            <td class="col-right" style="border: 1px solid #000; font-weight: bold">Rp {{ grand_total|intcomma }}</td>
+            <td class="col-center" style="border: 1px solid #000; font-weight: bold">Rp {{ grand_total|intcomma }}</td>
           </tr>
         </tbody>
       </table>
 
-      <!-- Terbilang Box - aligned with summary columns -->
-      <table style="width: 100%; border-collapse: collapse; margin-top: 5px">
+      <!-- Terbilang Box -->
+      <table style="width: 100%; margin-top: 5px; border-collapse: collapse">
         <tr>
-          <td style="width: 65%; border: none"></td>
-          <td colspan="2" style="border: 1px solid #000; padding: 4px 8px; font-size: 10px; text-align: center">{{ grand_total|terbilang }}</td>
+          <td style="width: 75%; border: 1px solid #000; padding: 4px 8px; font-size: 10px; text-align: center">{{ grand_total|terbilang }}</td>
+          <td style="width: 15%; border: none"></td>
         </tr>
       </table>
 
