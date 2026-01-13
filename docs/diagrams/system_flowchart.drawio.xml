@@ -1,0 +1,70 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36" version="29.2.9">
+  <diagram id="flowchart-system" name="Alur Sistem Akuntansi">
+    <mxGraphModel dx="1489" dy="753" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" background="light-dark(#FFFFFF,#FFFFFF)" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="GbtCpZtryfQIoy-gL74g-124" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;AKUN&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="160" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-125" parent="GbtCpZtryfQIoy-gL74g-124" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;kode (String)&#xa;nama (String)&#xa;kategori (Enum)" vertex="1">
+          <mxGeometry height="70" width="160" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-126" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;JURNAL&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="180" x="300" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-127" parent="GbtCpZtryfQIoy-gL74g-126" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;FK akun_debit_id&#xa;FK akun_kredit_id&#xa;tanggal (Date)&#xa;nominal (Decimal)&#xa;uraian (String)" vertex="1">
+          <mxGeometry height="90" width="180" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-128" edge="1" parent="1" source="GbtCpZtryfQIoy-gL74g-124" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#FFFFFF);" target="GbtCpZtryfQIoy-gL74g-126" value="1..n">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-129" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;INVOICE_TAGIHAN&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="180" x="35" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-130" parent="GbtCpZtryfQIoy-gL74g-129" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;no_invoice (String)&#xa;customer (String)&#xa;total (Decimal)" vertex="1">
+          <mxGeometry height="70" width="180" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-131" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;INBOUND_TRX&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="180" x="295" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-132" parent="GbtCpZtryfQIoy-gL74g-131" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;FK invoice_id&#xa;no_resi (String)&#xa;total_biaya (Decimal)" vertex="1">
+          <mxGeometry height="70" width="180" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-133" edge="1" parent="1" source="GbtCpZtryfQIoy-gL74g-129" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#FFFFFF);" target="GbtCpZtryfQIoy-gL74g-131" value="1..n">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-134" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font&gt;KARYAWAN&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="35" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-135" parent="GbtCpZtryfQIoy-gL74g-134" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;nama (String)&#xa;gaji_pokok (Decimal)" vertex="1">
+          <mxGeometry height="50" width="160" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-136" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;CASHBON&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="160" x="295" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-137" parent="GbtCpZtryfQIoy-gL74g-136" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;FK karyawan_id&#xa;nominal (Decimal)" vertex="1">
+          <mxGeometry height="50" width="160" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-138" edge="1" parent="1" source="GbtCpZtryfQIoy-gL74g-134" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#FFFFFF);" target="GbtCpZtryfQIoy-gL74g-136" value="1..n">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-139" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;PENGGAJIAN&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="180" x="295" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-140" parent="GbtCpZtryfQIoy-gL74g-139" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;FK karyawan_id&#xa;bulan (Int)&#xa;total_diterima (Decimal)" vertex="1">
+          <mxGeometry height="70" width="180" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-141" edge="1" parent="1" source="GbtCpZtryfQIoy-gL74g-134" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#FFFFFF);" target="GbtCpZtryfQIoy-gL74g-139" value="1..n">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-142" parent="1" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;html=1;strokeColor=light-dark(#000000,#000000);fontColor=light-dark(#000000,#000000);" value="&lt;font style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;MANIFEST&lt;/font&gt;" vertex="1">
+          <mxGeometry height="100" width="180" x="530" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="GbtCpZtryfQIoy-gL74g-143" parent="GbtCpZtryfQIoy-gL74g-142" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=light-dark(#000000,#000000);" value="PK id&#xa;no_resi (String)&#xa;vendor (String)&#xa;total_hutang (Decimal)" vertex="1">
+          <mxGeometry height="70" width="180" y="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
