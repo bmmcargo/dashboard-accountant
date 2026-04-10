@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from .decorators import owner_required
 from django.db.models import Sum, Q, F, Value, DecimalField
 from django.db.models.functions import Coalesce
 from django.contrib import messages
@@ -37,6 +38,7 @@ def get_saldo_akun(akun, start_date=None, end_date=None):
         return credit - debit
 
 @login_required
+@owner_required
 def dashboard(request):
     # Summary Cards
     total_aset = 0
@@ -68,6 +70,7 @@ def dashboard(request):
     return render(request, 'finance/dashboard.html', context)
 
 @login_required
+@owner_required
 def jurnal_list(request):
     jurnals = Jurnal.objects.all().order_by('-tanggal', '-created_at')
     
@@ -83,6 +86,7 @@ def jurnal_list(request):
     return render(request, 'finance/akuntansi/jurnal_list.html', {'jurnals': jurnals, 'form': form})
 
 @login_required
+@owner_required
 def jurnal_delete(request, pk):
     jurnal = get_object_or_404(Jurnal, pk=pk)
     jurnal.delete()
@@ -90,6 +94,7 @@ def jurnal_delete(request, pk):
     return redirect('jurnal_list')
 
 @login_required
+@owner_required
 def jurnal_edit(request, pk):
     jurnal = get_object_or_404(Jurnal, pk=pk)
     if request.method == 'POST':
@@ -103,6 +108,7 @@ def jurnal_edit(request, pk):
     return render(request, 'finance/akuntansi/jurnal_edit.html', {'form': form, 'jurnal': jurnal})
 
 @login_required
+@owner_required
 def buku_besar(request):
     akun_id = request.GET.get('akun')
     selected_akun = None
@@ -163,22 +169,30 @@ def buku_besar(request):
     return render(request, 'finance/akuntansi/buku_besar.html', context)
 
 @login_required
+@owner_required
 def laporan_keuangan(request):
-    import datetime
-    today = datetime.date.today()
-    try:
-        tahun = int(request.GET.get('tahun', today.year))
-    except ValueError:
-        tahun = today.year
+    import calendar
+    from datetime import date
 
-    start_date = datetime.date(tahun, 1, 1)
-    end_date = datetime.date(tahun, 12, 31)
+    # Filter parameter
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+    
+    start_date = None
+    end_date = None
+    
+    if bulan and tahun:
+        bulan = int(bulan)
+        tahun = int(tahun)
+        start_date = date(tahun, bulan, 1)
+        last_day = calendar.monthrange(tahun, bulan)[1]
+        end_date = date(tahun, bulan, last_day)
 
-    # 1. LABA RUGI (Hanya transaksi tahun ini)
+    # Laba Rugi
     pendapatan = []
     total_pendapatan = 0
     for a in Akun.objects.filter(kategori='REVENUE'):
-        s = get_saldo_akun(a, start_date=start_date, end_date=end_date)
+        s = get_saldo_akun(a, start_date, end_date)
         if s != 0:
             pendapatan.append({'nama': a.nama, 'nominal': s})
             total_pendapatan += s
@@ -186,37 +200,26 @@ def laporan_keuangan(request):
     beban = []
     total_beban = 0
     for a in Akun.objects.filter(kategori='EXPENSE'):
-        s = get_saldo_akun(a, start_date=start_date, end_date=end_date)
+        s = get_saldo_akun(a, start_date, end_date)
         if s != 0:
             beban.append({'nama': a.nama, 'nominal': s})
             total_beban += s
             
-    # Laba Rugi Tahun Berjalan
-    # Pajak 2% dikembalikan (Sesuai request user)
-    pajak_2_persen = int(total_pendapatan * Decimal('0.02'))
-    laba_kotor = total_pendapatan - pajak_2_persen
+    laba_rugi_sebelum_pajak = total_pendapatan - total_beban
     
-    biaya_pajak = 0 
-    laba_rugi_tahun_ini = laba_kotor - total_beban - biaya_pajak
+    # Perhitungan Pajak 2% (sesuai format BMM)
+    pajak_2_persen = int(total_pendapatan * Decimal('0.02'))  # Pajak 2% dari penghasilan
+    laba_kotor = total_pendapatan - pajak_2_persen  # Laba Kotor setelah pajak penghasilan
+    biaya_pajak = 0  # Biaya pajak lainnya (bisa diisi jika ada)
     
-    # 2. LABA DITAHAN (Retained Earnings) - Akumulasi Laba dari awal s.d. Tahun Lalu
-    # Hitung semua pendapatan & beban SEBELUM start_date tahun ini
-    total_rev_past = 0
-    for a in Akun.objects.filter(kategori='REVENUE'):
-        total_rev_past += get_saldo_akun(a, end_date=start_date - datetime.timedelta(days=1))
-        
-    total_exp_past = 0
-    for a in Akun.objects.filter(kategori='EXPENSE'):
-        total_exp_past += get_saldo_akun(a, end_date=start_date - datetime.timedelta(days=1))
-        
-    laba_ditahan_awal = total_rev_past - total_exp_past
-
-    # 3. NERACA (Akumulatif sampai end_date)
+    # Laba Bersih = Laba Kotor - Total Beban - Biaya Pajak
+    laba_rugi = laba_kotor - total_beban - biaya_pajak
+    
+    # Neraca (Balance Sheet)
     aset = []
     total_aset = 0
     for a in Akun.objects.filter(kategori='ASSET'):
-        # Asset akumulatif dari awal waktu sampai akhir tahun ini
-        s = get_saldo_akun(a, end_date=end_date)
+        s = get_saldo_akun(a, start_date, end_date)
         if s != 0:
             aset.append({'nama': a.nama, 'nominal': s})
             total_aset += s
@@ -224,47 +227,45 @@ def laporan_keuangan(request):
     kewajiban = []
     total_kewajiban = 0
     for a in Akun.objects.filter(kategori='LIABILITY'):
-        s = get_saldo_akun(a, end_date=end_date)
+        s = get_saldo_akun(a, start_date, end_date)
         if s != 0:
             kewajiban.append({'nama': a.nama, 'nominal': s})
             total_kewajiban += s
             
-    modal_items = [] 
-    total_modal_setor = 0
-    for a in Akun.objects.filter(kategori='EQUITY'):
-        # FILTER PENTING: Jangan masukkan Akun Laba/Rugi dari Database
-        # Karena kita akan pakai nilai hasil hitungan 'laba_rugi_tahun_ini' dan 'laba_ditahan_awal'
-        # Agar tidak DOUBLE COUNTING.
-        if 'laba' in a.nama.lower() or 'rugi' in a.nama.lower() or 'income' in a.nama.lower():
-            continue
-            
-        s = get_saldo_akun(a, end_date=end_date)
-        modal_items.append({'nama': a.nama, 'nominal': s})
-        total_modal_setor += s
-        
-    # Total Ekuitas = Modal Setor + Laba Ditahan Awal + Laba Tahun Ini
-    total_ekuitas = total_modal_setor + laba_ditahan_awal + laba_rugi_tahun_ini
+    modal_items = [] # Avoid Variable Clash
+    total_modal_awal = 0
     
-    # Balance Check
+    for a in Akun.objects.filter(kategori='EQUITY'):
+        s = get_saldo_akun(a, start_date, end_date)
+        modal_items.append({'nama': a.nama, 'nominal': s})
+        total_modal_awal += s
+        
+    # Saldo Laba (Retained Earnings) = Laba Rugi
+    total_ekuitas = total_modal_awal + laba_rugi
+    
+    # Checks
     balance_check = total_aset - (total_kewajiban + total_ekuitas)
     
-    # 4. NERACA SALDO (Kumulatif sampai akhir tahun)
+    # Neraca Saldo (Trial Balance)
     neraca_saldo = []
     total_ns_debit = 0
     total_ns_kredit = 0
     
-    # Ambil semua akun
     for a in Akun.objects.all().order_by('kode'):
-        saldo = get_saldo_akun(a, end_date=end_date)
+        saldo = get_saldo_akun(a, start_date, end_date)
         if saldo != 0:
             ns_debit = 0
             ns_kredit = 0
             if a.saldo_normal == 'DEBIT':
-                if saldo >= 0: ns_debit = saldo
-                else: ns_kredit = abs(saldo)
+                if saldo >= 0:
+                    ns_debit = saldo
+                else:
+                    ns_kredit = abs(saldo) # Abnormal balance
             else: # CREDIT
-                if saldo >= 0: ns_kredit = saldo
-                else: ns_debit = abs(saldo)
+                if saldo >= 0:
+                    ns_kredit = saldo
+                else:
+                    ns_debit = abs(saldo) # Abnormal balance
                     
             neraca_saldo.append({
                 'kode': a.kode,
@@ -275,20 +276,22 @@ def laporan_keuangan(request):
             total_ns_debit += ns_debit
             total_ns_kredit += ns_kredit
 
-    # 5. ARUS KAS (Untuk tahun ini saja)
+    # Laporan Arus Kas (Metode Langsung Sederhana)
     arus_kas_masuk = []
     arus_kas_keluar = []
     total_ak_masuk = 0
     total_ak_keluar = 0
     
+    # Asumsi akun Kas/Bank mengandung kata 'Kas' atau 'Bank'
     cash_accounts = Akun.objects.filter(Q(nama__icontains='Kas') | Q(nama__icontains='Bank'))
     
-    # Filter jurnal kas range tahun ini
-    inflows = Jurnal.objects.filter(
-        akun_debit__in=cash_accounts, 
-        tanggal__range=(start_date, end_date)
-    ).select_related('akun_kredit').order_by('tanggal')
+    # Filter Jurnal Arus Kas
+    ak_filter = Q()
+    if start_date and end_date:
+        ak_filter = Q(tanggal__range=[start_date, end_date])
     
+    # Pemasukan (Debit di Akun Kas)
+    inflows = Jurnal.objects.filter(ak_filter, akun_debit__in=cash_accounts).select_related('akun_kredit').order_by('tanggal')
     for tx in inflows:
         arus_kas_masuk.append({
             'tanggal': tx.tanggal,
@@ -297,11 +300,8 @@ def laporan_keuangan(request):
         })
         total_ak_masuk += tx.nominal
         
-    outflows = Jurnal.objects.filter(
-        akun_kredit__in=cash_accounts,
-        tanggal__range=(start_date, end_date)
-    ).select_related('akun_debit').order_by('tanggal')
-    
+    # Pengeluaran (Kredit di Akun Kas)
+    outflows = Jurnal.objects.filter(ak_filter, akun_kredit__in=cash_accounts).select_related('akun_debit').order_by('tanggal')
     for tx in outflows:
         arus_kas_keluar.append({
             'tanggal': tx.tanggal,
@@ -311,44 +311,45 @@ def laporan_keuangan(request):
         total_ak_keluar += tx.nominal
     
     net_cash_flow = total_ak_masuk - total_ak_keluar
-
-    # List Tahun untuk Filter UI
-    # Ambil distinct year dari Jurnal
-    tahun_db = Jurnal.objects.dates('tanggal', 'year')
-    tahun_list = sorted(set([t.year for t in tahun_db] + [today.year]), reverse=True)
+    
+    # Siapkan data untuk dropdown tahun
+    current_year = date.today().year
+    years = range(current_year - 5, current_year + 1)
 
     context = {
-        'tahun': tahun,
-        'tahun_list': tahun_list,
+        # Periode
+        'selected_bulan': str(bulan) if bulan else '',
+        'selected_tahun': int(tahun) if tahun else '',
+        'years': years,
+        
+        # Datasets
         'pendapatan': pendapatan, 'total_pendapatan': total_pendapatan,
         'beban': beban, 'total_beban': total_beban,
-        'pajak_2_persen': pajak_2_persen, 
-        'laba_kotor': laba_kotor,
-        'laba_rugi': laba_rugi_tahun_ini, # Laba Rugi Tahun Ini
-        
+        'pajak_2_persen': pajak_2_persen, 'laba_kotor': laba_kotor,
+        'biaya_pajak': biaya_pajak, 'laba_rugi': laba_rugi,
         'aset': aset, 'total_aset': total_aset,
         'kewajiban': kewajiban, 'total_kewajiban': total_kewajiban,
-        'modal': modal_items, 'total_modal': total_modal_setor,
-        'laba_ditahan_awal': laba_ditahan_awal, # New Item
-        'total_ekuitas': total_ekuitas,
-        
+        'modal': modal_items, 'total_modal': total_modal_awal, 'total_ekuitas': total_ekuitas,
         'balance_check': balance_check,
         'neraca_saldo': neraca_saldo, 'total_ns_debit': total_ns_debit, 'total_ns_kredit': total_ns_kredit,
         'arus_kas_masuk': arus_kas_masuk, 'arus_kas_keluar': arus_kas_keluar,
         'total_ak_masuk': total_ak_masuk, 'total_ak_keluar': total_ak_keluar,
         'net_cash_flow': net_cash_flow
     }
-    return render(request, 'finance/laporan/laporan.html', context)
+    return render(request, 'finance/laporan.html', context)
 
-# --- Akun (Master Data) Views ---
+
+# --- Akun (Master Data) Views --- (Khusus Owner)
 from .forms import AkunForm
 
 @login_required
+@owner_required
 def akun_list(request):
     akuns = Akun.objects.all().order_by('kode')
     return render(request, 'finance/akuntansi/akun_list.html', {'akuns': akuns})
 
 @login_required
+@owner_required
 def akun_create(request):
     if request.method == 'POST':
         form = AkunForm(request.POST)
@@ -361,6 +362,7 @@ def akun_create(request):
     return render(request, 'finance/akuntansi/akun_form.html', {'form': form, 'title': 'Tambah Akun Baru'})
 
 @login_required
+@owner_required
 def akun_update(request, pk):
     akun = get_object_or_404(Akun, pk=pk)
     if request.method == 'POST':
@@ -374,6 +376,7 @@ def akun_update(request, pk):
     return render(request, 'finance/akuntansi/akun_form.html', {'form': form, 'title': f'Edit Akun: {akun.nama}'})
 
 @login_required
+@owner_required
 def akun_delete(request, pk):
     akun = get_object_or_404(Akun, pk=pk)
     try:
@@ -386,6 +389,7 @@ def akun_delete(request, pk):
 # --- INBOUND & OUTBOUND VIEWS ---
 
 @login_required
+@owner_required
 def inbound_list(request):
     inbound_data = InboundTransaction.objects.all().order_by('-tanggal_masuk_stt')
     
@@ -412,6 +416,7 @@ def inbound_list(request):
     return render(request, 'finance/inbound/inbound_list.html', context)
 
 @login_required
+@owner_required
 def outbound_list(request):
     outbound_data = OutboundTransaction.objects.all().order_by('-tanggal')
     
@@ -444,6 +449,7 @@ def outbound_list(request):
 from .forms import InboundForm, OutboundForm, ManifestForm
 
 @login_required
+@owner_required
 def inbound_create(request):
     if request.method == 'POST':
         form = InboundForm(request.POST)
@@ -456,6 +462,7 @@ def inbound_create(request):
     return render(request, 'finance/inbound/inbound_form.html', {'form': form, 'title': 'Tambah Data Inbound'})
 
 @login_required
+@owner_required
 def inbound_edit(request, pk):
     inbound = get_object_or_404(InboundTransaction, pk=pk)
     if request.method == 'POST':
@@ -469,6 +476,7 @@ def inbound_edit(request, pk):
     return render(request, 'finance/inbound/inbound_form.html', {'form': form, 'title': f'Edit Inbound: {inbound.no_resi}'})
 
 @login_required
+@owner_required
 def inbound_delete(request, pk):
     inbound = get_object_or_404(InboundTransaction, pk=pk)
     no_resi = inbound.no_resi
@@ -479,6 +487,7 @@ def inbound_delete(request, pk):
 # --- OUTBOUND CRUD ---
 
 @login_required
+@owner_required
 def outbound_create(request):
     if request.method == 'POST':
         form = OutboundForm(request.POST)
@@ -491,6 +500,7 @@ def outbound_create(request):
     return render(request, 'finance/outbound/outbound_form.html', {'form': form, 'title': 'Tambah Data Outbound'})
 
 @login_required
+@owner_required
 def outbound_edit(request, pk):
     outbound = get_object_or_404(OutboundTransaction, pk=pk)
     if request.method == 'POST':
@@ -504,6 +514,7 @@ def outbound_edit(request, pk):
     return render(request, 'finance/outbound/outbound_form.html', {'form': form, 'title': f'Edit Outbound: {outbound.no_resi_bmm}'})
 
 @login_required
+@owner_required
 def outbound_delete(request, pk):
     outbound = get_object_or_404(OutboundTransaction, pk=pk)
     no_resi = outbound.no_resi_bmm
@@ -515,6 +526,7 @@ def outbound_delete(request, pk):
 from .models import Manifest
 
 @login_required
+@owner_required
 def manifest_list(request):
     # Urutkan berdasarkan tanggal kirim secara Ascending (Kronologis)
     manifest_data = Manifest.objects.all().order_by('tanggal_kirim')
@@ -560,6 +572,7 @@ def manifest_list(request):
     return render(request, 'finance/manifest/manifest_list.html', context)
 
 @login_required
+@owner_required
 def manifest_create(request):
     if request.method == 'POST':
         form = ManifestForm(request.POST)
@@ -572,6 +585,7 @@ def manifest_create(request):
     return render(request, 'finance/manifest/manifest_form.html', {'form': form, 'title': 'Tambah Manifest'})
 
 @login_required
+@owner_required
 def manifest_edit(request, pk):
     manifest = get_object_or_404(Manifest, pk=pk)
     if request.method == 'POST':
@@ -585,6 +599,7 @@ def manifest_edit(request, pk):
     return render(request, 'finance/manifest/manifest_form.html', {'form': form, 'title': f'Edit Manifest: {manifest.no_resi}'})
 
 @login_required
+@owner_required
 def manifest_delete(request, pk):
     manifest = get_object_or_404(Manifest, pk=pk)
     no_resi = manifest.no_resi
@@ -605,6 +620,7 @@ NAMA_BULAN = {
 }
 
 @login_required
+@owner_required
 def kas_harian_list(request):
     """View utama Kas Harian dengan navigasi bulan horizontal"""
     today = date.today()
@@ -665,6 +681,7 @@ def kas_harian_list(request):
     return render(request, 'finance/kas/kas_harian_list.html', context)
 
 @login_required
+@owner_required
 def kas_harian_create(request):
     bulan = request.GET.get('bulan', date.today().month)
     tahun = request.GET.get('tahun', date.today().year)
@@ -687,6 +704,7 @@ def kas_harian_create(request):
     })
 
 @login_required
+@owner_required
 def kas_harian_edit(request, pk):
     kas = get_object_or_404(KasHarian, pk=pk)
     if request.method == 'POST':
@@ -705,6 +723,7 @@ def kas_harian_edit(request, pk):
     })
 
 @login_required
+@owner_required
 def kas_harian_delete(request, pk):
     kas = get_object_or_404(KasHarian, pk=pk)
     bulan = kas.tanggal.month
@@ -714,11 +733,13 @@ def kas_harian_delete(request, pk):
     return redirect(f'/kas-harian/?bulan={bulan}&tahun={tahun}')
 
 @login_required
+@owner_required
 def invoice_inbound(request, pk):
     inbound = get_object_or_404(InboundTransaction, pk=pk)
     return render(request, 'finance/inbound/invoice_inbound.html', {'inbound': inbound})
 
 @login_required
+@owner_required
 def buku_piutang(request):
     # CLIENT REQUEST: Link dari Invoice Tagihan
     data = InvoiceTagihan.objects.all().order_by('-tanggal', '-no_invoice')
@@ -733,6 +754,7 @@ def buku_piutang(request):
     })
 
 @login_required
+@owner_required
 def buku_hutang(request):
     # 1. Manifest Data
     manifests = Manifest.objects.all()
@@ -796,6 +818,7 @@ def buku_hutang(request):
     })
 
 @login_required
+@owner_required
 def tagihan_create(request):
     if request.method == 'POST':
         customer = request.POST.get('customer')
@@ -854,6 +877,7 @@ def tagihan_create(request):
     })
 
 @login_required
+@owner_required
 def invoice_tagihan_print(request, pk):
     inv = get_object_or_404(InvoiceTagihan, pk=pk)
     # Calculate grand total (total + biaya_awb + biaya_handling)
@@ -865,6 +889,7 @@ def invoice_tagihan_print(request, pk):
 
 
 @login_required
+@owner_required
 def invoice_list(request):
     today = timezone.now()
     try:
@@ -911,6 +936,7 @@ def invoice_list(request):
 from .forms import InvoiceTagihanForm
 
 @login_required
+@owner_required
 def tagihan_edit(request, pk):
     invoice = get_object_or_404(InvoiceTagihan, pk=pk)
     
@@ -936,11 +962,13 @@ from .models import Karyawan, Cashbon, Penggajian
 from .forms import KaryawanForm, CashbonForm, PenggajianForm
 
 @login_required
+@owner_required
 def karyawan_list(request):
     karyawan = Karyawan.objects.all().order_by('nama')
     return render(request, 'finance/karyawan/karyawan_list.html', {'karyawan_list': karyawan})
 
 @login_required
+@owner_required
 def karyawan_create(request):
     if request.method == 'POST':
         form = KaryawanForm(request.POST)
@@ -953,6 +981,7 @@ def karyawan_create(request):
     return render(request, 'finance/karyawan/karyawan_form.html', {'form': form, 'title': 'Tambah Karyawan'})
 
 @login_required
+@owner_required
 def karyawan_edit(request, pk):
     karyawan = get_object_or_404(Karyawan, pk=pk)
     if request.method == 'POST':
@@ -966,6 +995,7 @@ def karyawan_edit(request, pk):
     return render(request, 'finance/karyawan/karyawan_form.html', {'form': form, 'title': f'Edit {karyawan.nama}'})
 
 @login_required
+@owner_required
 def karyawan_delete(request, pk):
     k = get_object_or_404(Karyawan, pk=pk)
     k.delete()
@@ -973,6 +1003,7 @@ def karyawan_delete(request, pk):
     return redirect('karyawan_list')
 
 @login_required
+@owner_required
 def gaji_list(request):
     """
     View spreadsheet untuk Penggajian & Cashbon
@@ -1038,6 +1069,7 @@ def gaji_list(request):
     })
 
 @login_required
+@owner_required
 def gaji_save_all(request):
     """
     Simpan data gaji dari grid/spreadsheet view
@@ -1092,6 +1124,7 @@ def gaji_save_all(request):
     return redirect('gaji_list')
 
 @login_required
+@owner_required
 def cashbon_list(request):
     cashbons = Cashbon.objects.all().order_by('-tanggal')
     
@@ -1107,6 +1140,7 @@ def cashbon_list(request):
     return render(request, 'finance/gaji/cashbon_list.html', {'cashbons': cashbons, 'form': form})
 
 @login_required
+@owner_required
 def cashbon_edit(request, pk):
     cashbon = get_object_or_404(Cashbon, pk=pk)
     if request.method == 'POST':
@@ -1125,6 +1159,7 @@ def cashbon_edit(request, pk):
     return render(request, 'finance/gaji/cashbon_edit.html', {'form': form, 'title': 'Edit Cashbon'})
 
 @login_required
+@owner_required
 def cashbon_delete(request, pk):
     c = get_object_or_404(Cashbon, pk=pk)
     c.delete()
@@ -1134,6 +1169,7 @@ def cashbon_delete(request, pk):
 
 
 @login_required
+@owner_required
 def tagihan_delete(request, pk):
     inv = get_object_or_404(InvoiceTagihan, pk=pk)
     
@@ -1146,3 +1182,238 @@ def tagihan_delete(request, pk):
     messages.success(request, f'Invoice {no_inv} berhasil dihapus. Item resi telah dikembalikan ke status belum ditagih.')
     return redirect('invoice_list')
 
+
+
+from .decorators import owner_required
+# ============================================================
+# VIEWS OPERASIONAL (UNTUK ADMIN & OWNER)
+from .models import OpsInbound, OpsOutbound, OpsManifest
+from .forms import OpsInboundForm, OpsOutboundForm, OpsManifestForm
+
+# ============================================================
+
+
+
+
+@login_required
+def dashboard_ops(request):
+    """Dashboard Operasional — bisa diakses oleh Admin Operasional dan Owner."""
+    from .decorators import is_owner
+    context = {
+        'is_owner': is_owner(request.user),
+        'total_inbound': OpsInbound.objects.count(),
+        'total_outbound': OpsOutbound.objects.count(),
+        'total_manifest': OpsManifest.objects.count(),
+        'inbound_terbaru': OpsInbound.objects.all()[:5],
+        'manifest_terbaru': OpsManifest.objects.all()[:5],
+    }
+    return render(request, 'finance/dashboard_ops.html', context)
+
+
+# --- INBOUND (Barang Masuk) ---
+
+@login_required
+def ops_inbound_list(request):
+    search = request.GET.get('q', '')
+    items = OpsInbound.objects.all()
+    if search:
+        items = items.filter(
+            Q(nomor_resi__icontains=search) |
+            Q(pengirim__icontains=search) |
+            Q(penerima__icontains=search) |
+            Q(asal__icontains=search) |
+            Q(tujuan__icontains=search)
+        )
+    return render(request, 'finance/inbound_list.html', {'items': items, 'search': search})
+
+@login_required
+def ops_inbound_create(request):
+    if request.method == 'POST':
+        form = OpsInboundForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Barang masuk berhasil dicatat!')
+            return redirect('ops_inbound_list')
+    else:
+        form = OpsInboundForm()
+    return render(request, 'finance/inbound_form.html', {'form': form, 'title': 'Catat Barang Masuk'})
+
+@login_required
+def ops_inbound_edit(request, pk):
+    item = get_object_or_404(Inbound, pk=pk)
+    if request.method == 'POST':
+        form = OpsInboundForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data barang masuk diperbarui.')
+            return redirect('ops_inbound_list')
+    else:
+        form = OpsInboundForm(instance=item)
+    return render(request, 'finance/inbound_form.html', {'form': form, 'title': f'Edit: {item.nomor_resi}'})
+
+@login_required
+def ops_inbound_delete(request, pk):
+    item = get_object_or_404(Inbound, pk=pk)
+    try:
+        item.delete()
+        messages.success(request, f'Barang {item.nomor_resi} berhasil dihapus.')
+    except Exception:
+        messages.error(request, 'Gagal menghapus. Barang ini mungkin sudah terhubung ke Outbound.')
+    return redirect('ops_inbound_list')
+
+
+# --- MANIFEST ---
+
+@login_required
+def ops_manifest_list(request):
+    items = OpsManifest.objects.all()
+    return render(request, 'finance/manifest_list.html', {'items': items})
+
+@login_required
+def ops_manifest_create(request):
+    if request.method == 'POST':
+        form = OpsManifestForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Manifest berhasil dibuat!')
+            return redirect('ops_manifest_list')
+    else:
+        form = OpsManifestForm()
+    return render(request, 'finance/manifest_form.html', {'form': form, 'title': 'Buat Manifest Baru'})
+
+@login_required
+def ops_manifest_edit(request, pk):
+    item = get_object_or_404(Manifest, pk=pk)
+    if request.method == 'POST':
+        form = OpsManifestForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Manifest diperbarui.')
+            return redirect('ops_manifest_list')
+    else:
+        form = OpsManifestForm(instance=item)
+    return render(request, 'finance/manifest_form.html', {'form': form, 'title': f'Edit: {item.nomor_manifest}'})
+
+@login_required
+def ops_manifest_detail(request, pk):
+    """Detail manifest beserta daftar barang outbound-nya."""
+    item = get_object_or_404(Manifest, pk=pk)
+    outbound_items = item.outbound_items.select_related('inbound').all()
+    return render(request, 'finance/manifest_detail.html', {
+        'manifest': item,
+        'outbound_items': outbound_items,
+    })
+
+@login_required
+def ops_manifest_delete(request, pk):
+    item = get_object_or_404(Manifest, pk=pk)
+    try:
+        item.delete()
+        messages.success(request, f'Manifest {item.nomor_manifest} berhasil dihapus.')
+    except Exception:
+        messages.error(request, 'Gagal menghapus manifest.')
+    return redirect('ops_manifest_list')
+
+
+# --- OUTBOUND (Barang Keluar) ---
+
+@login_required
+def ops_outbound_list(request):
+    items = OpsOutbound.objects.select_related('inbound', 'manifest').all()
+    return render(request, 'finance/outbound_list.html', {'items': items})
+
+@login_required
+def ops_outbound_create(request):
+    if request.method == 'POST':
+        form = OpsOutboundForm(request.POST)
+        if form.is_valid():
+            outbound = form.save()
+            # Update status inbound menjadi DIKIRIM
+            outbound.inbound.status = 'DIKIRIM'
+            outbound.inbound.save()
+            messages.success(request, 'Barang keluar berhasil dicatat!')
+            return redirect('ops_outbound_list')
+    else:
+        form = OpsOutboundForm()
+    return render(request, 'finance/outbound_form.html', {'form': form, 'title': 'Catat Barang Keluar'})
+
+@login_required
+def ops_outbound_edit(request, pk):
+    item = get_object_or_404(Outbound, pk=pk)
+    if request.method == 'POST':
+        form = OpsOutboundForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Data barang keluar diperbarui.')
+            return redirect('ops_outbound_list')
+    else:
+        form = OpsOutboundForm(instance=item)
+    return render(request, 'finance/outbound_form.html', {'form': form, 'title': f'Edit Outbound: {item.inbound.nomor_resi}'})
+
+@login_required
+def ops_outbound_delete(request, pk):
+    item = get_object_or_404(Outbound, pk=pk)
+    # Kembalikan status inbound
+    item.inbound.status = 'SIAP_KIRIM'
+    item.inbound.save()
+    item.delete()
+    messages.success(request, 'Data barang keluar berhasil dihapus.')
+    return redirect('ops_outbound_list')
+
+
+# ============================================================
+# MANAJEMEN USER (Custom UI for Owner)
+# ============================================================
+from django.contrib.auth.models import User, Group
+
+@login_required
+@owner_required
+def user_management_list(request):
+    """Menampilkan daftar user dan rolenya."""
+    users = User.objects.all().prefetch_related('groups')
+    return render(request, 'finance/user_management_list.html', {'users': users})
+
+@login_required
+@owner_required
+def user_management_create(request):
+    """Membuat user baru dan menetapkan group."""
+    groups = Group.objects.all()
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        group_id = request.POST.get('group')
+        
+        if User.objects.filter(username=username).exists():
+            messages.error(request, f"Username '{username}' sudah digunakan.")
+        else:
+            new_user = User.objects.create_user(username=username, password=password)
+            if group_id:
+                group = Group.objects.get(id=group_id)
+                new_user.groups.add(group)
+            
+            # Berikan staff status jika dia Owner agar bisa login (opsional)
+            if group_id and Group.objects.get(id=group_id).name == 'Owner':
+                new_user.is_staff = True
+                new_user.save()
+                
+            messages.success(request, f"User {username} berhasil dibuat.")
+            return redirect('user_management_list')
+            
+    return render(request, 'finance/user_management_form.html', {'groups': groups})
+
+@login_required
+@owner_required
+def user_management_delete(request, pk):
+    """Menghapus user."""
+    user_to_delete = get_object_or_404(User, pk=pk)
+    
+    if user_to_delete.is_superuser:
+        messages.error(request, "Superuser tidak dapat dihapus melalui menu ini.")
+    elif user_to_delete == request.user:
+        messages.error(request, "Anda tidak dapat menghapus akun Anda sendiri.")
+    else:
+        username = user_to_delete.username
+        user_to_delete.delete()
+        messages.success(request, f"User {username} berhasil dihapus.")
+        
+    return redirect('user_management_list')

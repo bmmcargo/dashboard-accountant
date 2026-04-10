@@ -12,19 +12,15 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-load_dotenv(BASE_DIR / '.env')
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', "django-insecure-s$3jmiccd(9(x0=6qrpn_b^pglq9u50o1cv!pavf$3xjz3i44^")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -134,5 +130,5 @@ CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Konfigurasi Login
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'custom_login_redirect'
 LOGOUT_REDIRECT_URL = 'login'

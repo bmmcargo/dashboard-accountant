@@ -1,0 +1,76 @@
+{% extends 'finance/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold mb-0">
+        <i class="bi bi-box-arrow-in-down me-2"></i>{{ title }}
+      </h3>
+      <a href="{% url 'ops_inbound_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Kembali
+      </a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <div class="col-md-6">
+              {{ form.nomor_resi|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+              {{ form.tanggal|as_crispy_field }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              {{ form.pengirim|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+              {{ form.penerima|as_crispy_field }}
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              {{ form.asal|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+              {{ form.tujuan|as_crispy_field }}
+            </div>
+          </div>
+
+          <div class="row border-top pt-3 mt-1">
+            <div class="col-md-6">
+              {{ form.berat|as_crispy_field }}
+            </div>
+            <div class="col-md-6">
+              {{ form.status|as_crispy_field }}
+            </div>
+          </div>
+
+          <div class="row border-top pt-3 mt-1">
+            <div class="col-12">
+              {{ form.keterangan|as_crispy_field }}
+            </div>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="submit" class="btn btn-primary px-5">
+              <i class="bi bi-save me-1"></i> Simpan Data
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

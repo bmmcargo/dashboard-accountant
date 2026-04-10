@@ -1,0 +1,93 @@
+{% extends 'finance/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-box-arrow-in-down me-2"></i>Barang Masuk (Inbound)</h3>
+    <p class="text-muted mb-0">Daftar semua barang yang diterima di gudang.</p>
+  </div>
+  <a href="{% url 'ops_inbound_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> Tambah Barang Masuk
+  </a>
+</div>
+
+<!-- Search -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-8">
+        <input type="text" name="q" class="form-control" placeholder="Cari resi, pengirim, penerima, asal, tujuan..." value="{{ search }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i> Cari</button>
+      </div>
+      {% if search %}
+      <div class="col-md-2">
+        <a href="{% url 'ops_inbound_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>No. Resi</th>
+            <th>Tanggal</th>
+            <th>Pengirim</th>
+            <th>Penerima</th>
+            <th>Asal</th>
+            <th>Tujuan</th>
+            <th>Berat (Kg)</th>
+            <th>Status</th>
+            <th class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td><strong>{{ item.nomor_resi }}</strong></td>
+            <td>{{ item.tanggal|date:"d M Y" }}</td>
+            <td>{{ item.pengirim }}</td>
+            <td>{{ item.penerima }}</td>
+            <td>{{ item.asal }}</td>
+            <td>{{ item.tujuan }}</td>
+            <td>{{ item.berat }}</td>
+            <td>
+              {% if item.status == 'DITERIMA' %}
+                <span class="badge bg-info">Diterima</span>
+              {% elif item.status == 'PROSES' %}
+                <span class="badge bg-warning text-dark">Proses</span>
+              {% elif item.status == 'SIAP_KIRIM' %}
+                <span class="badge bg-primary">Siap Kirim</span>
+              {% elif item.status == 'DIKIRIM' %}
+                <span class="badge bg-success">Dikirim</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'ops_inbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'ops_inbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data ini?')">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-4 text-muted">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              Belum ada data barang masuk.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

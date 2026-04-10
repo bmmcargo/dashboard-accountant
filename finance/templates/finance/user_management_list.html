@@ -1,0 +1,81 @@
+{% extends 'finance/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-person-gear me-2"></i>Manajemen User</h3>
+    <p class="text-muted mb-0">Kelola akun dan hak akses (Owner / Admin Operasional).</p>
+  </div>
+  <a href="{% url 'user_management_create' %}" class="btn btn-primary">
+    <i class="bi bi-person-plus me-1"></i> Tambah User Baru
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Username</th>
+            <th>Role / Grup</th>
+            <th>Status</th>
+            <th>Terakhir Login</th>
+            <th class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td>
+                <div class="d-flex align-items-center">
+                    <div class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 35px; height: 35px; font-weight: bold;">
+                        {{ u.username|slice:":1"|upper }}
+                    </div>
+                    <strong>{{ u.username }}</strong>
+                </div>
+            </td>
+            <td>
+              {% for group in u.groups.all %}
+                {% if group.name == 'Owner' %}
+                    <span class="badge bg-danger">Owner</span>
+                {% elif group.name == 'Admin Operasional' %}
+                    <span class="badge bg-primary">Admin Operasional</span>
+                {% else %}
+                    <span class="badge bg-secondary">{{ group.name }}</span>
+                {% endif %}
+              {% empty %}
+                {% if u.is_superuser %}
+                    <span class="badge bg-dark">Superuser</span>
+                {% else %}
+                    <span class="badge bg-light text-dark border">Tanpa Role</span>
+                {% endif %}
+              {% endfor %}
+            </td>
+            <td>
+                {% if u.is_active %}
+                    <span class="badge bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle me-1"></i>Aktif</span>
+                {% else %}
+                    <span class="badge bg-danger bg-opacity-10 text-danger"><i class="bi bi-x-circle me-1"></i>Nonaktif</span>
+                {% endif %}
+            </td>
+            <td>{{ u.last_login|date:"d M Y, H:i"|default:"-" }}</td>
+            <td class="text-center">
+              {% if not u.is_superuser and u != request.user %}
+              <form action="{% url 'user_management_delete' u.pk %}" method="POST" style="display: inline;" onsubmit="return confirm('Yakin ingin menghapus user ini?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus User">
+                    <i class="bi bi-trash"></i>
+                </button>
+              </form>
+              {% else %}
+              <span class="text-muted small"><em>System</em></span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

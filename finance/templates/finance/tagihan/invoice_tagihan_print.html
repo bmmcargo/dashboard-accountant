@@ -155,12 +155,14 @@
         }
       }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   </head>
   <body>
     <div class="d-print-none" style="position: fixed; top: 10px; right: 10px; z-index: 1000">
       <a href="{% url 'tagihan_edit' invoice.pk %}" style="text-decoration: none; background: #ffc107; color: #000; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px">Edit Invoice</a>
       <a href="{% url 'invoice_list' %}" style="text-decoration: none; background: #6c757d; color: #fff; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px; margin-left: 5px">Kembali</a>
       <a href="javascript:window.print()" style="text-decoration: none; background: #0d6efd; color: #fff; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px; margin-left: 5px">Cetak</a>
+      <a href="#" onclick="exportToExcel(); return false;" style="text-decoration: none; background: #198754; color: #fff; padding: 5px 10px; border-radius: 4px; font-family: sans-serif; font-weight: bold; font-size: 12px; margin-left: 5px">Tarik Excel</a>
     </div>
 
     <div class="container">
@@ -174,8 +176,8 @@
             <div class="company-info">BMM CARGO</div>
             <div class="company-detail">
               Jl. Danau Sentarum Pontianak<br />
-              E-Mail: bmmcargo@yahoo.co.id, ajaroh@yahoo.co.id<br />
-              Telp. 081256655558 / 085650006440
+              E-Mail: borneopnk@yahoo.co.id, ajuesh@yahoo.co.id<br />
+              Telp. 081256655558 / 085650806448
             </div>
           </td>
         </tr>
@@ -251,33 +253,248 @@
       </table>
 
       <!-- Footer Info -->
-      <div class="bank-info">
-        <div class="bank-table">
-          <strong>Mohon dikirim ke Rekening:</strong>
-          <table>
-            <tr>
-              <td style="width: 100px">Nomor Rekening</td>
-              <td>: 6465539899</td>
-            </tr>
-            <tr>
-              <td>Bank</td>
-              <td>: BCA Cabang Pontianak</td>
-            </tr>
-            <tr>
-              <td>Atas Nama</td>
-              <td>: Borneo Mega Mandiri CV</td>
-            </tr>
-          </table>
-        </div>
+      <table style="width: 100%; margin-top: 20px; border: none; border-collapse: collapse;">
+        <tr>
+          <!-- Kolom Kiri: Info Rekening -->
+          <td style="width: 50%; vertical-align: top; border: none; padding: 0;">
+            <strong>Mohon dikirim ke Rekening :</strong>
+            <table style="width: 100%; border: none;">
+              <tr>
+                <td style="width: 100px; border: none; padding: 1px 0;">Nomor Rekening</td>
+                <td style="border: none; padding: 1px 0;">: 6465539899</td>
+              </tr>
+              <tr>
+                <td style="border: none; padding: 1px 0;">Bank</td>
+                <td style="border: none; padding: 1px 0;">: BCA Cabang Pontianak</td>
+              </tr>
+              <tr>
+                <td style="border: none; padding: 1px 0;">Atas Nama</td>
+                <td style="border: none; padding: 1px 0;">: Borneo Mega Mandiri CV</td>
+              </tr>
+            </table>
+          </td>
+          
+          <!-- Kolom Kanan -->
+          <td style="width: 50%; border: none;"></td>
+        </tr>
 
-        <div class="signature-box">
-          <div>Pontianak, {{ invoice.tanggal|date:"d F Y" }}</div>
-          <div class="sign-space"></div>
-          <div style="font-weight: bold; text-decoration: underline">Syakina Hafifah</div>
-          <div>Accounting</div>
-        </div>
-        <div class="clear"></div>
-      </div>
+        <!-- Baris Tanggal & Label Tanda Tangan -->
+        <tr>
+          <td style="padding-top: 25px; border: none; text-align: left; vertical-align: bottom;">
+            <div style="margin-left: 50px;">Mengetahui,</div>
+          </td>
+          <td style="padding-top: 25px; border: none; text-align: center; vertical-align: bottom;">
+            <!-- Tanggal rapat dengan Dibuat Oleh -->
+            <div style="margin: 0;">Pontianak, {{ invoice.tanggal|date:"d F Y" }}</div>
+            <div style="margin: 0;">Dibuat oleh,</div>
+          </td>
+        </tr>
+
+        <!-- Baris Ruang Tanda Tangan -->
+        <tr>
+          <td style="border: none; height: 60px;"></td>
+          <td style="border: none; height: 60px;"></td>
+        </tr>
+
+        <!-- Baris Nama & Jabatan -->
+        <tr>
+          <td style="border: none; text-align: left; vertical-align: top;">
+            <div style="margin-left: 20px; font-weight: bold; text-decoration: underline;">Parida Ekayanti, S.E</div>
+            <div style="margin-left: 45px;">General Manager</div>
+          </td>
+          <td style="border: none; text-align: center; vertical-align: top;">
+            <div style="font-weight: bold; text-decoration: underline;">Syakina Hafifah, A.md, Ak</div>
+            <div>Accounting</div>
+          </td>
+        </tr>
+      </table>
     </div>
+
+    <!-- Script for Excel Export -->
+    <script>
+      async function exportToExcel() {
+        if (typeof ExcelJS === 'undefined') {
+          alert('Excel library still loading or blocked. Please refresh the page.');
+          return;
+        }
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Invoice');
+
+        // Column Setup
+        worksheet.columns = [
+          { key: 'col1', width: 6 },
+          { key: 'col2', width: 20 },
+          { key: 'col3', width: 10 },
+          { key: 'col4', width: 15 },
+          { key: 'col5', width: 8 },
+          { key: 'col6', width: 8 },
+          { key: 'col7', width: 22 },
+          { key: 'col8', width: 15 }
+        ];
+
+        // 1. Logo Embedding
+        try {
+          const response = await fetch("{% static 'finance/img/logo-bmm.png' %}");
+          if (response.ok) {
+            const blob = await response.blob();
+            const buffer = await blob.arrayBuffer();
+            const logoId = workbook.addImage({
+              buffer: buffer,
+              extension: 'png',
+            });
+            worksheet.addImage(logoId, {
+              tl: { col: 0, row: 0 },
+              ext: { width: 65, height: 60 }
+            });
+          }
+        } catch (e) {
+          console.warn("Logo could not be loaded into Excel", e);
+        }
+
+        // 2. Company Info
+        worksheet.mergeCells('B1:E1');
+        worksheet.getCell('B1').value = 'BMM CARGO';
+        worksheet.getCell('B1').font = { bold: true, size: 14, name: 'Arial' };
+
+        worksheet.mergeCells('B2:E2');
+        worksheet.getCell('B2').value = 'Jl. Danau Sentarum Pontianak';
+        worksheet.getCell('B2').font = { size: 10, name: 'Arial' };
+
+        worksheet.mergeCells('B3:E3');
+        worksheet.getCell('B3').value = 'E-Mail: borneopnk@yahoo.co.id, ajuesh@yahoo.co.id';
+        worksheet.getCell('B3').font = { size: 10, name: 'Arial' };
+
+        worksheet.mergeCells('B4:E4');
+        worksheet.getCell('B4').value = 'Telp. 081256655558 / 085650806448';
+        worksheet.getCell('B4').font = { size: 10, name: 'Arial' };
+
+        // 3. Title
+        worksheet.mergeCells('A6:H6');
+        const titleCell = worksheet.getCell('A6');
+        titleCell.value = 'INVOICE';
+        titleCell.font = { bold: true, size: 18, underline: true, name: 'Arial' };
+        titleCell.alignment = { horizontal: 'center' };
+
+        // 4. Meta Info
+        const metaFont = { size: 10, name: 'Arial' };
+        worksheet.getCell('A8').value = 'Tgl Invoice';
+        worksheet.getCell('A8').font = metaFont;
+        worksheet.getCell('B8').value = ': {{ invoice.tanggal|date:"d F Y" }}';
+        worksheet.getCell('B8').font = metaFont;
+        worksheet.getCell('C8').value = 'Tgl Jatuh Tempo';
+        worksheet.getCell('C8').font = metaFont;
+        worksheet.getCell('D8').value = ': {{ invoice.jatuh_tempo|date:"d F Y"|default:"-" }}';
+        worksheet.getCell('D8').font = metaFont;
+
+        worksheet.getCell('A9').value = 'Nama Customer';
+        worksheet.getCell('A9').font = metaFont;
+        worksheet.getCell('B9').value = ': {{ invoice.customer|escapejs }}';
+        worksheet.getCell('B9').font = { ...metaFont, bold: true };
+        worksheet.getCell('C9').value = 'No Invoice';
+        worksheet.getCell('C9').font = metaFont;
+        worksheet.getCell('D9').value = ': {{ invoice.no_invoice|escapejs }}';
+        worksheet.getCell('D9').font = { ...metaFont, bold: true };
+
+        // 5. Table Header
+        const headerRow = worksheet.getRow(11);
+        headerRow.values = ['No', 'No AWB', 'Asal', 'Tujuan', 'Koli', 'Kilo', 'Biaya Handling', 'Total'];
+        headerRow.eachCell(cell => {
+          cell.font = { bold: true, color: { argb: 'FFFFFF' }, name: 'Arial', size: 10 };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '5B9BD5' } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle' };
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+
+        // 6. Items
+        {% for item in invoice.inbound_items.all %}
+        worksheet.addRow([
+          {{ forloop.counter }},
+          '{{ item.no_resi|escapejs }}',
+          'JKT',
+          '{{ item.tujuan|default:"RASAU"|escapejs }}',
+          {{ item.koli }},
+          {{ item.kilo|floatformat:0 }},
+          'Rp {{ item.tarif_per_kg|default:"-" }}',
+          'Rp {{ item.total_biaya|floatformat:0|intcomma }}'
+        ]).eachCell(cell => {
+          cell.font = { name: 'Arial', size: 10 };
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+        });
+        {% endfor %}
+
+        // 7. Summary Rows
+        const awbRow = worksheet.addRow(['', '', '', '', '', '', 'By Kirim AWB', 'Rp {{ invoice.biaya_awb|floatformat:0|intcomma }}']);
+        awbRow.getCell(7).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        awbRow.getCell(8).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        awbRow.getCell(8).alignment = { horizontal: 'center' };
+
+        const totalRow = worksheet.addRow(['', '', '', '', '', '', 'TOTAL', 'Rp {{ grand_total|intcomma }}']);
+        totalRow.getCell(7).font = { bold: true, name: 'Arial', size: 10 };
+        totalRow.getCell(8).font = { bold: true, name: 'Arial', size: 10 };
+        totalRow.getCell(7).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        totalRow.getCell(8).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        totalRow.getCell(8).alignment = { horizontal: 'center' };
+
+        // 8. Terbilang (Centered and Bordered)
+        const terbilangRowIdx = worksheet.lastRow.number + 2;
+        worksheet.mergeCells(`A${terbilangRowIdx}:G${terbilangRowIdx}`);
+        const terbilangCell = worksheet.getCell(`A${terbilangRowIdx}`);
+        terbilangCell.value = '{{ grand_total|terbilang|escapejs }}';
+        terbilangCell.font = { italic: true, name: 'Arial', size: 10 };
+        terbilangCell.alignment = { horizontal: 'center', vertical: 'middle' };
+        // Apply border to all cells in the merge range for proper rendering
+        for(let i=1; i<=7; i++) {
+          worksheet.getRow(terbilangRowIdx).getCell(i).border = { 
+            top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} 
+          };
+        }
+
+        // 9. Bank Info
+        let bankStart = worksheet.lastRow.number + 2;
+        worksheet.getCell(`A${bankStart}`).value = 'Mohon dikirim ke Rekening :';
+        worksheet.getCell(`A${bankStart}`).font = { bold: true, size: 10, name: 'Arial' };
+        
+        worksheet.getCell(`A${bankStart+1}`).value = 'Nomor Rekening';
+        worksheet.getCell(`B${bankStart+1}`).value = ': 6465539899';
+        worksheet.getCell(`A${bankStart+2}`).value = 'Bank';
+        worksheet.getCell(`B${bankStart+2}`).value = ': BCA Cabang Pontianak';
+        worksheet.getCell(`A${bankStart+3}`).value = 'Atas Nama';
+        worksheet.getCell(`B${bankStart+3}`).value = ': Borneo Mega Mandiri CV';
+
+        // 10. Signatures
+        let signRow = worksheet.lastRow.number + 3;
+        worksheet.getCell(`A${signRow}`).value = 'Mengetahui,';
+        worksheet.getCell(`G${signRow}`).value = 'Pontianak, {{ invoice.tanggal|date:"d F Y" }}';
+        worksheet.getCell(`G${signRow+1}`).value = 'Dibuat oleh,';
+        
+        worksheet.getCell(`G${signRow}`).alignment = { horizontal: 'center' };
+        worksheet.getCell(`G${signRow+1}`).alignment = { horizontal: 'center' };
+
+        signRow += 4;
+        const nameLeft = worksheet.getCell(`A${signRow}`);
+        nameLeft.value = 'Parida Ekayanti, S.E';
+        nameLeft.font = { bold: true, underline: true, size: 10, name: 'Arial' };
+        
+        const nameRight = worksheet.getCell(`G${signRow}`);
+        nameRight.value = 'Syakina Hafifah, A.md, Ak';
+        nameRight.font = { bold: true, underline: true, size: 10, name: 'Arial' };
+        nameRight.alignment = { horizontal: 'center' };
+
+        worksheet.getCell(`A${signRow+1}`).value = 'General Manager';
+        worksheet.getCell(`G${signRow+1}`).value = 'Accounting';
+        worksheet.getCell(`G${signRow+1}`).alignment = { horizontal: 'center' };
+
+        // Export Buffer
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Invoice_{{ invoice.no_invoice }}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+    </script>
   </body>
 </html>

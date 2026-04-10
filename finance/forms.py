@@ -228,3 +228,75 @@ class InvoiceTagihanForm(forms.ModelForm):
             'biaya_handling': 'Biaya Handling (Rp)',
             'status': 'Status Pembayaran'
         }
+
+# ============================================================
+# FORMS OPERASIONAL
+from .models import OpsInbound, OpsOutbound, OpsManifest
+
+# ============================================================
+
+class OpsInboundForm(forms.ModelForm):
+    class Meta:
+        model = OpsInbound
+        fields = ['nomor_resi', 'tanggal', 'pengirim', 'penerima', 'asal', 'tujuan', 'berat', 'keterangan', 'status']
+        widgets = {
+            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'keterangan': forms.Textarea(attrs={'rows': 3}),
+            'berat': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
+        }
+        labels = {
+            'nomor_resi': 'Nomor Resi',
+            'tanggal': 'Tanggal Diterima',
+            'pengirim': 'Nama Pengirim',
+            'penerima': 'Nama Penerima',
+            'asal': 'Kota Asal',
+            'tujuan': 'Kota Tujuan',
+            'berat': 'Berat (Kg)',
+            'keterangan': 'Catatan Tambahan',
+            'status': 'Status Barang',
+        }
+
+
+class OpsManifestForm(forms.ModelForm):
+    class Meta:
+        model = OpsManifest
+        fields = ['nomor_manifest', 'tanggal', 'armada', 'rute', 'status', 'catatan']
+        widgets = {
+            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'catatan': forms.Textarea(attrs={'rows': 3}),
+        }
+        labels = {
+            'nomor_manifest': 'Nomor Manifest',
+            'tanggal': 'Tanggal Keberangkatan',
+            'armada': 'Nama Armada / Kendaraan',
+            'rute': 'Rute Pengiriman',
+            'status': 'Status',
+            'catatan': 'Catatan Tambahan',
+        }
+
+
+class OpsOutboundForm(forms.ModelForm):
+    class Meta:
+        model = OpsOutbound
+        fields = ['inbound', 'manifest', 'tanggal', 'catatan']
+        widgets = {
+            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'catatan': forms.Textarea(attrs={'rows': 3}),
+        }
+        labels = {
+            'inbound': 'Barang (dari Inbound)',
+            'manifest': 'Masukkan ke Manifest',
+            'tanggal': 'Tanggal Keluar',
+            'catatan': 'Catatan Tambahan',
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hanya tampilkan barang Inbound yang belum punya Outbound
+        used_inbound_ids = OpsOutbound.objects.values_list('inbound_id', flat=True)
+        if self.instance and self.instance.pk:
+            # Saat edit, jangan exclude inbound milik outbound ini sendiri
+            used_inbound_ids = used_inbound_ids.exclude(pk=self.instance.inbound_id)
+        self.fields['inbound'].queryset = OpsInbound.objects.filter(
+            status__in=['SIAP_KIRIM', 'PROSES', 'DITERIMA']
+        ).exclude(id__in=used_inbound_ids)

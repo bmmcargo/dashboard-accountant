@@ -1,0 +1,52 @@
+{% extends 'finance/base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold mb-0">
+        <i class="bi bi-box-arrow-up me-2"></i>{{ title }}
+      </h3>
+      <a href="{% url 'ops_outbound_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Kembali
+      </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body bg-light rounded text-center">
+        <i class="bi bi-info-circle text-primary me-1"></i>
+        <span>Hanya barang masuk dengan status <strong>Diterima, Proses, atau Siap Kirim</strong> yang bisa dipilih. Setelah barang dicatat keluar, status barang akan otomatis berubah menjadi <strong>Dikirim</strong>.</span>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <form method="post">
+          {% csrf_token %}
+          
+          {{ form.inbound|as_crispy_field }}
+          {{ form.manifest|as_crispy_field }}
+          
+          <div class="row">
+            <div class="col-md-6">
+              {{ form.tanggal|as_crispy_field }}
+            </div>
+          </div>
+          
+          {{ form.catatan|as_crispy_field }}
+          
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <button type="submit" class="btn btn-warning px-5">
+              <i class="bi bi-save me-1"></i> Simpan Data Keluaran
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

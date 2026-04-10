@@ -1,0 +1,79 @@
+{% extends 'finance/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="fw-bold mb-1"><i class="bi bi-clipboard-check me-2"></i>Daftar Manifest</h3>
+    <p class="text-muted mb-0">Kelola armada dan rute pengiriman barang.</p>
+  </div>
+  <a href="{% url 'ops_manifest_create' %}" class="btn btn-success">
+    <i class="bi bi-plus-lg me-1"></i> Buat Manifest Baru
+  </a>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>No. Manifest</th>
+            <th>Tgl Berangkat</th>
+            <th>Armada</th>
+            <th>Rute</th>
+            <th class="text-center">Jml Barang</th>
+            <th class="text-center">Total Berat</th>
+            <th>Status</th>
+            <th class="text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>
+              <a href="{% url 'ops_manifest_detail' item.pk %}" class="text-decoration-none fw-bold" title="Lihat Detail Manifest">
+                {{ item.nomor_manifest }}
+              </a>
+            </td>
+            <td>{{ item.tanggal|date:"d M Y" }}</td>
+            <td>{{ item.armada }}</td>
+            <td>{{ item.rute }}</td>
+            <td class="text-center">
+              <span class="badge bg-secondary rounded-pill fs-6">{{ item.jumlah_barang }}</span>
+            </td>
+            <td class="text-center">{{ item.total_berat }} Kg</td>
+            <td>
+              {% if item.status == 'DRAFT' %}
+                <span class="badge bg-secondary">Draft</span>
+              {% elif item.status == 'BERANGKAT' %}
+                <span class="badge bg-primary">Berangkat</span>
+              {% elif item.status == 'SAMPAI' %}
+                <span class="badge bg-success">Sampai Tujuan</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'ops_manifest_detail' item.pk %}" class="btn btn-sm btn-outline-info" title="Detail">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'ops_manifest_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'ops_manifest_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus manifest ini?')">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-4 text-muted">
+              <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>
+              Belum ada data manifest pengiriman.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

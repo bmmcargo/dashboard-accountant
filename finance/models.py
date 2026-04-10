@@ -639,3 +639,95 @@ def create_or_update_jurnal_gaji(sender, instance, created, **kwargs):
 def delete_jurnal_gaji(sender, instance, **kwargs):
     uraian_jurnal = f"Gaji: {instance.karyawan.nama} - {instance.bulan}/{instance.tahun}"
     Jurnal.objects.filter(uraian__startswith=uraian_jurnal).delete()
+# ============================================================
+# MODEL OPERASIONAL (Inbound, Outbound, Manifest)
+# ============================================================
+
+class OpsInbound(models.Model):
+    """Penerimaan Barang — dicatat saat barang masuk ke gudang."""
+    STATUS_CHOICES = [
+        ('DITERIMA', 'Diterima di Gudang'),
+        ('PROSES', 'Sedang Diproses'),
+        ('SIAP_KIRIM', 'Siap Kirim'),
+        ('DIKIRIM', 'Sudah Dikirim'),
+    ]
+
+    nomor_resi = models.CharField(max_length=50, unique=True, help_text="Nomor resi unik")
+    tanggal = models.DateField(help_text="Tanggal barang diterima")
+    pengirim = models.CharField(max_length=150, help_text="Nama pengirim")
+    penerima = models.CharField(max_length=150, help_text="Nama penerima")
+    asal = models.CharField(max_length=100, help_text="Kota / lokasi asal")
+    tujuan = models.CharField(max_length=100, help_text="Kota / lokasi tujuan")
+    berat = models.DecimalField(max_digits=10, decimal_places=2, help_text="Berat dalam Kg")
+    keterangan = models.TextField(blank=True, default='', help_text="Catatan tambahan (opsional)")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DITERIMA')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-tanggal', '-created_at']
+        verbose_name_plural = "Inbound (Barang Masuk)"
+
+    def __str__(self):
+        return f"{self.nomor_resi} — {self.pengirim} → {self.penerima}"
+
+
+class OpsManifest(models.Model):
+    """Manifest Pengiriman (Baru) — menggabungkan beberapa barang ke satu armada."""
+    STATUS_CHOICES = [
+        ('DRAFT', 'Draft'),
+        ('BERANGKAT', 'Sedang Dalam Perjalanan'),
+        ('SAMPAI', 'Sudah Sampai'),
+    ]
+
+    nomor_manifest = models.CharField(max_length=50, unique=True, help_text="Nomor manifest unik")
+    tanggal = models.DateField(help_text="Tanggal keberangkatan")
+    armada = models.CharField(max_length=100, help_text="Nama armada / kendaraan / ekspedisi")
+    rute = models.CharField(max_length=200, help_text="Rute pengiriman (misal: Jakarta → Surabaya)")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+    catatan = models.TextField(blank=True, default='', help_text="Catatan tambahan (opsional)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-tanggal', '-created_at']
+        verbose_name_plural = "Manifest Pengiriman"
+
+    def __str__(self):
+        return f"{self.nomor_manifest} — {self.armada} ({self.rute})"
+
+    @property
+    def total_berat(self):
+        """Hitung total berat seluruh barang di manifest ini."""
+        return self.outbound_items.aggregate(
+            total=models.Sum('inbound__berat')
+        )['total'] or 0
+
+    @property
+    def jumlah_barang(self):
+        """Hitung jumlah barang outbound di manifest ini."""
+        return self.outbound_items.count()
+
+
+class OpsOutbound(models.Model):
+    """Pengeluaran Barang — menghubungkan barang Inbound ke sebuah Manifest."""
+    inbound = models.OneToOneField(
+        OpsInbound, on_delete=models.CASCADE,
+        related_name='outbound',
+        help_text="Barang dari Inbound yang akan dikirim"
+    )
+    manifest = models.ForeignKey(
+        OpsManifest, on_delete=models.CASCADE,
+        related_name='outbound_items',
+        help_text="Manifest pengiriman tempat barang ini dimuat"
+    )
+    tanggal = models.DateField(help_text="Tanggal barang dikeluarkan")
+    catatan = models.TextField(blank=True, default='', help_text="Catatan tambahan (opsional)")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-tanggal', '-created_at']
+        verbose_name_plural = "Outbound (Barang Keluar)"
+
+    def __str__(self):
+        return f"OUT: {self.inbound.nomor_resi} → Manifest {self.manifest.nomor_manifest}"

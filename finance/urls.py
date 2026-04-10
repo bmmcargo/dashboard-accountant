@@ -64,4 +64,27 @@ urlpatterns = [
     path('cashbon/', views.cashbon_list, name='cashbon_list'),
     path('cashbon/edit/<int:pk>/', views.cashbon_edit, name='cashbon_edit'),
     path('cashbon/delete/<int:pk>/', views.cashbon_delete, name='cashbon_delete'),
+
+    # --- OPERASIONAL BARU ADMIN ---
+    path('ops/dashboard/', views.dashboard_ops, name='dashboard_ops'),
+    path('ops/inbound/', views.ops_inbound_list, name='ops_inbound_list'),
+    path('ops/inbound/tambah/', views.ops_inbound_create, name='ops_inbound_create'),
+    path('ops/inbound/edit/<int:pk>/', views.ops_inbound_edit, name='ops_inbound_edit'),
+    path('ops/inbound/hapus/<int:pk>/', views.ops_inbound_delete, name='ops_inbound_delete'),
+
+    path('ops/manifest/', views.ops_manifest_list, name='ops_manifest_list'),
+    path('ops/manifest/tambah/', views.ops_manifest_create, name='ops_manifest_create'),
+    path('ops/manifest/<int:pk>/', views.ops_manifest_detail, name='ops_manifest_detail'),
+    path('ops/manifest/edit/<int:pk>/', views.ops_manifest_edit, name='ops_manifest_edit'),
+    path('ops/manifest/hapus/<int:pk>/', views.ops_manifest_delete, name='ops_manifest_delete'),
+
+    path('ops/outbound/', views.ops_outbound_list, name='ops_outbound_list'),
+    path('ops/outbound/tambah/', views.ops_outbound_create, name='ops_outbound_create'),
+    path('ops/outbound/edit/<int:pk>/', views.ops_outbound_edit, name='ops_outbound_edit'),
+    path('ops/outbound/hapus/<int:pk>/', views.ops_outbound_delete, name='ops_outbound_delete'),
+
+    # Manajemen User
+    path('manajemen-user/', views.user_management_list, name='user_management_list'),
+    path('manajemen-user/tambah/', views.user_management_create, name='user_management_create'),
+    path('manajemen-user/hapus/<int:pk>/', views.user_management_delete, name='user_management_delete'),
 ]

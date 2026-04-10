@@ -1,4 +1,5 @@
 {% load static %}
+{% load auth_extras %}
 <!DOCTYPE html>
 <html lang="id">
   <head>
@@ -225,7 +226,30 @@
       </div>
 
       <nav class="sidebar-nav">
-        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'dashboard' %}"> <i class="bi bi-speedometer2"></i> Dashboard </a>
+        {# ============================================== #}
+        {# MENU OPERASIONAL — Tampil untuk SEMUA user     #}
+        {# ============================================== #}
+        <div class="nav-section-title">Operasional</div>
+        <a class="nav-link {% if request.path == '/operasional/' %}active{% endif %}" href="{% url 'dashboard_ops' %}">
+          <i class="bi bi-truck"></i> Dashboard Operasional
+        </a>
+        <a class="nav-link {% if 'ops/inbound' in request.path %}active{% endif %}" href="{% url 'ops_inbound_list' %}">
+          <i class="bi bi-box-arrow-in-down"></i> Barang Masuk
+        </a>
+        <a class="nav-link {% if 'ops/outbound' in request.path %}active{% endif %}" href="{% url 'ops_outbound_list' %}">
+          <i class="bi bi-box-arrow-up"></i> Barang Keluar
+        </a>
+        <a class="nav-link {% if 'ops/manifest' in request.path %}active{% endif %}" href="{% url 'ops_manifest_list' %}">
+          <i class="bi bi-clipboard-check"></i> Manifest
+        </a>
+
+        {# ============================================== #}
+        {# MENU KEUANGAN DLL — HANYA tampil untuk Owner   #}
+        {# ============================================== #}
+        {% if user.is_superuser or user|has_group:"Owner" %}
+        <hr class="text-secondary mx-3 my-2" />
+        <div class="nav-section-title">Keuangan</div>
+        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'dashboard' %}"> <i class="bi bi-speedometer2"></i> Dashboard Keuangan </a>
         <a class="nav-link {% if 'kas-harian' in request.path %}active{% endif %}" href="{% url 'kas_harian_list' %}"> <i class="bi bi-cash-coin"></i> Kas Harian </a>
         <a class="nav-link {% if 'jurnal' in request.path %}active{% endif %}" href="{% url 'jurnal_list' %}"> <i class="bi bi-journal-text"></i> Jurnal Umum </a>
         <a class="nav-link {% if 'buku-besar' in request.path %}active{% endif %}" href="{% url 'buku_besar' %}"> <i class="bi bi-book"></i> Buku Besar </a>
@@ -236,20 +260,20 @@
           <i class="bi bi-book"></i>
           <span>Buku Pembantu</span>
         </a>
-        <div id="collapseBukuPembantu" class="collapse" aria-labelledby="headingBukuPembantu" data-bs-parent="#accordionSidebar">
+        <div id="collapseBukuPembantu" class="collapse" aria-labelledby="headingBukuPembantu">
           <div class="bg-white py-2 collapse-inner rounded">
             <a class="collapse-item nav-link" href="{% url 'buku_piutang' %}" style="padding-left: 2.5rem; font-size: 0.85rem"> <i class="bi bi-arrow-down-left-circle"></i> Buku Piutang </a>
             <a class="collapse-item nav-link" href="{% url 'buku_hutang' %}" style="padding-left: 2.5rem; font-size: 0.85rem"> <i class="bi bi-arrow-up-right-circle"></i> Buku Hutang </a>
           </div>
         </div>
 
-        <div class="nav-section-title">Logistik</div>
+        <div class="nav-section-title">Data Legacy & Tagihan</div>
 
-        <a class="nav-link {% if 'inbound' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> <i class="bi bi-box-arrow-in-down"></i> Barang Masuk </a>
-        <a class="nav-link {% if 'outbound' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> <i class="bi bi-box-arrow-up"></i> Barang Keluar </a>
+        <a class="nav-link {% if 'inbound' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> <i class="bi bi-box-arrow-in-down"></i> Inbound & Tagihan </a>
+        <a class="nav-link {% if 'outbound' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> <i class="bi bi-box-arrow-up"></i> Outbound (Lama) </a>
 
         <a class="nav-link {% if 'tagihan' in request.path %}active{% endif %}" href="{% url 'invoice_list' %}"> <i class="bi bi-receipt"></i> Daftar Tagihan </a>
-        <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> <i class="bi bi-file-earmark-text"></i> Manifest (Hutang) </a>
+        <a class="nav-link {% if 'manifest' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> <i class="bi bi-file-earmark-text"></i> Manifest (Hutang) </a>
 
         <div class="nav-section-title">Personalia</div>
 
@@ -257,9 +281,14 @@
         <a class="nav-link {% if 'karyawan' in request.path %}active{% endif %}" href="{% url 'karyawan_list' %}"> <i class="bi bi-person-badge"></i> Data Karyawan </a>
         <a class="nav-link {% if 'cashbon' in request.path %}active{% endif %}" href="{% url 'cashbon_list' %}"> <i class="bi bi-wallet2"></i> Catatan Cashbon </a>
 
-        <div class="nav-section-title">Master Data</div>
+        <div class="nav-section-title">Master Data & User</div>
 
         <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-list-ul"></i> Daftar Akun (CoA) </a>
+        <a class="nav-link {% if 'manajemen-user' in request.path %}active{% endif %}" href="{% url 'user_management_list' %}"> <i class="bi bi-person-gear"></i> Manajemen User </a>
+        
+        <hr class="text-secondary mx-3 my-2" />
+        <a class="nav-link" href="/admin/" target="_blank" style="font-size: 0.75rem; color: #718096;"> <i class="bi bi-shield-lock"></i> Django Admin (Expert) </a>
+        {% endif %}
       </nav>
 
       <!-- User Profile Footer -->

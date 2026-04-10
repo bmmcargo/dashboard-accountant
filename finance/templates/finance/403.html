@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akses Ditolak - BMM Cargo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f8fa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .forbidden-card {
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            padding: 50px 40px;
+            max-width: 450px;
+        }
+        .forbidden-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+        .forbidden-card h2 {
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .forbidden-card p {
+            color: #6c757d;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="forbidden-card">
+        <div class="forbidden-icon">
+            <i class="bi bi-shield-lock-fill"></i>
+        </div>
+        <h2>Akses Ditolak</h2>
+        <p>Maaf, Anda tidak memiliki izin untuk mengakses halaman ini. Halaman ini hanya dapat diakses oleh <strong>Owner</strong>.</p>
+        <a href="{% url 'dashboard_ops' %}" class="btn btn-primary px-4 py-2">
+            <i class="bi bi-arrow-left me-2"></i>Kembali ke Dashboard
+        </a>
+    </div>
+</body>
+</html>
