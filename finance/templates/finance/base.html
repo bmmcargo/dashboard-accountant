@@ -286,8 +286,6 @@
         <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-list-ul"></i> Daftar Akun (CoA) </a>
         <a class="nav-link {% if 'manajemen-user' in request.path %}active{% endif %}" href="{% url 'user_management_list' %}"> <i class="bi bi-person-gear"></i> Manajemen User </a>
         
-        <hr class="text-secondary mx-3 my-2" />
-        <a class="nav-link" href="/admin/" target="_blank" style="font-size: 0.75rem; color: #718096;"> <i class="bi bi-shield-lock"></i> Django Admin (Expert) </a>
         {% endif %}
       </nav>
 
