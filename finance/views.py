@@ -13,6 +13,17 @@ from io import BytesIO
 from .models import Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest, KasHarian, InvoiceTagihan
 from .forms import JurnalForm
 
+@login_required
+def custom_login_redirect(request):
+    """
+    Redirect users to their respective dashboards based on group membership.
+    """
+    if request.user.groups.filter(name__in=['Owner', 'Admin']).exists():
+        return redirect('dashboard')
+    elif request.user.groups.filter(name='Admin Operasional').exists():
+        return redirect('dashboard_ops')
+    return redirect('dashboard') # Default fallback
+
 def get_saldo_akun(akun, start_date=None, end_date=None):
     """Helper to calculate account balance."""
     debit_filter = Q(akun_debit=akun)

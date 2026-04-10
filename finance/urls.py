@@ -87,4 +87,7 @@ urlpatterns = [
     path('manajemen-user/', views.user_management_list, name='user_management_list'),
     path('manajemen-user/tambah/', views.user_management_create, name='user_management_create'),
     path('manajemen-user/hapus/<int:pk>/', views.user_management_delete, name='user_management_delete'),
+
+    # Redirect Login
+    path('login-redirect/', views.custom_login_redirect, name='custom_login_redirect'),
 ]
