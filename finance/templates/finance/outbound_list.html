@@ -10,6 +10,48 @@
   </a>
 </div>
 
+<!-- Search & Filter -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-5">
+        <input type="text" name="q" class="form-control" placeholder="Cari resi, manifest..." value="{{ search }}">
+      </div>
+      <div class="col-md-2">
+        <select name="bulan" class="form-select">
+          <option value="">-- Bulan --</option>
+          <option value="1" {% if selected_bulan == '1' %}selected{% endif %}>Januari</option>
+          <option value="2" {% if selected_bulan == '2' %}selected{% endif %}>Februari</option>
+          <option value="3" {% if selected_bulan == '3' %}selected{% endif %}>Maret</option>
+          <option value="4" {% if selected_bulan == '4' %}selected{% endif %}>April</option>
+          <option value="5" {% if selected_bulan == '5' %}selected{% endif %}>Mei</option>
+          <option value="6" {% if selected_bulan == '6' %}selected{% endif %}>Juni</option>
+          <option value="7" {% if selected_bulan == '7' %}selected{% endif %}>Juli</option>
+          <option value="8" {% if selected_bulan == '8' %}selected{% endif %}>Agustus</option>
+          <option value="9" {% if selected_bulan == '9' %}selected{% endif %}>September</option>
+          <option value="10" {% if selected_bulan == '10' %}selected{% endif %}>Oktober</option>
+          <option value="11" {% if selected_bulan == '11' %}selected{% endif %}>November</option>
+          <option value="12" {% if selected_bulan == '12' %}selected{% endif %}>Desember</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select name="tahun" class="form-select">
+          <option value="">-- Tahun --</option>
+          {% for y in years %}
+            <option value="{{ y }}" {% if selected_tahun == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-warning text-white flex-fill"><i class="bi bi-filter me-1"></i> Filter</button>
+        {% if search or selected_bulan or selected_tahun %}
+        <a href="{% url 'ops_outbound_list' %}" class="btn btn-outline-secondary px-3">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- Table -->
 <div class="card border-0 shadow-sm">
   <div class="card-body p-0">
@@ -22,36 +64,47 @@
             <th>No. Manifest Tujuan</th>
             <th>Rute Manifest</th>
             <th>Catatan</th>
+            <th>Source</th>
             <th class="text-center">Aksi</th>
           </tr>
         </thead>
         <tbody>
           {% for item in items %}
           <tr>
-            <td>
-              <strong>{{ item.inbound.nomor_resi }}</strong><br>
-              <small class="text-muted">{{ item.inbound.pengirim }} → {{ item.inbound.penerima }}</small>
-            </td>
+            <td><strong>{{ item.nomor_resi_inbound }}</strong></td>
             <td>{{ item.tanggal|date:"d M Y" }}</td>
             <td>
-              <a href="{% url 'ops_manifest_detail' item.manifest.pk %}" class="text-decoration-none fw-bold">
-                {{ item.manifest.nomor_manifest }}
+              {% if item.source == 'new' %}
+              <a href="{% url 'ops_manifest_list' %}" class="text-decoration-none fw-bold">
+                {{ item.nomor_manifest }}
               </a>
+              {% else %}
+              <span class="text-muted fst-italic">{{ item.nomor_manifest }}</span>
+              {% endif %}
             </td>
-            <td>{{ item.manifest.rute }}</td>
+            <td>{{ item.rute }}</td>
             <td>{{ item.catatan|default:"-" }}</td>
+            <td>
+              <span class="badge {% if item.source == 'legacy' %}bg-secondary{% else %}bg-success{% endif %}">
+                {% if item.source == 'legacy' %}Data Lama{% else %}Baru{% endif %}
+              </span>
+            </td>
             <td class="text-center">
+              {% if item.source == 'new' %}
               <a href="{% url 'ops_outbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                 <i class="bi bi-pencil"></i>
               </a>
-              <a href="{% url 'ops_outbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data barang keluar ini? Status barang masuk akan kembali menjadi Siap Kirim.')">
+              <a href="{% url 'ops_outbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data barang keluar ini?')">
                 <i class="bi bi-trash"></i>
               </a>
+              {% else %}
+              <span class="text-muted small">Read-only</span>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="6" class="text-center py-4 text-muted">
+            <td colspan="7" class="text-center py-4 text-muted">
               <i class="bi bi-box-arrow-up fs-1 d-block mb-2"></i>
               Belum ada data barang keluar.
             </td>

@@ -400,7 +400,6 @@ def akun_delete(request, pk):
 # --- INBOUND & OUTBOUND VIEWS ---
 
 @login_required
-@owner_required
 def inbound_list(request):
     inbound_data = InboundTransaction.objects.all().order_by('-tanggal_masuk_stt')
     
@@ -413,21 +412,34 @@ def inbound_list(request):
             Q(tujuan__icontains=q) |
             Q(keterangan__icontains=q)
         )
+
+    # Filter Bulan & Tahun
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+    if bulan:
+        inbound_data = inbound_data.filter(tanggal_masuk_stt__month=bulan)
+    if tahun:
+        inbound_data = inbound_data.filter(tanggal_masuk_stt__year=tahun)
     
     # Hitung Total di Summary
     total_kilo = inbound_data.aggregate(Sum('kilo'))['kilo__sum'] or 0
     total_biaya = inbound_data.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
+    
+    # Metadata untuk filter UI
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
     
     context = {
         'inbounds': inbound_data,
         'total_kilo': total_kilo,
         'total_biaya': total_biaya,
         'q': q,
+        'selected_bulan': bulan,
+        'selected_tahun': tahun,
+        'years': years,
     }
     return render(request, 'finance/inbound/inbound_list.html', context)
 
 @login_required
-@owner_required
 def outbound_list(request):
     outbound_data = OutboundTransaction.objects.all().order_by('-tanggal')
     
@@ -438,21 +450,35 @@ def outbound_list(request):
             Q(no_resi_bmm__icontains=q) | 
             Q(pengirim__icontains=q) | 
             Q(penerima__icontains=q) |
+            # Q(keterangan__icontains=q)  -- Avoiding potential field issues if missing
             Q(keterangan__icontains=q)
         )
     
+    # Filter Bulan & Tahun
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+    if bulan:
+        outbound_data = outbound_data.filter(tanggal__month=bulan)
+    if tahun:
+        outbound_data = outbound_data.filter(tanggal__year=tahun)
+
     # Hitung Total di Summary
     total_pendapatan = outbound_data.aggregate(Sum('total'))['total__sum'] or 0
     total_biaya_vendor = (outbound_data.aggregate(Sum('vendor1_biaya'))['vendor1_biaya__sum'] or 0) + \
                          (outbound_data.aggregate(Sum('vendor2_biaya'))['vendor2_biaya__sum'] or 0)
     total_profit = outbound_data.aggregate(Sum('profit'))['profit__sum'] or 0
     
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+
     context = {
         'outbounds': outbound_data,
         'total_pendapatan': total_pendapatan,
         'total_biaya_vendor': total_biaya_vendor,
         'total_profit': total_profit,
         'q': q,
+        'selected_bulan': bulan,
+        'selected_tahun': tahun,
+        'years': years,
     }
     return render(request, 'finance/outbound/outbound_list.html', context)
 
@@ -537,7 +563,6 @@ def outbound_delete(request, pk):
 from .models import Manifest
 
 @login_required
-@owner_required
 def manifest_list(request):
     # Urutkan berdasarkan tanggal kirim secara Ascending (Kronologis)
     manifest_data = Manifest.objects.all().order_by('tanggal_kirim')
@@ -563,6 +588,14 @@ def manifest_list(request):
             Q(penerima__icontains=q) |
             Q(tujuan__icontains=q)
         )
+
+    # Filter Bulan & Tahun
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+    if bulan:
+        manifest_data = manifest_data.filter(tanggal_kirim__month=bulan)
+    if tahun:
+        manifest_data = manifest_data.filter(tanggal_kirim__year=tahun)
     
     # Hitung Total Hutang
     total_hutang = manifest_data.filter(status_bayar=False).aggregate(Sum('total'))['total__sum'] or 0
@@ -570,7 +603,8 @@ def manifest_list(request):
     
     # Kategori list untuk filter
     kategori_list = Manifest.KATEGORI_CHOICES
-    
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+
     context = {
         'manifests': manifest_data,
         'total_hutang': total_hutang,
@@ -578,6 +612,9 @@ def manifest_list(request):
         'kategori_list': kategori_list,
         'selected_kategori': kategori,
         'selected_status': status,
+        'selected_bulan': bulan,
+        'selected_tahun': tahun,
+        'years': years,
         'q': q,
     }
     return render(request, 'finance/manifest/manifest_list.html', context)
@@ -1209,12 +1246,57 @@ from .forms import OpsInboundForm, OpsOutboundForm, OpsManifestForm
 @login_required
 def dashboard_ops(request):
     """Dashboard Operasional — bisa diakses oleh Admin Operasional dan Owner."""
+    from django.utils import timezone
+    from .models import OpsInbound, OpsOutbound, OpsManifest, InboundTransaction, OutboundTransaction, Manifest
     from .decorators import is_owner
+
+    # Filter Bulan & Tahun
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Querysets Baru
+    ops_inbounds = OpsInbound.objects.all()
+    ops_outbounds = OpsOutbound.objects.all()
+    ops_manifests = OpsManifest.objects.all()
+
+    # Querysets Lama (Legacy)
+    legacy_inbounds = InboundTransaction.objects.all()
+    legacy_outbounds = OutboundTransaction.objects.all()
+    legacy_manifests = Manifest.objects.all()
+
+    if bulan:
+        ops_inbounds = ops_inbounds.filter(tanggal__month=bulan)
+        ops_outbounds = ops_outbounds.filter(tanggal__month=bulan)
+        ops_manifests = ops_manifests.filter(tanggal__month=bulan)
+        
+        legacy_inbounds = legacy_inbounds.filter(tanggal_masuk_stt__month=bulan)
+        legacy_outbounds = legacy_outbounds.filter(tanggal__month=bulan)
+        legacy_manifests = legacy_manifests.filter(tanggal_kirim__month=bulan)
+
+    if tahun:
+        ops_inbounds = ops_inbounds.filter(tanggal__year=tahun)
+        ops_outbounds = ops_outbounds.filter(tanggal__year=tahun)
+        ops_manifests = ops_manifests.filter(tanggal__year=tahun)
+        
+        legacy_inbounds = legacy_inbounds.filter(tanggal_masuk_stt__year=tahun)
+        legacy_outbounds = legacy_outbounds.filter(tanggal__year=tahun)
+        legacy_manifests = legacy_manifests.filter(tanggal_kirim__year=tahun)
+
+    # Gabungkan Counts
+    total_inbound = ops_inbounds.count() + legacy_inbounds.count()
+    total_outbound = ops_outbounds.count() + legacy_outbounds.count()
+    total_manifest = ops_manifests.count() + legacy_manifests.count()
+
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+
     context = {
         'is_owner': is_owner(request.user),
-        'total_inbound': OpsInbound.objects.count(),
-        'total_outbound': OpsOutbound.objects.count(),
-        'total_manifest': OpsManifest.objects.count(),
+        'total_inbound': total_inbound,
+        'total_outbound': total_outbound,
+        'total_manifest': total_manifest,
+        'selected_bulan': bulan,
+        'selected_tahun': tahun,
+        'years': years,
         'inbound_terbaru': OpsInbound.objects.all()[:5],
         'manifest_terbaru': OpsManifest.objects.all()[:5],
     }
@@ -1225,17 +1307,52 @@ def dashboard_ops(request):
 
 @login_required
 def ops_inbound_list(request):
+    from django.utils import timezone
+    from .models import OpsInbound, InboundTransaction
+    
     search = request.GET.get('q', '')
-    items = OpsInbound.objects.all()
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsInbound.objects.all()
     if search:
-        items = items.filter(
-            Q(nomor_resi__icontains=search) |
-            Q(pengirim__icontains=search) |
-            Q(penerima__icontains=search) |
-            Q(asal__icontains=search) |
-            Q(tujuan__icontains=search)
+        items_new = items_new.filter(
+            Q(nomor_resi__icontains=search) | Q(pengirim__icontains=search) | Q(penerima__icontains=search)
         )
-    return render(request, 'finance/inbound_list.html', {'items': items, 'search': search})
+    if bulan: items_new = items_new.filter(tanggal__month=bulan)
+    if tahun: items_new = items_new.filter(tanggal__year=tahun)
+
+    # Data Lama
+    items_legacy = InboundTransaction.objects.all()
+    if search:
+        items_legacy = items_legacy.filter(
+            Q(no_resi__icontains=search) | Q(vendor__icontains=search) | Q(tujuan__icontains=search)
+        )
+    if bulan: items_legacy = items_legacy.filter(tanggal_masuk_stt__month=bulan)
+    if tahun: items_legacy = items_legacy.filter(tanggal_masuk_stt__year=tahun)
+
+    # Normalisasi
+    merged = []
+    for item in items_new:
+        merged.append({
+            'source': 'new', 'pk': item.pk, 'nomor_resi': item.nomor_resi, 'tanggal': item.tanggal,
+            'pengirim': item.pengirim, 'penerima': item.penerima, 'asal': item.asal, 'tujuan': item.tujuan,
+            'berat': item.berat, 'status_display': item.get_status_display(), 'status_raw': item.status
+        })
+    for item in items_legacy:
+        merged.append({
+            'source': 'legacy', 'pk': item.pk, 'nomor_resi': item.no_resi, 'tanggal': item.tanggal_masuk_stt,
+            'pengirim': item.vendor, 'penerima': '-', 'asal': '-', 'tujuan': item.tujuan,
+            'berat': item.kilo, 'status_display': 'Data Riwayat (Lama)', 'status_raw': 'LEGACY'
+        })
+    
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+    
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+    return render(request, 'finance/inbound_list.html', {
+        'items': merged, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
+    })
 
 @login_required
 def ops_inbound_create(request):
@@ -1251,7 +1368,8 @@ def ops_inbound_create(request):
 
 @login_required
 def ops_inbound_edit(request, pk):
-    item = get_object_or_404(Inbound, pk=pk)
+    from .models import OpsInbound
+    item = get_object_or_404(OpsInbound, pk=pk)
     if request.method == 'POST':
         form = OpsInboundForm(request.POST, instance=item)
         if form.is_valid():
@@ -1264,7 +1382,8 @@ def ops_inbound_edit(request, pk):
 
 @login_required
 def ops_inbound_delete(request, pk):
-    item = get_object_or_404(Inbound, pk=pk)
+    from .models import OpsInbound
+    item = get_object_or_404(OpsInbound, pk=pk)
     try:
         item.delete()
         messages.success(request, f'Barang {item.nomor_resi} berhasil dihapus.')
@@ -1277,8 +1396,46 @@ def ops_inbound_delete(request, pk):
 
 @login_required
 def ops_manifest_list(request):
-    items = OpsManifest.objects.all()
-    return render(request, 'finance/manifest_list.html', {'items': items})
+    from django.utils import timezone
+    from .models import OpsManifest, Manifest
+    
+    search = request.GET.get('q', '')
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsManifest.objects.all()
+    if search:
+        items_new = items_new.filter(Q(nomor_manifest__icontains=search) | Q(armada__icontains=search))
+    if bulan: items_new = items_new.filter(tanggal__month=bulan)
+    if tahun: items_new = items_new.filter(tanggal__year=tahun)
+
+    # Data Lama
+    items_legacy = Manifest.objects.all()
+    if search:
+        items_legacy = items_legacy.filter(Q(no_resi__icontains=search) | Q(pengirim__icontains=search))
+    if bulan: items_legacy = items_legacy.filter(tanggal_kirim__month=bulan)
+    if tahun: items_legacy = items_legacy.filter(tanggal_kirim__year=tahun)
+
+    merged = []
+    for item in items_new:
+        merged.append({
+            'source': 'new', 'pk': item.pk, 'nomor_manifest': item.nomor_manifest, 'tanggal': item.tanggal,
+            'armada': item.armada, 'rute': item.rute, 'jumlah': item.jumlah_barang, 'berat': item.total_berat,
+            'status_display': item.get_status_display()
+        })
+    for item in items_legacy:
+        merged.append({
+            'source': 'legacy', 'pk': item.pk, 'nomor_manifest': item.no_resi, 'tanggal': item.tanggal_kirim,
+            'armada': item.penerima, 'rute': item.tujuan, 'jumlah': item.koli, 'berat': item.kg,
+            'status_display': 'Data Riwayat (Lama)'
+        })
+
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+    return render(request, 'finance/manifest_list.html', {
+        'items': merged, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
+    })
 
 @login_required
 def ops_manifest_create(request):
@@ -1294,7 +1451,8 @@ def ops_manifest_create(request):
 
 @login_required
 def ops_manifest_edit(request, pk):
-    item = get_object_or_404(Manifest, pk=pk)
+    from .models import OpsManifest # Local import for safety
+    item = get_object_or_404(OpsManifest, pk=pk)
     if request.method == 'POST':
         form = OpsManifestForm(request.POST, instance=item)
         if form.is_valid():
@@ -1308,7 +1466,8 @@ def ops_manifest_edit(request, pk):
 @login_required
 def ops_manifest_detail(request, pk):
     """Detail manifest beserta daftar barang outbound-nya."""
-    item = get_object_or_404(Manifest, pk=pk)
+    from .models import OpsManifest
+    item = get_object_or_404(OpsManifest, pk=pk)
     outbound_items = item.outbound_items.select_related('inbound').all()
     return render(request, 'finance/manifest_detail.html', {
         'manifest': item,
@@ -1317,7 +1476,8 @@ def ops_manifest_detail(request, pk):
 
 @login_required
 def ops_manifest_delete(request, pk):
-    item = get_object_or_404(Manifest, pk=pk)
+    from .models import OpsManifest
+    item = get_object_or_404(OpsManifest, pk=pk)
     try:
         item.delete()
         messages.success(request, f'Manifest {item.nomor_manifest} berhasil dihapus.')
@@ -1330,8 +1490,44 @@ def ops_manifest_delete(request, pk):
 
 @login_required
 def ops_outbound_list(request):
-    items = OpsOutbound.objects.select_related('inbound', 'manifest').all()
-    return render(request, 'finance/outbound_list.html', {'items': items})
+    from django.utils import timezone
+    from .models import OpsOutbound, OutboundTransaction
+    
+    search = request.GET.get('q', '')
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsOutbound.objects.select_related('inbound', 'manifest').all()
+    if search:
+        items_new = items_new.filter(Q(inbound__nomor_resi__icontains=search) | Q(manifest__nomor_manifest__icontains=search))
+    if bulan: items_new = items_new.filter(tanggal__month=bulan)
+    if tahun: items_new = items_new.filter(tanggal__year=tahun)
+
+    # Data Lama
+    items_legacy = OutboundTransaction.objects.all()
+    if search:
+        items_legacy = items_legacy.filter(Q(no_resi_bmm__icontains=search) | Q(pengirim__icontains=search))
+    if bulan: items_legacy = items_legacy.filter(tanggal__month=bulan)
+    if tahun: items_legacy = items_legacy.filter(tanggal__year=tahun)
+
+    merged = []
+    for item in items_new:
+        merged.append({
+            'source': 'new', 'pk': item.pk, 'nomor_resi_inbound': item.inbound.nomor_resi, 'tanggal': item.tanggal,
+            'nomor_manifest': item.manifest.nomor_manifest, 'rute': item.manifest.rute, 'catatan': item.catatan
+        })
+    for item in items_legacy:
+        merged.append({
+            'source': 'legacy', 'pk': item.pk, 'nomor_resi_inbound': item.no_resi_bmm, 'tanggal': item.tanggal,
+            'nomor_manifest': '-', 'rute': '-', 'catatan': f"Fatih: {item.pengirim}"
+        })
+
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+    return render(request, 'finance/outbound_list.html', {
+        'items': merged, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
+    })
 
 @login_required
 def ops_outbound_create(request):
@@ -1350,7 +1546,8 @@ def ops_outbound_create(request):
 
 @login_required
 def ops_outbound_edit(request, pk):
-    item = get_object_or_404(Outbound, pk=pk)
+    from .models import OpsOutbound
+    item = get_object_or_404(OpsOutbound, pk=pk)
     if request.method == 'POST':
         form = OpsOutboundForm(request.POST, instance=item)
         if form.is_valid():
@@ -1363,7 +1560,8 @@ def ops_outbound_edit(request, pk):
 
 @login_required
 def ops_outbound_delete(request, pk):
-    item = get_object_or_404(Outbound, pk=pk)
+    from .models import OpsOutbound
+    item = get_object_or_404(OpsOutbound, pk=pk)
     # Kembalikan status inbound
     item.inbound.status = 'SIAP_KIRIM'
     item.inbound.save()

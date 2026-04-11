@@ -243,6 +243,18 @@
           <i class="bi bi-clipboard-check"></i> Manifest
         </a>
 
+        {# MENU DATA LAMA — Tampil untuk SEMUA user agar bisa lihat histori #}
+        <div class="nav-section-title">Data Legacy (Lama)</div>
+        <a class="nav-link {% if 'inbound' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> 
+           <i class="bi bi-archive"></i> Inbound & Tagihan 
+        </a>
+        <a class="nav-link {% if 'outbound' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> 
+           <i class="bi bi-archive"></i> Outbound (Lama) 
+        </a>
+        <a class="nav-link {% if 'manifest' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> 
+           <i class="bi bi-archive"></i> Manifest (Hutang) 
+        </a>
+
         {# ============================================== #}
         {# MENU KEUANGAN DLL — HANYA tampil untuk Owner   #}
         {# ============================================== #}
@@ -267,13 +279,8 @@
           </div>
         </div>
 
-        <div class="nav-section-title">Data Legacy & Tagihan</div>
-
-        <a class="nav-link {% if 'inbound' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> <i class="bi bi-box-arrow-in-down"></i> Inbound & Tagihan </a>
-        <a class="nav-link {% if 'outbound' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> <i class="bi bi-box-arrow-up"></i> Outbound (Lama) </a>
-
+        <div class="nav-section-title">Tagihan</div>
         <a class="nav-link {% if 'tagihan' in request.path %}active{% endif %}" href="{% url 'invoice_list' %}"> <i class="bi bi-receipt"></i> Daftar Tagihan </a>
-        <a class="nav-link {% if 'manifest' in request.path and not 'ops' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> <i class="bi bi-file-earmark-text"></i> Manifest (Hutang) </a>
 
         <div class="nav-section-title">Personalia</div>
 

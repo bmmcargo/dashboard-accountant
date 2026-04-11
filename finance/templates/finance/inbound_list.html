@@ -10,21 +10,44 @@
   </a>
 </div>
 
-<!-- Search -->
+<!-- Search & Filter -->
 <div class="card border-0 shadow-sm mb-4">
   <div class="card-body py-3">
     <form method="get" class="row g-2 align-items-center">
-      <div class="col-md-8">
+      <div class="col-md-5">
         <input type="text" name="q" class="form-control" placeholder="Cari resi, pengirim, penerima, asal, tujuan..." value="{{ search }}">
       </div>
       <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i> Cari</button>
+        <select name="bulan" class="form-select">
+          <option value="">-- Bulan --</option>
+          <option value="1" {% if selected_bulan == '1' %}selected{% endif %}>Januari</option>
+          <option value="2" {% if selected_bulan == '2' %}selected{% endif %}>Februari</option>
+          <option value="3" {% if selected_bulan == '3' %}selected{% endif %}>Maret</option>
+          <option value="4" {% if selected_bulan == '4' %}selected{% endif %}>April</option>
+          <option value="5" {% if selected_bulan == '5' %}selected{% endif %}>Mei</option>
+          <option value="6" {% if selected_bulan == '6' %}selected{% endif %}>Juni</option>
+          <option value="7" {% if selected_bulan == '7' %}selected{% endif %}>Juli</option>
+          <option value="8" {% if selected_bulan == '8' %}selected{% endif %}>Agustus</option>
+          <option value="9" {% if selected_bulan == '9' %}selected{% endif %}>September</option>
+          <option value="10" {% if selected_bulan == '10' %}selected{% endif %}>Oktober</option>
+          <option value="11" {% if selected_bulan == '11' %}selected{% endif %}>November</option>
+          <option value="12" {% if selected_bulan == '12' %}selected{% endif %}>Desember</option>
+        </select>
       </div>
-      {% if search %}
       <div class="col-md-2">
-        <a href="{% url 'ops_inbound_list' %}" class="btn btn-outline-secondary w-100">Reset</a>
+        <select name="tahun" class="form-select">
+          <option value="">-- Tahun --</option>
+          {% for y in years %}
+            <option value="{{ y }}" {% if selected_tahun == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
       </div>
-      {% endif %}
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-filter me-1"></i> Filter</button>
+        {% if search or selected_bulan or selected_tahun %}
+        <a href="{% url 'ops_inbound_list' %}" class="btn btn-outline-secondary px-3">Reset</a>
+        {% endif %}
+      </div>
     </form>
   </div>
 </div>
@@ -58,23 +81,22 @@
             <td>{{ item.tujuan }}</td>
             <td>{{ item.berat }}</td>
             <td>
-              {% if item.status == 'DITERIMA' %}
-                <span class="badge bg-info">Diterima</span>
-              {% elif item.status == 'PROSES' %}
-                <span class="badge bg-warning text-dark">Proses</span>
-              {% elif item.status == 'SIAP_KIRIM' %}
-                <span class="badge bg-primary">Siap Kirim</span>
-              {% elif item.status == 'DIKIRIM' %}
-                <span class="badge bg-success">Dikirim</span>
-              {% endif %}
+            <td>
+              <span class="badge {% if item.source == 'legacy' %}bg-secondary{% elif item.status_raw == 'DIKIRIM' %}bg-success{% else %}bg-primary{% endif %}">
+                {{ item.status_display }}
+              </span>
             </td>
             <td class="text-center">
+              {% if item.source == 'new' %}
               <a href="{% url 'ops_inbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                 <i class="bi bi-pencil"></i>
               </a>
               <a href="{% url 'ops_inbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data ini?')">
                 <i class="bi bi-trash"></i>
               </a>
+              {% else %}
+              <span class="text-muted small">Read-only</span>
+              {% endif %}
             </td>
           </tr>
           {% empty %}

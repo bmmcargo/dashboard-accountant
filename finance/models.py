@@ -237,6 +237,17 @@ class Manifest(models.Model):
     total = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name="Total Hutang (Rp)")
     status_bayar = models.BooleanField(default=False, verbose_name="Sudah Dibayar")
     
+    # Shadow fields to avoid IntegrityError if table was polluted by new-style fields
+    nomor_manifest = models.CharField(max_length=100, null=True, blank=True)
+    tanggal = models.DateField(null=True, blank=True)
+    armada = models.CharField(max_length=100, null=True, blank=True)
+    rute = models.CharField(max_length=200, null=True, blank=True)
+    status = models.CharField(max_length=20, null=True, blank=True)
+    catatan_ops = models.TextField(null=True, blank=True, db_column='catatan') # Conflict with legacy catatan?
+    armada_ops = models.CharField(max_length=100, null=True, blank=True)
+    rute_ops = models.CharField(max_length=200, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -661,6 +672,12 @@ class OpsInbound(models.Model):
     berat = models.DecimalField(max_digits=10, decimal_places=2, help_text="Berat dalam Kg")
     keterangan = models.TextField(blank=True, default='', help_text="Catatan tambahan (opsional)")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DITERIMA')
+    
+    # Financial Fields for Sync to Legacy/Accounting
+    vendor = models.CharField(max_length=100, blank=True, null=True, help_text="Vendor pengirim (untuk Akuntansi)")
+    tarif_per_kg = models.DecimalField(max_digits=12, decimal_places=0, default=0)
+    total_biaya = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -670,6 +687,12 @@ class OpsInbound(models.Model):
 
     def __str__(self):
         return f"{self.nomor_resi} — {self.pengirim} → {self.penerima}"
+
+    def save(self, *args, **kwargs):
+        # Auto calculate total if weight and tariff are present
+        if not self.total_biaya and self.berat and self.tarif_per_kg:
+            self.total_biaya = self.berat * self.tarif_per_kg
+        super().save(*args, **kwargs)
 
 
 class OpsManifest(models.Model):
@@ -686,6 +709,12 @@ class OpsManifest(models.Model):
     rute = models.CharField(max_length=200, help_text="Rute pengiriman (misal: Jakarta → Surabaya)")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
     catatan = models.TextField(blank=True, default='', help_text="Catatan tambahan (opsional)")
+    
+    # Financial Fields for Sync to Legacy/Accounting
+    vendor_penerima = models.CharField(max_length=150, blank=True, null=True, help_text="Nama Vendor / Penerima Manifest")
+    total_hutang = models.DecimalField(max_digits=15, decimal_places=0, default=0)
+    dp = models.DecimalField(max_digits=15, decimal_places=0, default=0, help_text="Uang Panjar / DP")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -731,3 +760,98 @@ class OpsOutbound(models.Model):
 
     def __str__(self):
         return f"OUT: {self.inbound.nomor_resi} → Manifest {self.manifest.nomor_manifest}"
+
+# ============================================
+# SIGNALS FOR SYNCING NEW OPS TO LEGACY DATA
+# ============================================
+
+@receiver(post_save, sender=OpsInbound)
+def sync_ops_inbound_to_legacy(sender, instance, created, **kwargs):
+    """Sync OpsInbound data to InboundTransaction (Legacy)."""
+    legacy, created_legacy = InboundTransaction.objects.get_or_create(
+        no_resi=instance.nomor_resi
+    )
+    legacy.tanggal_masuk_stt = instance.tanggal
+    legacy.vendor = instance.vendor or instance.pengirim
+    legacy.tujuan = instance.tujuan
+    legacy.kilo = instance.berat
+    legacy.tarif_per_kg = str(instance.tarif_per_kg)
+    legacy.total_biaya = instance.total_biaya
+    legacy.keterangan = instance.keterangan
+    legacy.save()
+
+@receiver(post_save, sender=OpsManifest)
+def sync_ops_manifest_to_legacy(sender, instance, created, **kwargs):
+    """Sync OpsManifest data to Manifest (Legacy)."""
+    # Use defaults to satisfy NOT NULL constraints during creation
+    legacy, created_legacy = Manifest.objects.get_or_create(
+        no_resi=instance.nomor_manifest,
+        defaults={
+            'nomor_manifest': instance.nomor_manifest,
+            'tanggal': instance.tanggal,
+            'armada': instance.armada,
+            'rute': instance.rute,
+            'status': instance.status,
+            'catatan_ops': instance.catatan,
+            'armada_ops': instance.armada,
+            'rute_ops': instance.rute,
+            'kategori': 'HULU',
+            'tanggal_kirim': instance.tanggal,
+        }
+    )
+    
+    # Update fields (for both created and existing records)
+    legacy.tanggal_kirim = instance.tanggal
+    legacy.penerima = instance.vendor_penerima or instance.armada
+    legacy.tujuan = instance.rute
+    legacy.total = instance.total_hutang
+    legacy.dp = instance.dp
+    legacy.koli = instance.jumlah_barang
+    legacy.kg = instance.total_berat
+    
+    # Fill shadow fields to satisfy potential DB constraints
+    legacy.nomor_manifest = instance.nomor_manifest
+    legacy.tanggal = instance.tanggal
+    legacy.armada = instance.armada
+    legacy.rute = instance.rute
+    legacy.status = instance.status
+    legacy.catatan_ops = instance.catatan
+    legacy.armada_ops = instance.armada
+    legacy.rute_ops = instance.rute
+    
+    legacy.save()
+
+@receiver(post_save, sender=OpsOutbound)
+def sync_ops_outbound_to_legacy(sender, instance, created, **kwargs):
+    """Sync OpsOutbound data to OutboundTransaction (Legacy) and update Inbound status."""
+    # 1. Update Inbound Status
+    if created:
+        instance.inbound.status = 'DIKIRIM'
+        instance.inbound.save(update_fields=['status'])
+    
+    # 2. Update/Create OutboundTransaction
+    legacy, created_legacy = OutboundTransaction.objects.get_or_create(
+        no_resi_bmm=instance.inbound.nomor_resi
+    )
+    legacy.tanggal = instance.tanggal
+    legacy.pengirim = instance.inbound.pengirim
+    legacy.penerima = instance.inbound.penerima
+    legacy.koli = 0 
+    legacy.kg = str(instance.inbound.berat)
+    legacy.keterangan = instance.catatan
+    
+    # Default legacy vendor 1 to manifest info
+    legacy.vendor1_tgl = instance.manifest.tanggal
+    legacy.vendor1_resi = instance.manifest.nomor_manifest
+    legacy.save()
+
+@receiver(post_delete, sender=OpsOutbound)
+def reset_inbound_status_on_outbound_delete(sender, instance, **kwargs):
+    """Balikkan status inbound menjadi SIAP_KIRIM jika data outbound dihapus."""
+    try:
+        instance.inbound.status = 'SIAP_KIRIM'
+        instance.inbound.save(update_fields=['status'])
+    except: pass
+    
+    # Optional: Delete legacy too
+    OutboundTransaction.objects.filter(no_resi_bmm=instance.inbound.nomor_resi).delete()

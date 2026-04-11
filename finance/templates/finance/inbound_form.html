@@ -55,6 +55,21 @@
             </div>
           </div>
 
+          <!-- Financial Sync Section -->
+          <div class="row border-top pt-3 mt-1 bg-light p-3 rounded mb-3 border">
+            <h6 class="fw-bold mb-3"><i class="bi bi-calculator me-2"></i>Data Akuntansi (Koneksi Laporan)</h6>
+            <div class="col-md-4">
+              {{ form.vendor|as_crispy_field }}
+            </div>
+            <div class="col-md-4">
+              {{ form.tarif_per_kg|as_crispy_field }}
+            </div>
+            <div class="col-md-4">
+              {{ form.total_biaya|as_crispy_field }}
+            </div>
+            <small class="text-muted">Isi data ini agar otomatis muncul di laporan keuangan lama.</small>
+          </div>
+
           <div class="row border-top pt-3 mt-1">
             <div class="col-12">
               {{ form.keterangan|as_crispy_field }}
@@ -63,7 +78,7 @@
 
           <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
             <button type="submit" class="btn btn-primary px-5">
-              <i class="bi bi-save me-1"></i> Simpan Data
+              <i class="bi bi-save me-1"></i> Simpan Data Inbound
             </button>
           </div>
         </form>

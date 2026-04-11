@@ -409,13 +409,13 @@
         {% for item in invoice.inbound_items.all %}
         worksheet.addRow([
           {{ forloop.counter }},
-          '{{ item.no_resi|escapejs }}',
+          '{{ item.no_resi|default:""|escapejs }}',
           'JKT',
           '{{ item.tujuan|default:"RASAU"|escapejs }}',
-          {{ item.koli }},
-          {{ item.kilo|floatformat:0 }},
-          'Rp {{ item.tarif_per_kg|default:"-" }}',
-          'Rp {{ item.total_biaya|floatformat:0|intcomma }}'
+          {{ item.koli|default:0 }},
+          {{ item.kilo|floatformat:0|default:0 }},
+          'Rp {{ item.tarif_per_kg|default:"0"|intcomma }}',
+          'Rp {{ item.total_biaya|floatformat:0|default:"0"|intcomma }}'
         ]).eachCell(cell => {
           cell.font = { name: 'Arial', size: 10 };
           cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };

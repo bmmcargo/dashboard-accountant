@@ -63,36 +63,61 @@
         </div>
     </div>
 
-    <!-- Filter & Search -->
-    <div class="card shadow mb-3">
-        <div class="card-body py-2">
-            <form method="get" action="" class="row g-2 align-items-center">
+    <!-- Filter & Search Bar -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" action="" class="row g-3 align-items-center">
                 <div class="col-md-3">
-                    <select name="kategori" class="form-select">
-                        <option value="">-- Semua Kategori --</option>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted px-3"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Cari No Manifest, Vendor..." value="{{ q }}">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select name="bulan" class="form-select border-0 bg-light">
+                        <option value="">-- Semua Bulan --</option>
+                        <option value="1" {% if selected_bulan == '1' %}selected{% endif %}>Januari</option>
+                        <option value="2" {% if selected_bulan == '2' %}selected{% endif %}>Februari</option>
+                        <option value="3" {% if selected_bulan == '3' %}selected{% endif %}>Maret</option>
+                        <option value="4" {% if selected_bulan == '4' %}selected{% endif %}>April</option>
+                        <option value="5" {% if selected_bulan == '5' %}selected{% endif %}>Mei</option>
+                        <option value="6" {% if selected_bulan == '6' %}selected{% endif %}>Juni</option>
+                        <option value="7" {% if selected_bulan == '7' %}selected{% endif %}>Juli</option>
+                        <option value="8" {% if selected_bulan == '8' %}selected{% endif %}>Agustus</option>
+                        <option value="9" {% if selected_bulan == '9' %}selected{% endif %}>September</option>
+                        <option value="10" {% if selected_bulan == '10' %}selected{% endif %}>Oktober</option>
+                        <option value="11" {% if selected_bulan == '11' %}selected{% endif %}>November</option>
+                        <option value="12" {% if selected_bulan == '12' %}selected{% endif %}>Desember</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="tahun" class="form-select border-0 bg-light">
+                        <option value="">-- Tahun --</option>
+                        {% for y in years %}
+                          <option value="{{ y }}" {% if selected_tahun == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="kategori" class="form-select border-0 bg-light">
+                        <option value="">-- Kategori --</option>
                         {% for code, name in kategori_list %}
                         <option value="{{ code }}" {% if selected_kategori == code %}selected{% endif %}>{{ name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <select name="status" class="form-select">
-                        <option value="">-- Semua Status --</option>
-                        <option value="belum" {% if selected_status == 'belum' %}selected{% endif %}>Belum Bayar</option>
-                        <option value="lunas" {% if selected_status == 'lunas' %}selected{% endif %}>Lunas</option>
+                <div class="col-md-1">
+                    <select name="status" class="form-select border-0 bg-light px-2">
+                        <option value="">-- Stat --</option>
+                        <option value="belum" {% if selected_status == 'belum' %}selected{% endif %}>Blm</option>
+                        <option value="lunas" {% if selected_status == 'lunas' %}selected{% endif %}>Lns</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-search"></i></span>
-                        <input type="text" name="q" class="form-control" placeholder="Cari No Manifest, Vendor..." value="{{ q }}">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-outline-info me-2"><i class="bi bi-filter"></i> Filter</button>
-                    {% if q or selected_kategori or selected_status %}
-                    <a href="{% url 'manifest_list' %}" class="btn btn-secondary"><i class="bi bi-x"></i> Reset</a>
-                    {% endif %}
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-info text-white px-3 flex-fill">Filter</button>
+                    <a href="{% url 'manifest_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </a>
                 </div>
             </form>
         </div>

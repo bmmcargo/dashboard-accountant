@@ -238,10 +238,13 @@ from .models import OpsInbound, OpsOutbound, OpsManifest
 class OpsInboundForm(forms.ModelForm):
     class Meta:
         model = OpsInbound
-        fields = ['nomor_resi', 'tanggal', 'pengirim', 'penerima', 'asal', 'tujuan', 'berat', 'keterangan', 'status']
+        fields = [
+            'nomor_resi', 'tanggal', 'pengirim', 'penerima', 'asal', 'tujuan', 
+            'berat', 'status', 'vendor', 'tarif_per_kg', 'total_biaya', 'keterangan'
+        ]
         widgets = {
             'tanggal': forms.DateInput(attrs={'type': 'date'}),
-            'keterangan': forms.Textarea(attrs={'rows': 3}),
+            'keterangan': forms.Textarea(attrs={'rows': 2}),
             'berat': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
         labels = {
@@ -252,18 +255,21 @@ class OpsInboundForm(forms.ModelForm):
             'asal': 'Kota Asal',
             'tujuan': 'Kota Tujuan',
             'berat': 'Berat (Kg)',
-            'keterangan': 'Catatan Tambahan',
             'status': 'Status Barang',
+            'vendor': 'Vendor (untuk Akuntansi)',
+            'tarif_per_kg': 'Tarif per Kg (Rp)',
+            'total_biaya': 'Total Biaya (Rp) - [Auto-calculate jika kosong]',
+            'keterangan': 'Catatan Tambahan',
         }
 
 
 class OpsManifestForm(forms.ModelForm):
     class Meta:
         model = OpsManifest
-        fields = ['nomor_manifest', 'tanggal', 'armada', 'rute', 'status', 'catatan']
+        fields = ['nomor_manifest', 'tanggal', 'armada', 'rute', 'status', 'vendor_penerima', 'total_hutang', 'dp', 'catatan']
         widgets = {
             'tanggal': forms.DateInput(attrs={'type': 'date'}),
-            'catatan': forms.Textarea(attrs={'rows': 3}),
+            'catatan': forms.Textarea(attrs={'rows': 2}),
         }
         labels = {
             'nomor_manifest': 'Nomor Manifest',
@@ -271,6 +277,9 @@ class OpsManifestForm(forms.ModelForm):
             'armada': 'Nama Armada / Kendaraan',
             'rute': 'Rute Pengiriman',
             'status': 'Status',
+            'vendor_penerima': 'Nama Vendor / Penerima (Akuntansi)',
+            'total_hutang': 'Total Biaya Vendor (Hutang)',
+            'dp': 'DP / Panjar Dibayar (Rp)',
             'catatan': 'Catatan Tambahan',
         }
 
