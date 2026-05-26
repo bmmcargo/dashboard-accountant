@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'finance.middleware.CurrentUserMiddleware',  # Audit Log: tracking current user
 ]
 
 ROOT_URLCONF = 'akuntansi_app.urls'
@@ -67,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'finance.context_processors.sidebar_badges',  # Badge notifikasi sidebar
             ],
         },
     },

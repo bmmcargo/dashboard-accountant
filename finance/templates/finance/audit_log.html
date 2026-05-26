@@ -1,0 +1,141 @@
+{% extends 'finance/base.html' %} {% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold"><i class="bi bi-clock-history me-2"></i>Riwayat Aktivitas</h2>
+      <p class="text-muted">Audit log — siapa melakukan apa dan kapan.</p>
+    </div>
+  </div>
+
+  <!-- Advanced Filter -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Pencarian</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" class="form-control" placeholder="Cari user, objek..." value="{{ search }}" />
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Model</label>
+          <select name="model" class="form-select form-select-sm">
+            <option value="">-- Semua --</option>
+            {% for m in model_choices %}
+            <option value="{{ m }}" {% if model_filter == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Aksi</label>
+          <select name="action" class="form-select form-select-sm">
+            <option value="">-- Semua --</option>
+            {% for code, label in action_choices %}
+            <option value="{{ code }}" {% if action_filter == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Dari Tanggal</label>
+          <input type="date" name="tanggal_dari" class="form-control form-control-sm" value="{{ tanggal_dari }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Sampai Tanggal</label>
+          <input type="date" name="tanggal_sampai" class="form-control form-control-sm" value="{{ tanggal_sampai }}">
+        </div>
+        <div class="col-md-1">
+          <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-funnel me-1"></i>Filter</button>
+        </div>
+        {% if search or model_filter or action_filter or tanggal_dari or tanggal_sampai %}
+        <div class="col-md-1">
+          <a href="{% url 'audit_log' %}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+        </div>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="badge bg-dark fs-6 py-2 px-3">{{ page_obj.paginator.count }} aktivitas tercatat</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 150px">Waktu</th>
+              <th>User</th>
+              <th>Aksi</th>
+              <th>Model</th>
+              <th>Objek</th>
+              <th>Detail Perubahan</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+            <tr>
+              <td>
+                <small class="d-block fw-bold">{{ log.timestamp|date:"d/m/Y" }}</small>
+                <small class="text-muted">{{ log.timestamp|date:"H:i:s" }}</small>
+              </td>
+              <td>
+                <span class="fw-semibold">{{ log.user.username|default:"System" }}</span>
+                {% if log.ip_address %}
+                <br><small class="text-muted">{{ log.ip_address }}</small>
+                {% endif %}
+              </td>
+              <td>
+                {% if log.action == 'CREATE' %}
+                  <span class="badge bg-success">Tambah</span>
+                {% elif log.action == 'UPDATE' %}
+                  <span class="badge bg-warning text-dark">Edit</span>
+                {% elif log.action == 'DELETE' %}
+                  <span class="badge bg-danger">Hapus</span>
+                {% endif %}
+              </td>
+              <td><span class="badge bg-light text-dark border">{{ log.model_name }}</span></td>
+              <td><small>{{ log.object_repr|truncatechars:50 }}</small></td>
+              <td>
+                {% if log.changes %}
+                <button class="btn btn-outline-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#changes-{{ log.pk }}">
+                  <i class="bi bi-eye me-1"></i>Lihat
+                </button>
+                <div class="collapse mt-2" id="changes-{{ log.pk }}">
+                  <div class="card card-body bg-light py-2 px-3" style="font-size: 0.78rem;">
+                    {% for key, val in log.changes.items %}
+                      {% if val.lama is not None and val.baru is not None %}
+                        <div class="mb-1">
+                          <strong>{{ key }}:</strong>
+                          <span class="text-danger">{{ val.lama }}</span> →
+                          <span class="text-success">{{ val.baru }}</span>
+                        </div>
+                      {% else %}
+                        <div class="mb-1"><strong>{{ key }}:</strong> {{ val }}</div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                {% else %}
+                <small class="text-muted">—</small>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-5">
+                <i class="bi bi-inbox text-muted" style="font-size: 4rem"></i>
+                <p class="text-muted mt-3">Belum ada riwayat aktivitas.</p>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      {% include 'finance/includes/pagination.html' %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -88,6 +88,13 @@ urlpatterns = [
     path('manajemen-user/tambah/', views.user_management_create, name='user_management_create'),
     path('manajemen-user/hapus/<int:pk>/', views.user_management_delete, name='user_management_delete'),
 
+    # --- AUDIT LOG (Khusus Owner) ---
+    path('audit-log/', views.audit_log_list, name='audit_log'),
+
+    # --- EKSPOR LAPORAN (Khusus Owner) ---
+    path('laporan/export/excel/', views.export_laporan_excel, name='export_excel'),
+    path('laporan/export/pdf/', views.export_laporan_pdf, name='export_pdf'),
+
     # Redirect Login
     path('login-redirect/', views.custom_login_redirect, name='custom_login_redirect'),
 ]

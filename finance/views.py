@@ -1626,3 +1626,281 @@ def user_management_delete(request, pk):
         messages.success(request, f"User {username} berhasil dihapus.")
         
     return redirect('user_management_list')
+
+
+# ============================================================
+# HELPER: Pagination
+# ============================================================
+
+from django.core.paginator import Paginator
+
+def _paginate(request, queryset, per_page=20):
+    """Helper pagination — dipakai di semua list views."""
+    paginator = Paginator(queryset, per_page)
+    page_number = request.GET.get('page')
+    return paginator.get_page(page_number)
+
+
+# ============================================================
+# AUDIT LOG — Riwayat Aktivitas
+# ============================================================
+from .models import AuditLog
+
+@login_required
+@owner_required
+def audit_log_list(request):
+    """Tampilkan riwayat aktivitas user — hanya bisa dilihat Owner."""
+    logs = AuditLog.objects.select_related('user').all()
+
+    # Filter
+    search = request.GET.get('q', '').strip()
+    model_filter = request.GET.get('model', '')
+    action_filter = request.GET.get('action', '')
+    tanggal_dari = request.GET.get('tanggal_dari', '')
+    tanggal_sampai = request.GET.get('tanggal_sampai', '')
+
+    if search:
+        logs = logs.filter(
+            Q(object_repr__icontains=search) |
+            Q(user__username__icontains=search)
+        )
+    if model_filter:
+        logs = logs.filter(model_name=model_filter)
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+    if tanggal_dari:
+        logs = logs.filter(timestamp__date__gte=tanggal_dari)
+    if tanggal_sampai:
+        logs = logs.filter(timestamp__date__lte=tanggal_sampai)
+
+    page_obj = _paginate(request, logs)
+
+    # Dropdown choices
+    model_choices = AuditLog.objects.values_list('model_name', flat=True).distinct().order_by('model_name')
+
+    context = {
+        'logs': page_obj,
+        'page_obj': page_obj,
+        'search': search,
+        'model_filter': model_filter,
+        'action_filter': action_filter,
+        'tanggal_dari': tanggal_dari,
+        'tanggal_sampai': tanggal_sampai,
+        'model_choices': model_choices,
+        'action_choices': AuditLog.ACTION_CHOICES,
+    }
+    return render(request, 'finance/audit_log.html', context)
+
+
+# ============================================================
+# EKSPOR LAPORAN KEUANGAN KE EXCEL & PDF
+# ============================================================
+
+BULAN_NAMES = {
+    1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April',
+    5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus',
+    9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+}
+
+
+@login_required
+@owner_required
+def export_laporan_excel(request):
+    """Ekspor Laporan Keuangan ke file Excel (.xlsx) — mendukung filter bulan/tahun."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+    start_date = end_date = None
+
+    if bulan and tahun:
+        bulan = int(bulan)
+        tahun = int(tahun)
+        start_date = date(tahun, bulan, 1)
+        last_day = calendar.monthrange(tahun, bulan)[1]
+        end_date = date(tahun, bulan, last_day)
+
+    periode_text = f"Bulan {BULAN_NAMES.get(bulan, '')} {tahun}" if bulan and tahun else "Periode Berjalan"
+
+    # ---- Hitung data ----
+    pendapatan = []
+    total_pendapatan = 0
+    for a in Akun.objects.filter(kategori='REVENUE'):
+        s = get_saldo_akun(a, start_date, end_date)
+        if s != 0:
+            pendapatan.append({'nama': a.nama, 'nominal': s})
+            total_pendapatan += s
+
+    beban = []
+    total_beban = 0
+    for a in Akun.objects.filter(kategori='EXPENSE'):
+        s = get_saldo_akun(a, start_date, end_date)
+        if s != 0:
+            beban.append({'nama': a.nama, 'nominal': s})
+            total_beban += s
+
+    pajak_2_persen = int(total_pendapatan * Decimal('0.02'))
+    laba_kotor = total_pendapatan - pajak_2_persen
+    laba_rugi = laba_kotor - total_beban
+
+    # ---- Build Excel ----
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Laba Rugi"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="0D6EFD", end_color="0D6EFD", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # Title
+    ws.merge_cells('A1:C1')
+    ws['A1'] = f"LAPORAN LABA RUGI — {periode_text}"
+    ws['A1'].font = Font(bold=True, size=14)
+    ws['A1'].alignment = Alignment(horizontal='center')
+
+    ws.column_dimensions['A'].width = 8
+    ws.column_dimensions['B'].width = 35
+    ws.column_dimensions['C'].width = 20
+
+    # PENGHASILAN
+    row = 3
+    for col, h in enumerate(['No', 'Keterangan', 'Nominal (Rp)'], 1):
+        cell = ws.cell(row=row, column=col, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.border = thin_border
+
+    row = 4
+    ws.cell(row=row, column=2, value="--- PENGHASILAN ---").font = Font(bold=True)
+    row += 1
+    for idx, p in enumerate(pendapatan, 1):
+        ws.cell(row=row, column=1, value=idx).border = thin_border
+        ws.cell(row=row, column=2, value=p['nama']).border = thin_border
+        cell = ws.cell(row=row, column=3, value=float(p['nominal']))
+        cell.number_format = '#,##0'
+        cell.border = thin_border
+        row += 1
+
+    ws.cell(row=row, column=2, value="Total Penghasilan").font = Font(bold=True)
+    cell = ws.cell(row=row, column=3, value=float(total_pendapatan))
+    cell.font = Font(bold=True)
+    cell.number_format = '#,##0'
+    row += 1
+
+    ws.cell(row=row, column=2, value="Pajak Penghasilan 2%")
+    cell = ws.cell(row=row, column=3, value=float(pajak_2_persen))
+    cell.number_format = '#,##0'
+    row += 2
+
+    ws.cell(row=row, column=2, value="--- BIAYA / BEBAN ---").font = Font(bold=True)
+    row += 1
+    for idx, b in enumerate(beban, 1):
+        ws.cell(row=row, column=1, value=idx).border = thin_border
+        ws.cell(row=row, column=2, value=b['nama']).border = thin_border
+        cell = ws.cell(row=row, column=3, value=float(b['nominal']))
+        cell.number_format = '#,##0'
+        cell.border = thin_border
+        row += 1
+
+    ws.cell(row=row, column=2, value="Total Beban").font = Font(bold=True)
+    cell = ws.cell(row=row, column=3, value=float(total_beban))
+    cell.font = Font(bold=True)
+    cell.number_format = '#,##0'
+    row += 2
+
+    ws.cell(row=row, column=2, value="LABA BERSIH").font = Font(bold=True, color="198754", size=12)
+    cell = ws.cell(row=row, column=3, value=float(laba_rugi))
+    cell.font = Font(bold=True, color="198754", size=12)
+    cell.number_format = '#,##0'
+
+    filename = f"Laporan_Keuangan_BMM_{periode_text.replace(' ', '_')}.xlsx"
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+@login_required
+@owner_required
+def export_laporan_pdf(request):
+    """Ekspor Laporan Keuangan ke PDF menggunakan WeasyPrint."""
+    import weasyprint
+    from django.template.loader import render_to_string
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+    start_date = end_date = None
+
+    if bulan and tahun:
+        bulan = int(bulan)
+        tahun = int(tahun)
+        start_date = date(tahun, bulan, 1)
+        last_day = calendar.monthrange(tahun, bulan)[1]
+        end_date = date(tahun, bulan, last_day)
+
+    periode_text = f"Bulan {BULAN_NAMES.get(bulan, '')} {tahun}" if bulan and tahun else "Periode Berjalan"
+
+    # Hitung data
+    pendapatan = []
+    total_pendapatan = 0
+    for a in Akun.objects.filter(kategori='REVENUE'):
+        s = get_saldo_akun(a, start_date, end_date)
+        if s != 0:
+            pendapatan.append({'nama': a.nama, 'nominal': s})
+            total_pendapatan += s
+
+    beban = []
+    total_beban = 0
+    for a in Akun.objects.filter(kategori='EXPENSE'):
+        s = get_saldo_akun(a, start_date, end_date)
+        if s != 0:
+            beban.append({'nama': a.nama, 'nominal': s})
+            total_beban += s
+
+    pajak_2_persen = int(total_pendapatan * Decimal('0.02'))
+    laba_kotor = total_pendapatan - pajak_2_persen
+    laba_rugi = laba_kotor - total_beban
+
+    # Neraca Saldo
+    neraca_saldo = []
+    total_ns_debit = total_ns_kredit = 0
+    for a in Akun.objects.all().order_by('kode'):
+        saldo = get_saldo_akun(a, start_date, end_date)
+        if saldo != 0:
+            ns_d = ns_k = 0
+            if a.saldo_normal == 'DEBIT':
+                ns_d = saldo if saldo >= 0 else 0
+                ns_k = abs(saldo) if saldo < 0 else 0
+            else:
+                ns_k = saldo if saldo >= 0 else 0
+                ns_d = abs(saldo) if saldo < 0 else 0
+            neraca_saldo.append({'kode': a.kode, 'nama': a.nama, 'debit': ns_d, 'kredit': ns_k})
+            total_ns_debit += ns_d
+            total_ns_kredit += ns_k
+
+    context = {
+        'periode': periode_text,
+        'pendapatan': pendapatan, 'total_pendapatan': total_pendapatan,
+        'beban': beban, 'total_beban': total_beban,
+        'pajak_2_persen': pajak_2_persen, 'laba_kotor': laba_kotor, 'laba_rugi': laba_rugi,
+        'neraca_saldo': neraca_saldo,
+        'total_ns_debit': total_ns_debit, 'total_ns_kredit': total_ns_kredit,
+        'tanggal_cetak': timezone.now(),
+    }
+
+    html_string = render_to_string('finance/laporan_pdf.html', context)
+
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Laporan_Keuangan_BMM_{periode_text.replace(' ', '_')}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    pdf = weasyprint.HTML(string=html_string).write_pdf()
+    response.write(pdf)
+    return response
+

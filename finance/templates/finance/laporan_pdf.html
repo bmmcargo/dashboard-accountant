@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    @page { size: A4; margin: 2cm 1.5cm; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #333; }
+    .header { text-align: center; margin-bottom: 20px; border-bottom: 3px solid #0d6efd; padding-bottom: 15px; }
+    .header h1 { font-size: 18pt; margin: 0; color: #0d6efd; }
+    .header h2 { font-size: 13pt; margin: 5px 0 0 0; font-weight: normal; }
+    .header p { font-size: 9pt; margin: 3px 0 0 0; color: #666; }
+    .section-title { background: #0d6efd; color: #fff; padding: 6px 12px; font-size: 11pt; font-weight: bold; margin: 20px 0 8px 0; }
+    .section-title.danger { background: #dc3545; }
+    .section-title.success { background: #198754; }
+    .section-title.dark { background: #212529; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    th { background: #f0f0f0; font-weight: bold; text-align: left; padding: 6px 8px; border: 1px solid #ddd; font-size: 9pt; }
+    td { padding: 5px 8px; border: 1px solid #ddd; font-size: 9pt; }
+    .text-right { text-align: right; }
+    .text-center { text-align: center; }
+    .total-row td { font-weight: bold; background: #e8f4fd; }
+    .laba-row td { font-weight: bold; background: #198754; color: #fff; font-size: 11pt; padding: 8px; }
+    .footer { text-align: center; font-size: 8pt; color: #999; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 10px; }
+    .indent { padding-left: 25px !important; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>CV. BORNEO MEGA MANDIRI</h1>
+    <h2>LAPORAN KEUANGAN</h2>
+    <p>{{ periode }}</p>
+  </div>
+
+  <!-- LABA RUGI -->
+  <div class="section-title">LAPORAN LABA RUGI</div>
+  <table>
+    <tr><th colspan="2" style="background:#0d6efd; color:#fff;">PENGHASILAN</th></tr>
+    {% for p in pendapatan %}
+    <tr>
+      <td class="indent">{{ p.nama }}</td>
+      <td class="text-right">Rp {{ p.nominal|floatformat:0 }}</td>
+    </tr>
+    {% empty %}
+    <tr><td class="indent" colspan="2">Belum ada data pendapatan</td></tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td>Total Penghasilan</td>
+      <td class="text-right">Rp {{ total_pendapatan|floatformat:0 }}</td>
+    </tr>
+    <tr>
+      <td class="indent">Pajak Penghasilan 2%</td>
+      <td class="text-right" style="color:#dc3545;">(Rp {{ pajak_2_persen|floatformat:0 }})</td>
+    </tr>
+    <tr class="total-row">
+      <td>Laba Kotor</td>
+      <td class="text-right">Rp {{ laba_kotor|floatformat:0 }}</td>
+    </tr>
+  </table>
+
+  <table>
+    <tr><th colspan="2" style="background:#dc3545; color:#fff;">BIAYA / BEBAN</th></tr>
+    {% for b in beban %}
+    <tr>
+      <td class="indent">{{ b.nama }}</td>
+      <td class="text-right">Rp {{ b.nominal|floatformat:0 }}</td>
+    </tr>
+    {% empty %}
+    <tr><td class="indent" colspan="2">Belum ada data beban</td></tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td>Total Beban</td>
+      <td class="text-right">Rp {{ total_beban|floatformat:0 }}</td>
+    </tr>
+    <tr class="laba-row">
+      <td>LABA BERSIH</td>
+      <td class="text-right">Rp {{ laba_rugi|floatformat:0 }}</td>
+    </tr>
+  </table>
+
+  <!-- NERACA SALDO -->
+  <div class="section-title dark">NERACA SALDO</div>
+  <table>
+    <tr>
+      <th class="text-center" style="width:60px">Kode</th>
+      <th>Nama Akun</th>
+      <th class="text-right" style="width:130px">Debit (Rp)</th>
+      <th class="text-right" style="width:130px">Kredit (Rp)</th>
+    </tr>
+    {% for item in neraca_saldo %}
+    <tr>
+      <td class="text-center">{{ item.kode }}</td>
+      <td>{{ item.nama }}</td>
+      <td class="text-right">{% if item.debit %}{{ item.debit|floatformat:0 }}{% endif %}</td>
+      <td class="text-right">{% if item.kredit %}{{ item.kredit|floatformat:0 }}{% endif %}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td colspan="2" class="text-right">TOTAL</td>
+      <td class="text-right">{{ total_ns_debit|floatformat:0 }}</td>
+      <td class="text-right">{{ total_ns_kredit|floatformat:0 }}</td>
+    </tr>
+  </table>
+
+  <div class="footer">
+    Dicetak pada: {{ tanggal_cetak|date:"d/m/Y H:i" }} WIB — Sistem Akuntansi BMM Cargo
+  </div>
+</body>
+</html>

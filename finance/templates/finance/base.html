@@ -213,6 +213,29 @@
           position: relative;
         }
       }
+      /* Badge notifikasi sidebar */
+      .sidebar-badge {
+        background: #e74a3b;
+        color: #fff;
+        font-size: 0.65rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 10px;
+        margin-left: auto;
+        min-width: 18px;
+        text-align: center;
+        line-height: 1.3;
+      }
+      .role-badge {
+        display: inline-block;
+        font-size: 0.6rem;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 12px;
+        margin-top: 1px;
+      }
+      .role-badge.owner { background: #d4edda; color: #155724; }
+      .role-badge.admin-ops { background: #cce5ff; color: #004085; }
     </style>
   </head>
   <body>
@@ -233,14 +256,16 @@
         <a class="nav-link {% if request.path == '/operasional/' %}active{% endif %}" href="{% url 'dashboard_ops' %}">
           <i class="bi bi-truck"></i> Dashboard Operasional
         </a>
-        <a class="nav-link {% if 'inbound' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}"> 
-           <i class="bi bi-box-arrow-in-down"></i> Inbound (Barang Masuk) 
+        <a class="nav-link {% if 'inbound' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}">
+           <i class="bi bi-box-arrow-in-down"></i> Inbound (Barang Masuk)
+           {% if badge_inbound %}<span class="sidebar-badge">{{ badge_inbound }}</span>{% endif %}
         </a>
         <a class="nav-link {% if 'outbound' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> 
            <i class="bi bi-box-arrow-up"></i> Outbound (Barang Keluar) 
         </a>
-        <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}"> 
+        <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}">
            <i class="bi bi-clipboard-check"></i> Manifest
+           {% if badge_manifest %}<span class="sidebar-badge">{{ badge_manifest }}</span>{% endif %}
         </a>
 
         {# ============================================== #}
@@ -280,6 +305,9 @@
 
         <a class="nav-link {% if 'akun' in request.path %}active{% endif %}" href="{% url 'akun_list' %}"> <i class="bi bi-list-ul"></i> Daftar Akun (CoA) </a>
         <a class="nav-link {% if 'manajemen-user' in request.path %}active{% endif %}" href="{% url 'user_management_list' %}"> <i class="bi bi-person-gear"></i> Manajemen User </a>
+
+        <div class="nav-section-title">Monitoring</div>
+        <a class="nav-link {% if 'audit-log' in request.path %}active{% endif %}" href="{% url 'audit_log' %}"> <i class="bi bi-clock-history"></i> Riwayat Aktivitas </a>
         
         {% endif %}
       </nav>
@@ -290,7 +318,15 @@
           <div class="user-avatar">{{ user.username|slice:":1"|upper }}</div>
           <div class="user-details">
             <div class="name">{{ user.username }}</div>
-            <div class="email">{{ user.email|default:"bmmcargo@gmail.com" }}</div>
+            <div class="email">
+              {% if user_role == 'owner' %}
+                <span class="role-badge owner">Owner / Finance</span>
+              {% elif user_role == 'admin_ops' %}
+                <span class="role-badge admin-ops">Admin Operasional</span>
+              {% else %}
+                {{ user.email|default:"bmmcargo@gmail.com" }}
+              {% endif %}
+            </div>
           </div>
         </div>
         <div class="d-flex gap-2">

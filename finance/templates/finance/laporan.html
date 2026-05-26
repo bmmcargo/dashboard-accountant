@@ -1,38 +1,50 @@
 {% extends 'finance/base.html' %} {% load humanize %} {% block content %}
 <div class="container-fluid">
   <div class="row mb-4 align-items-center">
-    <div class="col-md-6">
+    <div class="col-md-4">
       <h2 class="fw-bold">Laporan Keuangan</h2>
       <p class="text-muted mb-0">Laporan generated otomatis dan presisi.</p>
     </div>
-    <div class="col-md-6 text-md-end mt-3 mt-md-0">
-      <form method="get" class="d-flex justify-content-md-end align-items-center gap-2">
-        <select name="bulan" class="form-select form-select-sm" style="width: 140px;">
-          <option value="">-- Semua Bulan --</option>
-          <option value="1" {% if selected_bulan == '1' %}selected{% endif %}>Januari</option>
-          <option value="2" {% if selected_bulan == '2' %}selected{% endif %}>Februari</option>
-          <option value="3" {% if selected_bulan == '3' %}selected{% endif %}>Maret</option>
-          <option value="4" {% if selected_bulan == '4' %}selected{% endif %}>April</option>
-          <option value="5" {% if selected_bulan == '5' %}selected{% endif %}>Mei</option>
-          <option value="6" {% if selected_bulan == '6' %}selected{% endif %}>Juni</option>
-          <option value="7" {% if selected_bulan == '7' %}selected{% endif %}>Juli</option>
-          <option value="8" {% if selected_bulan == '8' %}selected{% endif %}>Agustus</option>
-          <option value="9" {% if selected_bulan == '9' %}selected{% endif %}>September</option>
-          <option value="10" {% if selected_bulan == '10' %}selected{% endif %}>Oktober</option>
-          <option value="11" {% if selected_bulan == '11' %}selected{% endif %}>November</option>
-          <option value="12" {% if selected_bulan == '12' %}selected{% endif %}>Desember</option>
-        </select>
-        <select name="tahun" class="form-select form-select-sm" style="width: 100px;">
-          <option value="">-- Tahun --</option>
-          {% for y in years %}
-          <option value="{{ y }}" {% if selected_tahun == y %}selected{% endif %}>{{ y }}</option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-filter"></i> Filter</button>
-        {% if selected_bulan or selected_tahun %}
-        <a href="{% url 'laporan_keuangan' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> Reset</a>
-        {% endif %}
-      </form>
+    <div class="col-md-8 text-md-end mt-3 mt-md-0">
+      <div class="d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+        <form method="get" class="d-flex align-items-center gap-2">
+          <select name="bulan" class="form-select form-select-sm" style="width: 140px;">
+            <option value="">-- Semua Bulan --</option>
+            <option value="1" {% if selected_bulan == '1' %}selected{% endif %}>Januari</option>
+            <option value="2" {% if selected_bulan == '2' %}selected{% endif %}>Februari</option>
+            <option value="3" {% if selected_bulan == '3' %}selected{% endif %}>Maret</option>
+            <option value="4" {% if selected_bulan == '4' %}selected{% endif %}>April</option>
+            <option value="5" {% if selected_bulan == '5' %}selected{% endif %}>Mei</option>
+            <option value="6" {% if selected_bulan == '6' %}selected{% endif %}>Juni</option>
+            <option value="7" {% if selected_bulan == '7' %}selected{% endif %}>Juli</option>
+            <option value="8" {% if selected_bulan == '8' %}selected{% endif %}>Agustus</option>
+            <option value="9" {% if selected_bulan == '9' %}selected{% endif %}>September</option>
+            <option value="10" {% if selected_bulan == '10' %}selected{% endif %}>Oktober</option>
+            <option value="11" {% if selected_bulan == '11' %}selected{% endif %}>November</option>
+            <option value="12" {% if selected_bulan == '12' %}selected{% endif %}>Desember</option>
+          </select>
+          <select name="tahun" class="form-select form-select-sm" style="width: 100px;">
+            <option value="">-- Tahun --</option>
+            {% for y in years %}
+            <option value="{{ y }}" {% if selected_tahun == y %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-filter"></i> Filter</button>
+          {% if selected_bulan or selected_tahun %}
+          <a href="{% url 'laporan_keuangan' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-circle"></i> Reset</a>
+          {% endif %}
+        </form>
+        <!-- Export Buttons -->
+        <div class="dropdown">
+          <button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download me-1"></i> Export
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'export_excel' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Download Excel</a></li>
+            <li><a class="dropdown-item" href="{% url 'export_pdf' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Download PDF</a></li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 

@@ -854,4 +854,43 @@ def reset_inbound_status_on_outbound_delete(sender, instance, **kwargs):
     except: pass
     
     # Optional: Delete legacy too
+    # Optional: Delete legacy too
     OutboundTransaction.objects.filter(no_resi_bmm=instance.inbound.nomor_resi).delete()
+
+
+# ============================================================
+# MODEL AUDIT LOG (Riwayat Aktivitas / Audit Trail)
+# ============================================================
+
+class AuditLog(models.Model):
+    """Mencatat setiap aktivitas user pada sistem (Create, Update, Delete)."""
+    ACTION_CHOICES = [
+        ('CREATE', 'Tambah Data'),
+        ('UPDATE', 'Ubah Data'),
+        ('DELETE', 'Hapus Data'),
+    ]
+
+    user = models.ForeignKey(
+        'auth.User', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='audit_logs', verbose_name="User"
+    )
+    model_name = models.CharField(max_length=100, verbose_name="Nama Model")
+    object_id = models.CharField(max_length=50, verbose_name="ID Objek")
+    object_repr = models.CharField(max_length=255, verbose_name="Representasi Objek")
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES, verbose_name="Aksi")
+    changes = models.JSONField(default=dict, blank=True, verbose_name="Detail Perubahan")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="IP Address")
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name="Waktu")
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = "Audit Log"
+        verbose_name_plural = "Audit Logs"
+        indexes = [
+            models.Index(fields=['-timestamp']),
+            models.Index(fields=['model_name', '-timestamp']),
+            models.Index(fields=['user', '-timestamp']),
+        ]
+
+    def __str__(self):
+        return f"[{self.timestamp:%d/%m/%Y %H:%M}] {self.user} — {self.get_action_display()} {self.model_name}"
