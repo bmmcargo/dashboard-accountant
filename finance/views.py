@@ -16,13 +16,20 @@ from .forms import JurnalForm
 @login_required
 def custom_login_redirect(request):
     """
-    Redirect users to their respective dashboards based on group membership.
+    Router utama: Arahkan user ke dashboard yang sesuai berdasarkan role.
+    - Owner/Superuser → Dashboard Keuangan
+    - Admin Operasional → Dashboard Operasional
+    - Default → Dashboard Operasional (aman, tidak perlu role khusus)
     """
-    if request.user.groups.filter(name__in=['Owner', 'Admin']).exists():
+    user = request.user
+
+    if user.is_superuser or user.groups.filter(name='Owner').exists():
         return redirect('dashboard')
-    elif request.user.groups.filter(name='Admin Operasional').exists():
+    elif user.groups.filter(name='Admin Operasional').exists():
         return redirect('dashboard_ops')
-    return redirect('dashboard') # Default fallback
+
+    # Default fallback: arahkan ke ops dashboard (aman untuk semua role)
+    return redirect('dashboard_ops')
 
 def get_saldo_akun(akun, start_date=None, end_date=None):
     """Helper to calculate account balance."""

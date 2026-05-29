@@ -1,34 +1,47 @@
 {% extends 'finance/base.html' %} {% block content %}
 <div class="container-fluid px-4">
-  <div class="row justify-content-center mt-5">
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-header bg-white py-3 border-0">
-          <h5 class="fw-bold text-primary mb-0"><i class="bi bi-pencil-square me-2"></i>Edit Cashbon</h5>
+  
+  <div class="page-header mt-3">
+    <div>
+      <h3><i class="bi bi-pencil-square"></i>Edit Cashbon Karyawan</h3>
+      <p>Perbarui detail data nominal, tanggal, atau keterangan pinjaman cashbon.</p>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h6 class="fw-bold text-dark mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Form Edit Data Cashbon</h6>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
           <form method="post">
             {% csrf_token %}
             <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Karyawan</label>
+              <label class="form-label text-dark fw-bold">Karyawan</label>
               {{ form.karyawan }}
             </div>
             <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Tanggal</label>
+              <label class="form-label text-dark fw-bold">Tanggal Pinjaman</label>
               <input type="date" name="tanggal" class="form-control" value="{{ form.tanggal.value|date:'Y-m-d' }}" required />
             </div>
             <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Nominal (Rp)</label>
+              <label class="form-label text-dark fw-bold">Nominal Pinjaman (Rp)</label>
               {{ form.nominal }}
             </div>
             <div class="mb-3">
-              <label class="form-label text-muted small fw-bold">Keterangan</label>
+              <label class="form-label text-dark fw-bold">Keterangan</label>
               {{ form.keterangan }}
             </div>
 
-            <div class="d-grid gap-2">
-              <button type="submit" class="btn btn-primary rounded-pill">Simpan Perubahan</button>
-              <a href="{% url 'cashbon_list' %}" class="btn btn-light rounded-pill">Batal</a>
+            <hr class="opacity-10 my-4">
+            <div class="d-flex gap-2 justify-content-end">
+              <a href="{% url 'cashbon_list' %}" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-x-circle me-1"></i> Batal
+              </a>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-save me-1"></i> Simpan Perubahan
+              </button>
             </div>
           </form>
         </div>

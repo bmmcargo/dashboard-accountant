@@ -12,6 +12,15 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+import sys
+
+# macOS Homebrew dynamic library path configuration (for WeasyPrint)
+if sys.platform == 'darwin':
+    paths = ['/opt/homebrew/lib', '/usr/local/lib']
+    current_path = os.environ.get('DYLD_FALLBACK_LIBRARY_PATH', '')
+    if current_path:
+        paths.append(current_path)
+    os.environ['DYLD_FALLBACK_LIBRARY_PATH'] = ':'.join(paths)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent

@@ -1,54 +1,66 @@
 {% extends 'finance/base.html' %}
 {% block content %}
-<div class="mb-4">
-    <a href="{% url 'user_management_list' %}" class="btn btn-link text-decoration-none p-0 mb-2">
-        <i class="bi bi-arrow-left"></i> Kembali ke Daftar User
-    </a>
-    <h3 class="fw-bold mb-1">Tambah User Baru</h3>
-    <p class="text-muted">Buat akun untuk Owner atau Admin Operasional.</p>
-</div>
-
-<div class="row">
-    <div class="col-md-6">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body p-4">
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Username</label>
-                        <input type="text" name="username" class="form-control" required placeholder="Masukkan username">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Password</label>
-                        <input type="password" name="password" class="form-control" required placeholder="Masukkan password">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Pilih Role / Grup Akses</label>
-                        <select name="group" class="form-select" required>
-                            <option value="">-- Pilih Akses --</option>
-                            {% for group in groups %}
-                                <option value="{{ group.id }}">{{ group.name }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="form-text mt-2">
-                            <strong>Note:</strong> 
-                            <ul>
-                                <li><strong>Owner:</strong> Akses penuh ke seluruh fitur keuangan.</li>
-                                <li><strong>Admin Operasional:</strong> Akses terbatas hanya ke 4 halaman operasional.</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="bi bi-person-check me-1"></i> Simpan & Buat Akun
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
+<div class="container-fluid px-4">
+  
+  <div class="page-header mt-3">
+    <div>
+      <h3><i class="bi bi-person-gear"></i>Manajemen User</h3>
+      <p>Buat akun user baru untuk Owner atau Admin Operasional.</p>
     </div>
+    <a href="{% url 'user_management_list' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar User
+    </a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-header bg-white py-3 border-bottom">
+          <h6 class="m-0 fw-bold text-dark"><i class="bi bi-person-add me-2 text-primary"></i>Tambah User Baru</h6>
+        </div>
+        <div class="card-body p-4">
+          <form method="POST">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark">Username</label>
+              <input type="text" name="username" class="form-control" required placeholder="Masukkan username">
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark">Password</label>
+              <input type="password" name="password" class="form-control" required placeholder="Masukkan password">
+            </div>
+            
+            <div class="mb-4">
+              <label class="form-label fw-bold text-dark">Pilih Role / Hak Akses</label>
+              <select name="group" class="form-select border-0 bg-light py-2" required style="border-radius: 8px;">
+                <option value="">-- Pilih Akses --</option>
+                {% for group in groups %}
+                  <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text mt-3 bg-light p-3 rounded" style="border: 1px dashed #cbd5e1;">
+                <strong>Panduan Hak Akses:</strong> 
+                <ul class="mb-0 mt-1 ps-3">
+                  <li><strong>Owner:</strong> Akses penuh ke seluruh fitur akuntansi, gaji, dan laporan keuangan.</li>
+                  <li><strong>Admin Operasional:</strong> Akses terbatas hanya ke halaman operasional pergudangan dan logistik.</li>
+                </ul>
+              </div>
+            </div>
+            
+            <hr class="opacity-10 my-4">
+            <div class="d-flex justify-content-end gap-2">
+              <a href="{% url 'user_management_list' %}" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-x-circle me-1"></i> Batal
+              </a>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-person-check me-1"></i> Simpan & Buat Akun
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

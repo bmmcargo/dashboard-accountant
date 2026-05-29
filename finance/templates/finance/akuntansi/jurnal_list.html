@@ -1,14 +1,14 @@
 {% extends 'finance/base.html' %} {% load humanize %} {% load crispy_forms_tags %} {% block content %}
 <div class="container-fluid">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header">
     <div>
-      <h2 class="fw-bold">Jurnal Umum</h2>
-      <p class="text-muted">Catat transaksi keuangan disini.</p>
+      <h3><i class="bi bi-journal-text"></i>Jurnal Umum</h3>
+      <p>Catat transaksi keuangan disini.</p>
     </div>
-    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addJurnalModal"><i class="bi bi-plus-lg"></i> Tambah Jurnal</button>
+    <button type="button" class="btn btn-action-add" data-bs-toggle="modal" data-bs-target="#addJurnalModal"><i class="bi bi-plus-lg me-1"></i> Tambah Jurnal</button>
   </div>
 
-  <div class="card border-0">
+  <div class="card table-card">
     <div class="card-body">
       <!-- Search & Filter Bar -->
       <div class="row mb-3 g-2">
@@ -32,8 +32,8 @@
       </div>
 
       <div class="table-responsive">
-        <table class="table align-middle" id="jurnalTable">
-          <thead class="table-dark">
+        <table class="table table-hover align-middle" id="jurnalTable">
+          <thead class="thead-std">
             <tr>
               <th style="width: 100px" class="sortable" data-sort="date">Tanggal <i class="bi bi-arrow-down-up"></i></th>
               <th class="sortable" data-sort="uraian">Uraian</th>
@@ -64,9 +64,9 @@
             </tr>
             {% empty %}
             <tr id="emptyRow">
-              <td colspan="6" class="text-center py-5">
-                <i class="bi bi-inbox text-muted" style="font-size: 4rem"></i>
-                <p class="text-muted mt-3">Belum ada data jurnal.</p>
+              <td colspan="6" class="empty-state">
+                <i class="bi bi-journal-text"></i>
+                <p>Belum ada data jurnal.</p>
               </td>
             </tr>
             {% endfor %}
@@ -89,7 +89,7 @@
         <div class="modal-body">{% csrf_token %} {{ form|crispy }}</div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-          <button type="submit" class="btn btn-outline-primary"><i class="bi bi-check-lg me-1"></i>Simpan Transaksi</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Simpan Transaksi</button>
         </div>
       </form>
     </div>

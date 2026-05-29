@@ -2,7 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.dashboard, name='dashboard'),
+    path('', views.custom_login_redirect, name='home'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     path('jurnal/', views.jurnal_list, name='jurnal_list'),
     path('jurnal/edit/<int:pk>/', views.jurnal_edit, name='jurnal_edit'),
     path('jurnal/delete/<int:pk>/', views.jurnal_delete, name='jurnal_delete'),

@@ -1,14 +1,14 @@
 {% extends 'finance/base.html' %} {% block content %}
 <div class="container-fluid">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="page-header">
     <div>
-      <h2 class="fw-bold"><i class="bi bi-clock-history me-2"></i>Riwayat Aktivitas</h2>
-      <p class="text-muted">Audit log — siapa melakukan apa dan kapan.</p>
+      <h3><i class="bi bi-clock-history"></i>Riwayat Aktivitas</h3>
+      <p>Audit log — siapa melakukan apa dan kapan.</p>
     </div>
   </div>
 
   <!-- Advanced Filter -->
-  <div class="card border-0 shadow-sm mb-4">
+  <div class="card filter-card">
     <div class="card-body py-3">
       <form method="get" class="row g-2 align-items-end">
         <div class="col-md-2">
@@ -56,14 +56,14 @@
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm">
-    <div class="card-body">
+  <div class="card table-card">
+    <div class="card-body p-3">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="badge bg-dark fs-6 py-2 px-3">{{ page_obj.paginator.count }} aktivitas tercatat</span>
+        <span class="badge bg-primary fs-6 py-2 px-3">{{ page_obj.paginator.count }} aktivitas tercatat</span>
       </div>
       <div class="table-responsive">
         <table class="table table-hover align-middle">
-          <thead class="table-dark">
+          <thead class="thead-std">
             <tr>
               <th style="width: 150px">Waktu</th>
               <th>User</th>
@@ -88,14 +88,14 @@
               </td>
               <td>
                 {% if log.action == 'CREATE' %}
-                  <span class="badge bg-success">Tambah</span>
+                  <span class="badge-status badge-status-success">Tambah</span>
                 {% elif log.action == 'UPDATE' %}
-                  <span class="badge bg-warning text-dark">Edit</span>
+                  <span class="badge-status badge-status-warning">Edit</span>
                 {% elif log.action == 'DELETE' %}
-                  <span class="badge bg-danger">Hapus</span>
+                  <span class="badge-status badge-status-danger">Hapus</span>
                 {% endif %}
               </td>
-              <td><span class="badge bg-light text-dark border">{{ log.model_name }}</span></td>
+              <td><span class="badge-status badge-status-secondary text-dark">{{ log.model_name }}</span></td>
               <td><small>{{ log.object_repr|truncatechars:50 }}</small></td>
               <td>
                 {% if log.changes %}
@@ -124,9 +124,9 @@
             </tr>
             {% empty %}
             <tr>
-              <td colspan="6" class="text-center py-5">
-                <i class="bi bi-inbox text-muted" style="font-size: 4rem"></i>
-                <p class="text-muted mt-3">Belum ada riwayat aktivitas.</p>
+              <td colspan="6" class="empty-state">
+                <i class="bi bi-clock-history"></i>
+                <p>Belum ada riwayat aktivitas.</p>
               </td>
             </tr>
             {% endfor %}

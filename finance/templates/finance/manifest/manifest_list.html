@@ -3,60 +3,54 @@
 
 {% block content %}
 <div class="container-fluid px-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 mt-3 gap-3">
+    
+    <div class="page-header mt-3">
         <div>
-            <h1 class="mb-0 h3"><i class="bi bi-file-earmark-text text-info"></i> Manifest (Hutang Vendor)</h1>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                    <li class="breadcrumb-item active">Manifest</li>
-                </ol>
-            </nav>
+            <h3><i class="bi bi-file-earmark-text"></i>Manifest (Hutang Vendor)</h3>
+            <p>Kelola rute, vendor, dan hutang biaya manifest pengiriman untuk owner.</p>
         </div>
-        <div class="w-20 w-md-auto d-flex justify-content-start justify-content-md-end">
-            <a href="{% url 'manifest_create' %}" class="btn btn-outline-info text-nowrap">
-                <i class="bi bi-plus-circle me-1"></i> Tambah Data
-            </a>
-        </div>
+        <a href="{% url 'manifest_create' %}" class="btn btn-action-add text-nowrap">
+            <i class="bi bi-plus-lg me-1"></i> Tambah Data Manifest
+        </a>
     </div>
 
     <!-- Summary Cards -->
     <div class="row mb-3 mt-3">
         <div class="col-xl-4 col-md-6">
-            <div class="card bg-info text-white mb-3 shadow">
+            <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #17a2b8 !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-white fw-bold small">Total Data</div>
-                            <div class="fs-4 fw-bold">{{ manifests|length }} Manifest</div>
+                            <div class="text-muted small fw-bold text-uppercase">Total Data</div>
+                            <div class="fs-4 fw-bold text-dark mt-1">{{ manifests|length }} Manifest</div>
                         </div>
-                        <i class="bi bi-receipt fs-1 opacity-50"></i>
+                        <i class="bi bi-receipt fs-1 text-info opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-4 col-md-6">
-            <div class="card bg-danger text-white mb-3 shadow">
+            <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #e74a3b !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-white fw-bold small">Total Hutang (Belum Bayar)</div>
-                            <div class="fs-5 fw-bold">Rp {{ total_hutang|intcomma }}</div>
+                            <div class="text-muted small fw-bold text-uppercase">Total Hutang (Belum Bayar)</div>
+                            <div class="fs-5 fw-bold text-dark mt-1">Rp {{ total_hutang|intcomma }}</div>
                         </div>
-                        <i class="bi bi-exclamation-circle fs-1 opacity-50"></i>
+                        <i class="bi bi-exclamation-circle fs-1 text-danger opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-4 col-md-6">
-            <div class="card bg-success text-white mb-3 shadow">
+            <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #1cc88a !important;">
                 <div class="card-body py-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="text-white fw-bold small">Total Lunas</div>
-                            <div class="fs-5 fw-bold">Rp {{ total_lunas|intcomma }}</div>
+                            <div class="text-muted small fw-bold text-uppercase">Total Lunas</div>
+                            <div class="fs-5 fw-bold text-dark mt-1">Rp {{ total_lunas|intcomma }}</div>
                         </div>
-                        <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                        <i class="bi bi-check-circle fs-1 text-success opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -64,9 +58,9 @@
     </div>
 
     <!-- Filter & Search Bar -->
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-body">
-            <form method="get" action="" class="row g-3 align-items-center">
+    <div class="card filter-card">
+        <div class="card-body py-3">
+            <form method="get" action="" class="row g-2 align-items-center">
                 <div class="col-md-3">
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0 text-muted px-3"><i class="bi bi-search"></i></span>
@@ -114,7 +108,7 @@
                     </select>
                 </div>
                 <div class="col-md-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-info text-white px-3 flex-fill">Filter</button>
+                    <button type="submit" class="btn btn-primary flex-fill">Filter</button>
                     <a href="{% url 'manifest_list' %}" class="btn btn-outline-secondary">
                         <i class="bi bi-arrow-repeat"></i>
                     </a>
@@ -124,56 +118,53 @@
     </div>
 
     <!-- Tabel Data -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-4">
-            <h6 class="m-0 fw-bold"><i class="bi bi-table me-2"></i>DAFTAR MANIFEST - Hutang ke Vendor</h6>
-        </div>
+    <div class="card table-card mb-4">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
-                    <thead class="table-dark">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="thead-std">
                         <tr class="text-center">
                             <th>No</th>
                             <th>Kategori</th>
                             <th>Tgl Kirim</th>
                             <th>No Manifest</th>
                             <th>Tujuan</th>
-                            <th>Koli</th>
-                            <th>Kg</th>
+                            <th class="text-center">Koli</th>
+                            <th class="text-end">Kg</th>
                             <th>Vendor</th>
                             <th>Tgl Terima</th>
-                            <th>Total Hutang (Rp)</th>
-                            <th>DP (Rp)</th>
-                            <th>Status</th>
-                            <th>Aksi</th>
+                            <th class="text-end">Total Hutang (Rp)</th>
+                            <th class="text-end">DP (Rp)</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in manifests %}
-                        <tr class="{% if item.status_bayar %}table-success{% endif %}">
+                        <tr>
                             <td class="text-center">{{ forloop.counter }}</td>
-                            <td class="text-center"><span class="badge bg-secondary">{{ item.kategori }}</span></td>
+                            <td class="text-center"><span class="badge-status badge-status-secondary">{{ item.kategori }}</span></td>
                             <td class="text-center">{{ item.tanggal_kirim|date:"d/m/Y"|default:"-" }}</td>
-                            <td class="text-center fw-bold text-info">{{ item.no_resi }}</td>
+                            <td class="text-center fw-bold text-primary">{{ item.no_resi }}</td>
                             <td class="text-center">{{ item.tujuan|default:"-" }}</td>
                             <td class="text-center">{{ item.koli }}</td>
-                            <td class="text-center">{{ item.kg|floatformat:0 }}</td>
-                            <td class="text-center">{{ item.penerima|default:"-"|truncatechars:15 }}</td>
-                            <td class="text-nowrap">{{ item.tanggal_terima|date:"d/m/Y"|default:"-" }}</td>
-                            <td class="text-center fw-bold {% if item.status_bayar %}text-success{% else %}text-danger{% endif %}">{{ item.total|intcomma }}</td>
+                            <td class="text-end">{{ item.kg|floatformat:0 }}</td>
+                            <td>{{ item.penerima|default:"-"|truncatechars:15 }}</td>
+                            <td class="text-center">{{ item.tanggal_terima|date:"d/m/Y"|default:"-" }}</td>
+                            <td class="text-end fw-bold {% if item.status_bayar %}text-success{% else %}text-danger{% endif %}">{{ item.total|intcomma }}</td>
                             <td class="text-end">{{ item.dp|intcomma }}</td>
                             <td class="text-center">
                                 {% if item.status_bayar %}
-                                <span class="badge bg-success"><i class="bi bi-check"></i> LUNAS</span>
+                                <span class="badge-status badge-status-success"><i class="bi bi-check-lg"></i> LUNAS</span>
                                 {% else %}
-                                <span class="badge bg-danger">BELUM</span>
+                                <span class="badge-status badge-status-danger">BELUM</span>
                                 {% endif %}
                             </td>
                             <td class="text-center text-nowrap">
-                                <a href="{% url 'manifest_edit' item.pk %}" class="btn btn-sm btn-outline-warning py-0 px-1" title="Edit">
+                                <a href="{% url 'manifest_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" title="Hapus" 
+                                <button type="button" class="btn btn-sm btn-outline-danger" title="Hapus" 
                                        data-name="{{ item.no_resi }}" data-url="{% url 'manifest_delete' item.pk %}" onclick="confirmDelete(this.dataset.name, this.dataset.url)">
                                     <i class="bi bi-trash"></i>
                                 </button>
@@ -181,20 +172,24 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="14" class="text-center py-4 text-muted">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                {% if q or selected_kategori or selected_status %}
-                                Tidak ada data yang cocok dengan filter.
-                                {% else %}
-                                Belum ada data manifest.
-                                {% endif %}
+                            <td colspan="13">
+                                <div class="empty-state">
+                                    <i class="bi bi-inbox"></i>
+                                    <p>
+                                        {% if q or selected_kategori or selected_status %}
+                                        Tidak ada data yang cocok dengan filter.
+                                        {% else %}
+                                        Belum ada data manifest.
+                                        {% endif %}
+                                    </p>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
-                    <tfoot class="table-dark fw-bold">
+                    <tfoot class="table fw-bold bg-light">
                         <tr>
-                            <td colspan="10" class="text-end">TOTAL HUTANG (Belum Bayar):</td>
+                            <td colspan="9" class="text-end">TOTAL HUTANG (Belum Bayar):</td>
                             <td class="text-end text-danger">{{ total_hutang|intcomma }}</td>
                             <td colspan="3"></td>
                         </tr>

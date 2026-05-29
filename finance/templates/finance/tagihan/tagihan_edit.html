@@ -2,100 +2,105 @@
 {% load humanize %}
 {% block content %}
 <div class="container-fluid px-4">
-    <h1 class="mt-4"><i class="bi bi-pencil-square text-info"></i> Edit Invoice</h1>
-    <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'invoice_list' %}">Data Invoice</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'invoice_tagihan_print' invoice.pk %}">{{ invoice.no_invoice }}</a></li>
-        <li class="breadcrumb-item active">Edit</li>
-    </ol>
-
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-info text-white">
-            <h6 class="m-0 fw-bold">Edit Data Invoice</h6>
+    
+    <div class="page-header mt-3">
+        <div>
+            <h3><i class="bi bi-pencil-square"></i>Edit Invoice</h3>
+            <p>Ubah detail nomor invoice, nominal, handling, atau biaya AWB untuk tagihan.</p>
         </div>
-        <div class="card-body">
+        <a href="{% url 'invoice_tagihan_print' invoice.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-eye me-1"></i> Preview Invoice
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h6 class="m-0 fw-bold text-dark"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Form Edit Data Invoice - {{ invoice.no_invoice }}</h6>
+        </div>
+        <div class="card-body p-4">
             <form method="post">
                 {% csrf_token %}
                 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="id_no_invoice" class="form-label fw-bold">Nomor Invoice</label>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="id_no_invoice" class="form-label fw-bold text-dark">Nomor Invoice</label>
                         <input type="text" name="no_invoice" id="id_no_invoice" class="form-control"
                                value="{{ form.no_invoice.value }}" required>
                         <div class="form-text text-muted">Pastikan format nomor sesuai standar perusahaan.</div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="id_customer" class="form-label fw-bold">Nama Customer</label>
+                    <div class="col-md-6">
+                        <label for="id_customer" class="form-label fw-bold text-dark">Nama Customer</label>
                         <input type="text" name="customer" id="id_customer" class="form-control"
                                value="{{ form.customer.value }}" required>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="id_tanggal" class="form-label fw-bold">Tanggal Invoice</label>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label for="id_tanggal" class="form-label fw-bold text-dark">Tanggal Invoice</label>
                         <input type="date" name="tanggal" id="id_tanggal" class="form-control"
                                value="{{ form.tanggal.value|date:'Y-m-d' }}">
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="id_jatuh_tempo" class="form-label fw-bold">Jatuh Tempo</label>
+                    <div class="col-md-4">
+                        <label for="id_jatuh_tempo" class="form-label fw-bold text-dark">Jatuh Tempo</label>
                         <input type="date" name="jatuh_tempo" id="id_jatuh_tempo" class="form-control"
                                value="{{ form.jatuh_tempo.value|date:'Y-m-d' }}">
                     </div>
-                     <div class="col-md-4 mb-3">
-                        <label for="id_status" class="form-label fw-bold">Status Pembayaran</label>
-                        <select name="status" id="id_status" class="form-select">
+                     <div class="col-md-4">
+                        <label for="id_status" class="form-label fw-bold text-dark">Status Pembayaran</label>
+                        <select name="status" id="id_status" class="form-select border-0 bg-light">
                             <option value="BELUM BAYAR" {% if form.status.value == 'BELUM BAYAR' %}selected{% endif %}>Belum Bayar</option>
                             <option value="LUNAS" {% if form.status.value == 'LUNAS' %}selected{% endif %}>Lunas</option>
                         </select>
                     </div>
                 </div>
 
-                <hr class="my-3">
-                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calculator me-2"></i>Detail Biaya</h6>
+                <hr class="opacity-10 my-4">
+                <h6 class="fw-bold text-primary mb-3"><i class="bi bi-calculator me-2"></i>Detail Rincian Biaya</h6>
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="id_total" class="form-label fw-bold">Total Tagihan (Rp)</label>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="id_total" class="form-label fw-bold text-dark">Total Tagihan (Rp)</label>
                         <input type="number" name="total" id="id_total" class="form-control"
                                value="{{ form.total.value|default:0 }}">
                         <div class="form-text text-muted">Subtotal dari item-item inbound.</div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="id_biaya_handling" class="form-label fw-bold">Biaya Handling (Rp)</label>
+                    <div class="col-md-4">
+                        <label for="id_biaya_handling" class="form-label fw-bold text-dark">Biaya Handling (Rp)</label>
                         <input type="number" name="biaya_handling" id="id_biaya_handling" class="form-control"
                                value="{{ form.biaya_handling.value|default:0 }}">
                         <div class="form-text text-muted">Biaya penanganan/tarif per kg.</div>
                     </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="id_biaya_awb" class="form-label fw-bold">Biaya Kirim AWB (Rp)</label>
+                    <div class="col-md-4">
+                        <label for="id_biaya_awb" class="form-label fw-bold text-dark">Biaya Kirim AWB (Rp)</label>
                         <input type="number" name="biaya_awb" id="id_biaya_awb" class="form-control"
                                value="{{ form.biaya_awb.value|default:0 }}">
                         <div class="form-text text-muted">Biaya pengiriman dokumen fisik.</div>
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold text-success">Grand Total (Rp)</label>
-                        <input type="text" class="form-control fw-bold text-success bg-light" 
+                <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-success">Grand Total Terkalkulasi (Rp)</label>
+                        <input type="text" class="form-control fw-bold text-success bg-light py-2" 
+                               style="font-size: 1.1rem;"
                                id="grandTotalDisplay" readonly 
                                value="Rp {{ invoice.total|add:invoice.biaya_awb|intcomma }}">
                         <div class="form-text text-success">Total + Handling + AWB</div>
                     </div>
                 </div>
 
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle me-2"></i> Perubahan <strong>Nomor Invoice</strong> atau <strong>Tanggal</strong> mungkin mempengaruhi data laporan/pencatatan. Pastikan data sudah benar.
+                <div class="alert alert-warning border-0 shadow-sm mt-4 p-3" style="border-radius: 8px;">
+                    <i class="bi bi-exclamation-triangle-fill me-2 text-warning fs-5"></i> 
+                    <span>Perubahan <strong>Nomor Invoice</strong> atau <strong>Tanggal</strong> mungkin mempengaruhi data laporan/pencatatan. Pastikan data sudah benar.</span>
                 </div>
 
-                <hr>
+                <hr class="opacity-10 my-4">
                 <div class="d-flex gap-2 justify-content-end">
-                    <a href="{% url 'invoice_tagihan_print' invoice.pk %}" class="btn btn-secondary">
-                        <i class="bi bi-arrow-left me-1"></i> Batal
+                    <a href="{% url 'invoice_tagihan_print' invoice.pk %}" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-x-circle me-1"></i> Batal
                     </a>
-                    <button type="submit" class="btn btn-info text-white">
+                    <button type="submit" class="btn btn-primary px-4">
                         <i class="bi bi-save me-1"></i> Simpan Perubahan
                     </button>
                 </div>

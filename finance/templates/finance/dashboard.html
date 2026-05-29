@@ -1,9 +1,9 @@
 {% extends 'finance/base.html' %} {% load humanize %} {% block content %}
 <div class="container-fluid">
-  <div class="row mb-4">
-    <div class="col-12">
-      <h2 class="fw-bold">Dashboard Keuangan</h2>
-      <p class="text-muted">Ringkasan performa keuangan hari ini.</p>
+  <div class="page-header">
+    <div>
+      <h3><i class="bi bi-speedometer2"></i>Dashboard Keuangan</h3>
+      <p>Ringkasan performa keuangan hari ini.</p>
     </div>
   </div>
 
@@ -67,15 +67,15 @@
   <!-- Recent Transactions -->
   <div class="row">
     <div class="col-12">
-      <div class="card border-0">
+      <div class="card table-card">
         <div class="card-header bg-white border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
           <h5 class="fw-bold mb-0">Jurnal Terbaru</h5>
           <a href="{% url 'jurnal_list' %}" class="btn btn-sm btn-outline-primary">Lihat Semua</a>
         </div>
-        <div class="card-body px-4">
+        <div class="card-body px-0">
           <div class="table-responsive">
-            <table class="table table-hover align-middle table-custom">
-              <thead class="bg-light">
+            <table class="table table-hover align-middle">
+              <thead class="thead-std">
                 <tr>
                   <th>Tanggal</th>
                   <th>Uraian</th>
@@ -95,7 +95,10 @@
                 </tr>
                 {% empty %}
                 <tr>
-                  <td colspan="5" class="text-center py-4 text-muted">Belum ada transaksi</td>
+                  <td colspan="5" class="empty-state">
+                    <i class="bi bi-journal-text"></i>
+                    <p>Belum ada transaksi</p>
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>

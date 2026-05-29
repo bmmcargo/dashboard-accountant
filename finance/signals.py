@@ -8,6 +8,7 @@ sudah ada di models.py. File ini HANYA untuk Audit Log.
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 
+from django.contrib.auth.models import User
 from .models import (
     Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest,
     KasHarian, Karyawan, Cashbon, Penggajian, InvoiceTagihan,
@@ -25,7 +26,7 @@ def _get_field_changes(instance, old_instance):
     changes = {}
     for field in instance._meta.fields:
         field_name = field.name
-        if field_name in ('id', 'created_at', 'updated_at'):
+        if field_name in ('id', 'created_at', 'updated_at', 'password'):
             continue
         old_val = getattr(old_instance, field_name, None)
         new_val = getattr(instance, field_name, None)
@@ -42,7 +43,7 @@ def _get_all_fields(instance):
     data = {}
     for field in instance._meta.fields:
         field_name = field.name
-        if field_name in ('id', 'created_at', 'updated_at'):
+        if field_name in ('id', 'created_at', 'updated_at', 'password'):
             continue
         val = getattr(instance, field_name, None)
         if val is not None:
@@ -73,7 +74,7 @@ def _create_log(action, instance, changes=None):
 # ============================================================
 
 AUDITED_MODELS = [
-    Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest,
+    User, Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest,
     KasHarian, Karyawan, Cashbon, Penggajian, InvoiceTagihan,
     OpsInbound, OpsManifest, OpsOutbound, Penerimaan,
 ]

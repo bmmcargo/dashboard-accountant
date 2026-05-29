@@ -425,11 +425,19 @@
 
         // 7. Summary Rows
         const awbRow = worksheet.addRow(['', '', '', '', '', '', 'By Kirim AWB', 'Rp {{ invoice.biaya_awb|floatformat:0|intcomma }}']);
+        worksheet.mergeCells(`A${awbRow.number}:F${awbRow.number}`);
+        for (let i = 1; i <= 6; i++) {
+          awbRow.getCell(i).border = { top: null, left: null, bottom: null, right: null };
+        }
         awbRow.getCell(7).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         awbRow.getCell(8).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
         awbRow.getCell(8).alignment = { horizontal: 'center' };
 
         const totalRow = worksheet.addRow(['', '', '', '', '', '', 'TOTAL', 'Rp {{ grand_total|intcomma }}']);
+        worksheet.mergeCells(`A${totalRow.number}:F${totalRow.number}`);
+        for (let i = 1; i <= 6; i++) {
+          totalRow.getCell(i).border = { top: null, left: null, bottom: null, right: null };
+        }
         totalRow.getCell(7).font = { bold: true, name: 'Arial', size: 10 };
         totalRow.getCell(8).font = { bold: true, name: 'Arial', size: 10 };
         totalRow.getCell(7).border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
@@ -449,6 +457,7 @@
             top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} 
           };
         }
+        worksheet.getRow(terbilangRowIdx).getCell(8).border = { top: null, left: null, bottom: null, right: null };
 
         // 9. Bank Info
         let bankStart = worksheet.lastRow.number + 2;

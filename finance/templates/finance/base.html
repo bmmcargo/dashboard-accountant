@@ -117,6 +117,37 @@
         text-align: center;
       }
 
+      /* Chevron rotation and dropdowns in sidebar */
+      .nav-link .toggle-icon {
+        transition: transform 0.2s ease;
+      }
+      .nav-link:not(.collapsed) .toggle-icon {
+        transform: rotate(180deg);
+      }
+      .collapse-inner {
+        background-color: #f8f9fc !important;
+        border-radius: 8px;
+        margin: 2px 12px;
+        padding: 5px 0;
+        border: 1px solid #e3e6f0;
+      }
+      .collapse-item.nav-link {
+        margin: 2px 10px !important;
+        padding: 8px 15px !important;
+        color: #5a5c69 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      .collapse-item.nav-link:hover {
+        color: #2e59d9 !important;
+        background-color: rgba(78, 115, 223, 0.05) !important;
+      }
+      .collapse-item.nav-link.active {
+        color: #2e59d9 !important;
+        background-color: rgba(78, 115, 223, 0.1) !important;
+        font-weight: 600;
+      }
+
       /* User Profile Section */
       .sidebar-footer {
         padding: 15px;
@@ -236,6 +267,160 @@
       }
       .role-badge.owner { background: #d4edda; color: #155724; }
       .role-badge.admin-ops { background: #cce5ff; color: #004085; }
+
+      /* ========================================
+         DESIGN SYSTEM — Utility Classes
+         Standar untuk SEMUA halaman
+         ======================================== */
+
+      /* Page Header — selalu h3 + icon + subtitle */
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+      }
+      .page-header h3 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+        font-size: 1.35rem;
+        color: #2d3748;
+      }
+      .page-header h3 i {
+        color: var(--sidebar-active-bg);
+        margin-right: 0.5rem;
+      }
+      .page-header p {
+        color: #718096;
+        margin-bottom: 0;
+        font-size: 0.875rem;
+      }
+
+      /* Card standar untuk wrapping tabel */
+      .table-card {
+        border: none !important;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      }
+      .table-card .card-body {
+        padding: 0;
+      }
+      .table-card .table {
+        margin-bottom: 0;
+      }
+
+      /* Table header standar — selalu light */
+      .table thead.thead-std {
+        background-color: #f8f9fc;
+      }
+      .table thead.thead-std th {
+        color: #5a5c69;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        padding: 12px 16px;
+        border-bottom: 2px solid #e3e6f0;
+        white-space: nowrap;
+      }
+      .table tbody td {
+        padding: 10px 16px;
+        vertical-align: middle;
+      }
+
+      /* Tombol aksi standar */
+      .btn-action-add {
+        background: var(--sidebar-active-bg);
+        border-color: var(--sidebar-active-bg);
+        color: #fff;
+        font-weight: 500;
+        padding: 8px 20px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+      }
+      .btn-action-add:hover {
+        background: #2e59d9;
+        border-color: #2e59d9;
+        color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(78,115,223,0.3);
+      }
+
+      /* Filter card standar */
+      .filter-card {
+        border: none !important;
+        border-radius: 12px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+        margin-bottom: 1rem;
+      }
+      .filter-card .card-body {
+        padding: 12px 16px;
+      }
+
+      /* Empty state standar */
+      .empty-state {
+        text-align: center;
+        padding: 3rem 1rem !important;
+        color: #a0aec0;
+      }
+      .empty-state i {
+        font-size: 3rem;
+        display: block;
+        margin-bottom: 0.75rem;
+        opacity: 0.3;
+      }
+      .empty-state p {
+        margin: 0;
+        font-size: 0.9rem;
+      }
+
+      /* Badge status standar & modern soft style */
+      .badge-status {
+        font-size: 0.725rem;
+        font-weight: 600;
+        padding: 5px 12px;
+        border-radius: 50px; /* pill style */
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        border: none !important;
+      }
+      .badge-status-success {
+        background-color: rgba(25, 135, 84, 0.12) !important;
+        color: #198754 !important;
+      }
+      .badge-status-warning {
+        background-color: rgba(255, 193, 7, 0.15) !important;
+        color: #b58100 !important;
+      }
+      .badge-status-danger {
+        background-color: rgba(220, 53, 69, 0.12) !important;
+        color: #dc3545 !important;
+      }
+      .badge-status-info {
+        background-color: rgba(13, 202, 240, 0.12) !important;
+        color: #0dcaf0 !important;
+      }
+      .badge-status-primary {
+        background-color: rgba(13, 110, 253, 0.12) !important;
+        color: #0d6efd !important;
+      }
+      .badge-status-secondary {
+        background-color: rgba(108, 117, 125, 0.12) !important;
+        color: #6c757d !important;
+      }
+
+      /* Card TIDAK hover naik untuk tabel (hanya stat card yang hover) */
+      .table-card:hover {
+        transform: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      }
+      .filter-card:hover {
+        transform: none;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+      }
     </style>
   </head>
   <body>
@@ -281,14 +466,26 @@
         <a class="nav-link {% if 'laporan' in request.path %}active{% endif %}" href="{% url 'laporan_keuangan' %}"> <i class="bi bi-bar-chart-line"></i> Laporan Keuangan </a>
 
         <!-- Buku Pembantu Dropdown -->
-        <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseBukuPembantu" aria-expanded="false" aria-controls="collapseBukuPembantu">
-          <i class="bi bi-book"></i>
-          <span>Buku Pembantu</span>
+        <a class="nav-link {% if 'buku-piutang' not in request.path and 'buku-hutang' not in request.path %}collapsed{% endif %} d-flex align-items-center justify-content-between" 
+           href="#" data-bs-toggle="collapse" data-bs-target="#collapseBukuPembantu" 
+           aria-expanded="{% if 'buku-piutang' in request.path or 'buku-hutang' in request.path %}true{% else %}false{% endif %}" 
+           aria-controls="collapseBukuPembantu">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-journal-album"></i>
+            <span>Buku Pembantu</span>
+          </div>
+          <i class="bi bi-chevron-down toggle-icon" style="font-size: 0.8rem;"></i>
         </a>
-        <div id="collapseBukuPembantu" class="collapse" aria-labelledby="headingBukuPembantu">
-          <div class="bg-white py-2 collapse-inner rounded">
-            <a class="collapse-item nav-link" href="{% url 'buku_piutang' %}" style="padding-left: 2.5rem; font-size: 0.85rem"> <i class="bi bi-arrow-down-left-circle"></i> Buku Piutang </a>
-            <a class="collapse-item nav-link" href="{% url 'buku_hutang' %}" style="padding-left: 2.5rem; font-size: 0.85rem"> <i class="bi bi-arrow-up-right-circle"></i> Buku Hutang </a>
+        <div id="collapseBukuPembantu" class="collapse {% if 'buku-piutang' in request.path or 'buku-hutang' in request.path %}show{% endif %}" aria-labelledby="headingBukuPembantu">
+          <div class="collapse-inner">
+            <a class="collapse-item nav-link {% if 'buku-piutang' in request.path %}active{% endif %}" href="{% url 'buku_piutang' %}"> 
+              <i class="bi bi-arrow-down-left-circle{% if 'buku-piutang' in request.path %}-fill{% endif %} {% if 'buku-piutang' in request.path %}text-primary{% else %}text-success{% endif %}"></i> 
+              Buku Piutang 
+            </a>
+            <a class="collapse-item nav-link {% if 'buku-hutang' in request.path %}active{% endif %}" href="{% url 'buku_hutang' %}"> 
+              <i class="bi bi-arrow-up-right-circle{% if 'buku-hutang' in request.path %}-fill{% endif %} {% if 'buku-hutang' in request.path %}text-primary{% else %}text-danger{% endif %}"></i> 
+              Buku Hutang 
+            </a>
           </div>
         </div>
 

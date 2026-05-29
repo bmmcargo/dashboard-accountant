@@ -1,29 +1,35 @@
 {% extends 'finance/base.html' %} {% load humanize %} {% block content %}
 <div class="container-fluid px-4">
-  <h1 class="mt-4 mb-4">Buat Tagihan Baru</h1>
-
-  <div class="card shadow mb-4">
-    <div class="card-header py-3 bg-primary text-white">
-      <h6 class="m-0 fw-bold">Pilih Transaksi untuk Ditagihkan</h6>
+  
+  <div class="page-header mt-3">
+    <div>
+      <h3><i class="bi bi-file-earmark-plus"></i>Buat Tagihan Baru</h3>
+      <p>Pilih beberapa transaksi inbound yang belum ditagihkan untuk men-generate invoice baru.</p>
     </div>
-    <div class="card-body">
+  </div>
+
+  <div class="card table-card mb-4">
+    <div class="card-header bg-white py-3 border-bottom">
+      <h6 class="m-0 fw-bold text-dark"><i class="bi bi-list-check me-2 text-primary"></i>Pilih Transaksi untuk Ditagihkan</h6>
+    </div>
+    <div class="card-body p-4">
       <form method="post" id="tagihanForm">
         {% csrf_token %}
 
-        <div class="row mb-4">
+        <div class="row g-3 mb-4">
           <div class="col-md-6">
-            <label for="customerInput" class="form-label fw-bold">Nama Customer/Vendor</label>
+            <label for="customerInput" class="form-label fw-bold text-dark">Nama Customer / Vendor</label>
             <input type="text" name="customer" id="customerInput" class="form-control" placeholder="Ketik nama customer atau pilih dari daftar item" required />
             <div class="form-text text-muted">Ketik manual atau akan otomatis terisi dari item pertama yang dicentang.</div>
           </div>
-          <div class="col-md-4">
-            <label for="jatuhTempo" class="form-label fw-bold">Tanggal Jatuh Tempo</label>
+          <div class="col-md-3">
+            <label for="jatuhTempo" class="form-label fw-bold text-dark">Tanggal Jatuh Tempo</label>
             <input type="date" name="jatuh_tempo" id="jatuhTempo" class="form-control" />
           </div>
-          <div class="col-md-2">
-            <label class="form-label fw-bold">Filter</label>
-            <select id="filterVendor" class="form-select" onchange="filterByVendor()">
-              <option value="">-- Semua --</option>
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-dark">Filter Vendor Gudang</label>
+            <select id="filterVendor" class="form-select border-0 bg-light" onchange="filterByVendor()">
+              <option value="">-- Semua Vendor --</option>
               {% for c in customers %}
               <option value="{{ c }}">{{ c }}</option>
               {% endfor %}
@@ -32,23 +38,23 @@
         </div>
 
         <!-- Action Bar (Moved to Top) -->
-        <div class="alert alert-light border shadow-sm d-flex justify-content-between align-items-center mb-4">
+        <div class="alert alert-light border shadow-sm d-flex justify-content-between align-items-center mb-4 py-3 px-4" style="border-radius: 8px;">
           <div>
-            <span class="text-muted">Terpilih: <strong id="selectedCount">0</strong> item</span>
-            <span class="ms-3 text-primary fw-bold">Total: Rp <span id="selectedTotal">0</span></span>
+            <span class="text-muted">Terpilih: <strong id="selectedCount" class="text-dark">0</strong> item</span>
+            <span class="ms-4 text-primary fw-bold fs-5">Total: Rp <span id="selectedTotal">0</span></span>
           </div>
-          <button type="submit" class="btn btn-success btn-lg shadow-sm"><i class="bi bi-file-earmark-plus"></i> Generate Invoice</button>
+          <button type="submit" class="btn btn-action-add shadow-sm px-4"><i class="bi bi-file-earmark-plus me-1"></i> Generate Invoice</button>
         </div>
 
         <div class="table-responsive">
-          <table class="table table-bordered table-hover">
-            <thead>
-              <tr class="table-light">
-                <th class="text-center" style="width: 50px"><input type="checkbox" id="checkAll" onclick="toggleAll(this)" /></th>
+          <table class="table table-hover align-middle mb-0">
+            <thead class="thead-std">
+              <tr>
+                <th class="text-center" style="width: 50px"><input type="checkbox" id="checkAll" class="form-check-input" onclick="toggleAll(this)" /></th>
                 <th>Tanggal</th>
                 <th>No Resi</th>
                 <th>Tujuan</th>
-                <th>Customer</th>
+                <th>Customer / Vendor</th>
                 <th class="text-end">Total (Rp)</th>
               </tr>
             </thead>
@@ -56,31 +62,34 @@
               {% for item in inbounds %}
               <tr class="inbound-row" data-vendor="{{ item.vendor }}">
                 <td class="text-center">
-                  <input type="checkbox" name="inbound_ids" value="{{ item.pk }}" class="inbound-check" onchange="updateCustomerField()" />
+                  <input type="checkbox" name="inbound_ids" value="{{ item.pk }}" class="form-check-input inbound-check" onchange="updateCustomerField()" />
                 </td>
-                <td>{{ item.tanggal_masuk_stt|date:"d/m/Y" }}</td>
-                <td class="fw-bold">{{ item.no_resi }}</td>
+                <td class="text-center">{{ item.tanggal_masuk_stt|date:"d/m/Y" }}</td>
+                <td class="fw-bold text-primary">{{ item.no_resi }}</td>
                 <td>{{ item.tujuan }}</td>
                 <td><span class="badge bg-secondary">{{ item.vendor }}</span></td>
-                <td class="text-end fw-bold">{{ item.total_biaya|intcomma }}</td>
+                <td class="text-end fw-bold text-success">Rp {{ item.total_biaya|intcomma }}</td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center py-3">Tidak ada transaksi yang belum ditagih.</td>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <i class="bi bi-inbox"></i>
+                    <p>Tidak ada transaksi yang belum ditagih.</p>
+                  </div>
+                </td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
-
-
       </form>
     </div>
   </div>
 </div>
 
 <script>
-  // Filter by vendor (optional, for convenience)
+  // Filter by vendor
   function filterByVendor() {
     const selectedVendor = document.getElementById('filterVendor').value;
     const rows = document.querySelectorAll('.inbound-row');
@@ -130,7 +139,7 @@
       const row = cb.closest('tr');
       // Get total from last td (remove Rp and dots for parsing)
       const totalText = row.querySelector('td:last-child').textContent.trim();
-      const numericVal = parseInt(totalText.replace(/\./g, '').replace(/,/g, '')) || 0;
+      const numericVal = parseInt(totalText.replace(/Rp /g, '').replace(/\./g, '').replace(/,/g, '')) || 0;
       total += numericVal;
     });
 

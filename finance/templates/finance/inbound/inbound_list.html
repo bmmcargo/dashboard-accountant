@@ -1,57 +1,53 @@
 {% extends 'finance/base.html' %} {% load humanize %} {% block content %}
 <div class="container-fluid px-4">
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 mt-3 gap-3">
+  
+  <div class="page-header mt-3">
     <div>
-      <h1 class="mb-0 h3"><i class="bi bi-box-arrow-in-down text-primary"></i> Monitoring Invoice Inbound</h1>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-          <li class="breadcrumb-item active">Inbound</li>
-        </ol>
-      </nav>
+      <h3><i class="bi bi-box-arrow-in-down"></i>Monitoring Invoice Inbound</h3>
+      <p>Kelola dan monitor invoice barang masuk (Inbound) untuk owner.</p>
     </div>
-    <div class="w-20 w-md-auto d-flex justify-content-start justify-content-md-end">
-      <a href="{% url 'inbound_create' %}" class="btn btn-outline-primary text-nowrap"> <i class="bi bi-plus-circle me-1"></i> Tambah Data </a>
-    </div>
+    <a href="{% url 'inbound_create' %}" class="btn btn-action-add text-nowrap">
+      <i class="bi bi-plus-lg me-1"></i> Tambah Data Inbound
+    </a>
   </div>
 
   <!-- Summary Cards -->
   <div class="row mb-4 mt-3">
     <div class="col-xl-4 col-md-6">
-      <div class="card bg-primary text-white mb-3 shadow">
+      <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #4e73df !important;">
         <div class="card-body py-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <div class="text-white-50 small">Total Transaksi</div>
-              <div class="fs-4 fw-bold">{{ inbounds|length }} Resi</div>
+              <div class="text-muted small fw-bold text-uppercase">Total Transaksi</div>
+              <div class="fs-4 fw-bold text-dark mt-1">{{ inbounds|length }} Resi</div>
             </div>
-            <i class="bi bi-receipt fs-1 opacity-50"></i>
+            <i class="bi bi-receipt fs-1 text-primary opacity-50"></i>
           </div>
         </div>
       </div>
     </div>
     <div class="col-xl-4 col-md-6">
-      <div class="card bg-success text-white mb-3 shadow">
+      <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #1cc88a !important;">
         <div class="card-body py-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <div class="text-white-50 small">Total Berat</div>
-              <div class="fs-4 fw-bold">{{ total_kilo|floatformat:0|intcomma }} Kg</div>
+              <div class="text-muted small fw-bold text-uppercase">Total Berat</div>
+              <div class="fs-4 fw-bold text-dark mt-1">{{ total_kilo|floatformat:0|intcomma }} Kg</div>
             </div>
-            <i class="bi bi-box-seam fs-1 opacity-50"></i>
+            <i class="bi bi-box-seam fs-1 text-success opacity-50"></i>
           </div>
         </div>
       </div>
     </div>
     <div class="col-xl-4 col-md-6">
-      <div class="card bg-warning text-dark mb-3 shadow">
+      <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #f6c23e !important;">
         <div class="card-body py-3">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <div class="text-dark small opacity-75">Total Pendapatan</div>
-              <div class="fs-4 fw-bold">Rp {{ total_biaya|intcomma }}</div>
+              <div class="text-muted small fw-bold text-uppercase">Total Pendapatan</div>
+              <div class="fs-4 fw-bold text-dark mt-1">Rp {{ total_biaya|intcomma }}</div>
             </div>
-            <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+            <i class="bi bi-cash-stack fs-1 text-warning opacity-50"></i>
           </div>
         </div>
       </div>
@@ -59,9 +55,9 @@
   </div>
 
   <!-- Search and Filter Bar -->
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body">
-      <form method="get" action="" class="row g-3 align-items-center">
+  <div class="card filter-card">
+    <div class="card-body py-3">
+      <form method="get" action="" class="row g-2 align-items-center">
         <div class="col-md-5">
           <div class="input-group">
             <span class="input-group-text bg-white border-end-0 text-muted px-3"><i class="bi bi-search"></i></span>
@@ -94,10 +90,10 @@
           </select>
         </div>
         <div class="col-md-3 d-flex gap-2">
-          <button type="submit" class="btn btn-primary px-4">
+          <button type="submit" class="btn btn-primary flex-fill">
             <i class="bi bi-filter me-1"></i> Filter
           </button>
-          <a href="{% url 'inbound_list' %}" class="btn btn-outline-secondary">
+          <a href="{% url 'inbound_list' %}" class="btn btn-outline-secondary px-3">
             Reset
           </a>
         </div>
@@ -106,60 +102,59 @@
   </div>
 
   <!-- Tabel Data -->
-  <div class="card shadow mb-4">
-    <div class="card-header py-4">
-      <h6 class="m-0 fw-bold"><i class="bi bi-table me-2"></i>Daftar Barang Masuk (Inbound 2026)</h6>
-    </div>
+  <div class="card table-card">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem">
-          <thead class="table-dark">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem">
+          <thead class="thead-std">
             <tr class="text-center">
               <th>Tgl Masuk</th>
               <th>Vendor</th>
               <th>No Resi</th>
               <th>Tujuan</th>
-              <th>Koli</th>
-              <th>Kg</th>
+              <th class="text-center">Koli</th>
+              <th class="text-end">Kg</th>
               <th>Tgl Dooring</th>
               <th>Tgl Kembali</th>
               <th>Keterangan</th>
-              <th>Biaya Handling (Rp)</th>
-              <th>Total (Rp)</th>
-              <th>Aksi</th>
+              <th class="text-end">Handling (Rp)</th>
+              <th class="text-end">Total (Rp)</th>
+              <th class="text-center">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {% for item in inbounds %}
             <tr>
-              <td class="text-nowrap">{{ item.tanggal_masuk_stt|date:"d/m/Y"|default:"-" }}</td>
-              <td><span class="badge bg-secondary">{{ item.vendor|default:"-" }}</span></td>
+              <td class="text-nowrap text-center">{{ item.tanggal_masuk_stt|date:"d/m/Y"|default:"-" }}</td>
+              <td class="text-center"><span class="badge bg-secondary">{{ item.vendor|default:"-" }}</span></td>
               <td class="fw-bold text-primary">{{ item.no_resi }}</td>
               <td>{{ item.tujuan|default:"-" }}</td>
               <td class="text-center">{{ item.koli }}</td>
               <td class="text-end">{{ item.kilo|floatformat:0 }}</td>
-              <td class="text-nowrap">{{ item.tanggal_dooring|date:"d/m/Y"|default:"-" }}</td>
-              <td class="text-nowrap">{{ item.tanggal_kembali|date:"d/m/Y"|default:"-" }}</td>
+              <td class="text-nowrap text-center">{{ item.tanggal_dooring|date:"d/m/Y"|default:"-" }}</td>
+              <td class="text-nowrap text-center">{{ item.tanggal_kembali|date:"d/m/Y"|default:"-" }}</td>
               <td>{{ item.keterangan|default:"-"|truncatechars:20 }}</td>
               <td class="text-end">{{ item.tarif_per_kg|default:"-" }}</td>
               <td class="text-end fw-bold text-success">{{ item.total_biaya|intcomma }}</td>
               <td class="text-center text-nowrap">
-                <a href="{% url 'invoice_inbound' item.pk %}" class="btn btn-sm btn-outline-info py-0 px-1" title="Invoice" target="_blank">
+                <a href="{% url 'invoice_inbound' item.pk %}" class="btn btn-sm btn-outline-info" title="Invoice" target="_blank">
                   <i class="bi bi-printer"></i>
                 </a>
-                <a href="{% url 'inbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning py-0 px-1" title="Edit">
+                <a href="{% url 'inbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                   <i class="bi bi-pencil"></i>
                 </a>
-                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1" title="Hapus" data-name="{{ item.no_resi }}" data-url="{% url 'inbound_delete' item.pk %}" onclick="confirmDelete(this.dataset.name, this.dataset.url)">
+                <button type="button" class="btn btn-sm btn-outline-danger" title="Hapus" data-name="{{ item.no_resi }}" data-url="{% url 'inbound_delete' item.pk %}" onclick="confirmDelete(this.dataset.name, this.dataset.url)">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
             </tr>
             {% empty %}
             <tr>
-              <td colspan="12" class="text-center py-4 text-muted">
-                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                {% if q %}Tidak ada data yang cocok dengan "{{ q }}"{% else %}Belum ada data inbound.{% endif %}
+              <td colspan="12">
+                <div class="empty-state">
+                  <i class="bi bi-inbox"></i>
+                  <p>{% if q %}Tidak ada data yang cocok dengan "{{ q }}"{% else %}Belum ada data inbound.{% endif %}</p>
+                </div>
               </td>
             </tr>
             {% endfor %}
