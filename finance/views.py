@@ -1915,6 +1915,195 @@ def export_ops_outbound_excel(request):
     return response
 
 
+@login_required
+def export_ops_inbound_pdf(request):
+    """Ekspor Data Inbound (Barang Masuk) ke PDF menggunakan WeasyPrint."""
+    import weasyprint
+    from django.template.loader import render_to_string
+    from django.utils import timezone
+    from .models import OpsInbound, InboundTransaction
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsInbound.objects.all()
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+
+    # Data Lama
+    items_legacy = InboundTransaction.objects.all()
+    if bulan: items_legacy = items_legacy.filter(tanggal_masuk_stt__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal_masuk_stt__year=int(tahun))
+
+    # Merge & sort
+    merged = []
+    for item in items_new:
+        merged.append({
+            'nomor_resi': item.nomor_resi, 'tanggal': item.tanggal,
+            'pengirim': item.pengirim, 'penerima': item.penerima, 'asal': item.asal,
+            'tujuan': item.tujuan, 'berat': item.berat, 'status': item.status,
+            'status_display': item.get_status_display(), 'source': 'new'
+        })
+    for item in items_legacy:
+        merged.append({
+            'nomor_resi': item.no_resi, 'tanggal': item.tanggal_masuk_stt,
+            'pengirim': item.vendor or '-', 'penerima': '-', 'asal': '-',
+            'tujuan': item.tujuan or '-', 'berat': item.kilo, 'status': 'LEGACY',
+            'status_display': 'Data Riwayat (Lama)', 'source': 'legacy'
+        })
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+
+    periode_text = ""
+    if bulan:
+        periode_text += f" Bulan {BULAN_NAMES_OPS.get(int(bulan), '')}"
+    if tahun:
+        periode_text += f" {tahun}"
+    if not periode_text:
+        periode_text = " Semua Periode"
+
+    context = {
+        'items': merged,
+        'periode': periode_text,
+        'tanggal_cetak': timezone.now(),
+    }
+
+    html_string = render_to_string('finance/inbound_pdf.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Inbound_{BULAN_NAMES_OPS.get(int(bulan), 'All') if bulan else 'All'}_{tahun or 'All'}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    pdf = weasyprint.HTML(string=html_string).write_pdf()
+    response.write(pdf)
+    return response
+
+
+@login_required
+def export_ops_manifest_pdf(request):
+    """Ekspor Data Manifest ke PDF menggunakan WeasyPrint."""
+    import weasyprint
+    from django.template.loader import render_to_string
+    from django.utils import timezone
+    from .models import OpsManifest, Manifest
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsManifest.objects.all()
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+
+    # Data Lama
+    items_legacy = Manifest.objects.all()
+    if bulan: items_legacy = items_legacy.filter(tanggal_kirim__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal_kirim__year=int(tahun))
+
+    merged = []
+    for item in items_new:
+        merged.append({
+            'nomor_manifest': item.nomor_manifest, 'tanggal': item.tanggal,
+            'armada': item.armada, 'rute': item.rute,
+            'jumlah': item.jumlah_barang, 'berat': item.total_berat,
+            'status': item.status, 'status_display': item.get_status_display(), 'source': 'new'
+        })
+    for item in items_legacy:
+        merged.append({
+            'nomor_manifest': item.no_resi, 'tanggal': item.tanggal_kirim,
+            'armada': item.penerima or '-', 'rute': item.tujuan or '-',
+            'jumlah': item.koli, 'berat': float(item.kg) if item.kg else 0,
+            'status': 'LEGACY', 'status_display': 'Data Riwayat (Lama)', 'source': 'legacy'
+        })
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+
+    periode_text = ""
+    if bulan:
+        periode_text += f" Bulan {BULAN_NAMES_OPS.get(int(bulan), '')}"
+    if tahun:
+        periode_text += f" {tahun}"
+    if not periode_text:
+        periode_text = " Semua Periode"
+
+    context = {
+        'items': merged,
+        'periode': periode_text,
+        'tanggal_cetak': timezone.now(),
+    }
+
+    html_string = render_to_string('finance/manifest_pdf.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Manifest_{BULAN_NAMES_OPS.get(int(bulan), 'All') if bulan else 'All'}_{tahun or 'All'}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    pdf = weasyprint.HTML(string=html_string).write_pdf()
+    response.write(pdf)
+    return response
+
+
+@login_required
+def export_ops_outbound_pdf(request):
+    """Ekspor Data Outbound (Barang Keluar) ke PDF menggunakan WeasyPrint."""
+    import weasyprint
+    from django.template.loader import render_to_string
+    from django.utils import timezone
+    from .models import OpsOutbound, OutboundTransaction
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsOutbound.objects.select_related('inbound', 'manifest').all()
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+
+    # Data Lama
+    items_legacy = OutboundTransaction.objects.all()
+    if bulan: items_legacy = items_legacy.filter(tanggal__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal__year=int(tahun))
+
+    merged = []
+    for item in items_new:
+        merged.append({
+            'nomor_resi': item.inbound.nomor_resi, 'tanggal': item.tanggal,
+            'pengirim': item.inbound.pengirim, 'penerima': item.inbound.penerima,
+            'nomor_manifest': item.manifest.nomor_manifest, 'rute': item.manifest.rute,
+            'berat': float(item.inbound.berat) if item.inbound.berat else 0,
+            'catatan': item.catatan or '-', 'source': 'new'
+        })
+    for item in items_legacy:
+        merged.append({
+            'nomor_resi': item.no_resi_bmm, 'tanggal': item.tanggal,
+            'pengirim': item.pengirim or '-', 'penerima': item.penerima or '-',
+            'nomor_manifest': '-', 'rute': '-',
+            'berat': float(item.kg) if item.kg else 0,
+            'catatan': item.keterangan or '-', 'source': 'legacy'
+        })
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+
+    periode_text = ""
+    if bulan:
+        periode_text += f" Bulan {BULAN_NAMES_OPS.get(int(bulan), '')}"
+    if tahun:
+        periode_text += f" {tahun}"
+    if not periode_text:
+        periode_text = " Semua Periode"
+
+    context = {
+        'items': merged,
+        'periode': periode_text,
+        'tanggal_cetak': timezone.now(),
+    }
+
+    html_string = render_to_string('finance/outbound_pdf.html', context)
+    response = HttpResponse(content_type='application/pdf')
+    filename = f"Outbound_{BULAN_NAMES_OPS.get(int(bulan), 'All') if bulan else 'All'}_{tahun or 'All'}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    pdf = weasyprint.HTML(string=html_string).write_pdf()
+    response.write(pdf)
+    return response
+
+
 # ============================================================
 # MANAJEMEN USER (Custom UI for Owner)
 # ============================================================

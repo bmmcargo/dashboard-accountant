@@ -88,6 +88,9 @@ urlpatterns = [
     path('ops/export/inbound/', views.export_ops_inbound_excel, name='export_ops_inbound'),
     path('ops/export/manifest/', views.export_ops_manifest_excel, name='export_ops_manifest'),
     path('ops/export/outbound/', views.export_ops_outbound_excel, name='export_ops_outbound'),
+    path('ops/export/inbound/pdf/', views.export_ops_inbound_pdf, name='export_ops_inbound_pdf'),
+    path('ops/export/manifest/pdf/', views.export_ops_manifest_pdf, name='export_ops_manifest_pdf'),
+    path('ops/export/outbound/pdf/', views.export_ops_outbound_pdf, name='export_ops_outbound_pdf'),
 
     # Manajemen User
     path('manajemen-user/', views.user_management_list, name='user_management_list'),

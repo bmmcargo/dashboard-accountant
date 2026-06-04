@@ -5,12 +5,12 @@
   <style>
     @page { size: A4 landscape; margin: 1.5cm; }
     body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #333; }
-    .header { text-align: center; margin-bottom: 15px; border-bottom: 3px solid #0d6efd; padding-bottom: 10px; }
-    .header h1 { font-size: 16pt; margin: 0; color: #0d6efd; }
+    .header { text-align: center; margin-bottom: 15px; border-bottom: 3px solid #198754; padding-bottom: 10px; }
+    .header h1 { font-size: 16pt; margin: 0; color: #198754; }
     .header h2 { font-size: 12pt; margin: 5px 0 0 0; font-weight: normal; }
     .header p { font-size: 9pt; margin: 3px 0 0 0; color: #666; }
     table { width: 100%; border-collapse: collapse; }
-    th { background: #0d6efd; color: #fff; font-weight: bold; text-align: left; padding: 6px 8px; border: 1px solid #0b5ed7; font-size: 8pt; }
+    th { background: #198754; color: #fff; font-weight: bold; text-align: left; padding: 6px 8px; border: 1px solid #146c43; font-size: 8pt; }
     td { padding: 4px 8px; border: 1px solid #ddd; font-size: 8pt; }
     tr:nth-child(even) { background: #f9f9f9; }
     .text-right { text-align: right; }
@@ -28,48 +28,45 @@
 <body>
   <div class="header">
     <h1>CV. BORNEO MEGA MANDIRI</h1>
-    <h2>DATA BARANG MASUK (INBOUND)</h2>
+    <h2>DATA MANIFEST PENGIRIMAN</h2>
     <p>{{ periode }}</p>
   </div>
 
   <div class="summary">
-    <strong>Total Data:</strong> {{ items|length }} barang
+    <strong>Total Data:</strong> {{ items|length }} manifest
   </div>
 
   <table>
     <tr>
       <th class="text-center" style="width:30px">No</th>
-      <th>No. Resi</th>
+      <th>No. Manifest</th>
       <th>Tanggal</th>
-      <th>Pengirim</th>
-      <th>Penerima</th>
-      <th>Asal</th>
-      <th>Tujuan</th>
-      <th class="text-right">Berat (Kg)</th>
+      <th>Armada</th>
+      <th>Rute</th>
+      <th class="text-center">Jml Barang</th>
+      <th class="text-right">Total Berat (Kg)</th>
       <th class="text-center">Status</th>
     </tr>
     {% for item in items %}
     <tr>
       <td class="text-center">{{ forloop.counter }}</td>
-      <td><strong>{{ item.nomor_resi }}</strong></td>
+      <td><strong>{{ item.nomor_manifest }}</strong></td>
       <td>{{ item.tanggal|date:"d/m/Y" }}</td>
-      <td>{{ item.pengirim }}</td>
-      <td>{{ item.penerima }}</td>
-      <td>{{ item.asal }}</td>
-      <td>{{ item.tujuan }}</td>
+      <td>{{ item.armada }}</td>
+      <td>{{ item.rute }}</td>
+      <td class="text-center">{{ item.jumlah }}</td>
       <td class="text-right">{{ item.berat }}</td>
       <td class="text-center">
-        {% if item.status == 'DITERIMA' %}<span class="badge badge-info">Diterima</span>
-        {% elif item.status == 'PROSES' %}<span class="badge badge-warning">Proses</span>
-        {% elif item.status == 'SIAP_KIRIM' %}<span class="badge badge-primary">Siap Kirim</span>
+        {% if item.status == 'PENDING' %}<span class="badge badge-warning">Pending</span>
         {% elif item.status == 'DIKIRIM' %}<span class="badge badge-success">Dikirim</span>
+        {% elif item.status == 'SELESAI' %}<span class="badge badge-primary">Selesai</span>
         {% elif item.status == 'LEGACY' %}<span class="badge badge-secondary">Data Riwayat (Lama)</span>
         {% else %}<span class="badge badge-secondary">{{ item.status_display }}</span>
         {% endif %}
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="9" class="text-center">Tidak ada data.</td></tr>
+    <tr><td colspan="8" class="text-center">Tidak ada data.</td></tr>
     {% endfor %}
   </table>
 
