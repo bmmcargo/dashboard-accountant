@@ -5,9 +5,17 @@
     <h3><i class="bi bi-box-arrow-up"></i>Barang Keluar (Outbound)</h3>
     <p>Daftar barang yang dimasukkan ke manifest pengiriman.</p>
   </div>
-  <a href="{% url 'ops_outbound_create' %}" class="btn btn-action-add">
-    <i class="bi bi-plus-lg me-1"></i> Catat Barang Keluar
-  </a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'export_ops_outbound' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-outline-success">
+      <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
+    </a>
+    <a href="{% url 'export_ops_outbound_pdf' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-outline-danger" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+    </a>
+    <a href="{% url 'ops_outbound_create' %}" class="btn btn-action-add">
+      <i class="bi bi-plus-lg me-1"></i> Catat Barang Keluar
+    </a>
+  </div>
 </div>
 
 <!-- Search & Filter -->
@@ -49,14 +57,7 @@
         {% endif %}
       </div>
     </form>
-    <div class="mt-2 d-flex justify-content-end gap-2">
-      <a href="{% url 'export_ops_outbound' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-success btn-sm">
-        <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
-      </a>
-      <a href="{% url 'export_ops_outbound_pdf' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-danger btn-sm" target="_blank">
-        <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
-      </a>
-    </div>
+
   </div>
 </div>
 
@@ -77,23 +78,21 @@
           </tr>
         </thead>
         <tbody>
-          {% for item in items %}
+          {% for item in page_obj %}
           <tr>
             <td><strong>{{ item.nomor_resi_inbound }}</strong></td>
             <td>{{ item.tanggal|date:"d M Y" }}</td>
             <td>
-              {% if item.source == 'new' %}
-              <a href="{% url 'ops_manifest_list' %}" class="text-decoration-none fw-bold">
-                {{ item.nomor_manifest }}
-              </a>
+              {% if item.nomor_manifest != '-' %}
+              <span class="badge bg-secondary">{{ item.nomor_manifest }}</span>
               {% else %}
-              <span class="text-muted fst-italic">{{ item.nomor_manifest }}</span>
+              -
               {% endif %}
             </td>
             <td>{{ item.rute }}</td>
             <td>{{ item.catatan|default:"-" }}</td>
             <td>
-              <span class="badge-status {% if item.source == 'legacy' %}badge-status-secondary{% else %}badge-status-success{% endif %}">
+              <span class="badge bg-{% if item.source == 'legacy' %}secondary{% else %}success{% endif %} bg-opacity-10 text-{% if item.source == 'legacy' %}secondary{% else %}success{% endif %}">
                 {% if item.source == 'legacy' %}Data Lama{% else %}Baru{% endif %}
               </span>
             </td>
@@ -102,7 +101,7 @@
               <a href="{% url 'ops_outbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                 <i class="bi bi-pencil"></i>
               </a>
-              <a href="{% url 'ops_outbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data barang keluar ini?')">
+              <a href="{% url 'ops_outbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data ini?')">
                 <i class="bi bi-trash"></i>
               </a>
               {% else %}
@@ -112,10 +111,10 @@
           </tr>
           {% empty %}
           <tr>
-          <td colspan="7" class="empty-state">
-              <i class="bi bi-box-arrow-up"></i>
+            <td colspan="7" class="empty-state">
+              <i class="bi bi-inbox"></i>
               <p>Belum ada data barang keluar.</p>
-          </td>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -123,4 +122,6 @@
     </div>
   </div>
 </div>
+
+{% include 'finance/includes/pagination.html' %}
 {% endblock %}

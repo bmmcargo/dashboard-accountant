@@ -123,7 +123,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for item in inbounds %}
+            {% for item in page_obj %}
             <tr>
               <td class="text-nowrap text-center">{{ item.tanggal_masuk_stt|date:"d/m/Y"|default:"-" }}</td>
               <td class="text-center"><span class="badge bg-secondary">{{ item.vendor|default:"-" }}</span></td>
@@ -163,6 +163,7 @@
       </div>
     </div>
   </div>
+  {% include 'finance/includes/pagination.html' %}
 </div>
 
 <!-- Modal Konfirmasi Delete -->

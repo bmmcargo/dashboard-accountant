@@ -8,44 +8,81 @@
     <button type="button" class="btn btn-action-add" data-bs-toggle="modal" data-bs-target="#addJurnalModal"><i class="bi bi-plus-lg me-1"></i> Tambah Jurnal</button>
   </div>
 
-  <div class="card table-card">
-    <div class="card-body">
-      <!-- Search & Filter Bar -->
-      <div class="row mb-3 g-2">
-        <div class="col-md-4">
-          <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-            <input type="text" id="searchInput" class="form-control" placeholder="Cari uraian, akun..." onkeyup="filterTable()" />
-          </div>
-        </div>
+  <!-- Search & Filter Card -->
+  <div class="card filter-card mb-3">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-center">
         <div class="col-md-3">
-          <select id="sortSelect" class="form-select" onchange="sortTable()">
-            <option value="date-desc">Tanggal (Terbaru)</option>
-            <option value="date-asc">Tanggal (Terlama)</option>
-            <option value="nominal-desc">Nominal (Terbesar)</option>
-            <option value="nominal-asc">Nominal (Terkecil)</option>
+          <input type="text" name="q" class="form-control" placeholder="Cari uraian atau nama/kode akun..." value="{{ q }}">
+        </div>
+        <div class="col-md-2">
+          <select name="bulan" class="form-select">
+            <option value="">-- Bulan --</option>
+            <option value="1" {% if selected_bulan == '1' %}selected{% endif %}>Januari</option>
+            <option value="2" {% if selected_bulan == '2' %}selected{% endif %}>Februari</option>
+            <option value="3" {% if selected_bulan == '3' %}selected{% endif %}>Maret</option>
+            <option value="4" {% if selected_bulan == '4' %}selected{% endif %}>April</option>
+            <option value="5" {% if selected_bulan == '5' %}selected{% endif %}>Mei</option>
+            <option value="6" {% if selected_bulan == '6' %}selected{% endif %}>Juni</option>
+            <option value="7" {% if selected_bulan == '7' %}selected{% endif %}>Juli</option>
+            <option value="8" {% if selected_bulan == '8' %}selected{% endif %}>Agustus</option>
+            <option value="9" {% if selected_bulan == '9' %}selected{% endif %}>September</option>
+            <option value="10" {% if selected_bulan == '10' %}selected{% endif %}>Oktober</option>
+            <option value="11" {% if selected_bulan == '11' %}selected{% endif %}>November</option>
+            <option value="12" {% if selected_bulan == '12' %}selected{% endif %}>Desember</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <span class="badge bg-primary fs-6 py-2 px-3"> Total: <span id="totalCount">{{ jurnals|length }}</span> transaksi </span>
+        <div class="col-md-2">
+          <select name="tahun" class="form-select">
+            <option value="">-- Tahun --</option>
+            {% for y in years %}
+              <option value="{{ y }}" {% if selected_tahun == y|stringformat:"i" %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+          </select>
         </div>
-      </div>
+        <div class="col-md-2">
+          <select name="akun" class="form-select">
+            <option value="">-- Semua Akun --</option>
+            {% for akun in all_akuns %}
+              <option value="{{ akun.id }}" {% if selected_akun == akun.id|stringformat:"i" %}selected{% endif %}>{{ akun.kode }} - {{ akun.nama }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select name="sort" class="form-select">
+            <option value="date-desc" {% if sort_by == 'date-desc' %}selected{% endif %}>Tanggal (Terbaru)</option>
+            <option value="date-asc" {% if sort_by == 'date-asc' %}selected{% endif %}>Tanggal (Terlama)</option>
+            <option value="nominal-desc" {% if sort_by == 'nominal-desc' %}selected{% endif %}>Nominal (Terbesar)</option>
+            <option value="nominal-asc" {% if sort_by == 'nominal-asc' %}selected{% endif %}>Nominal (Terkecil)</option>
+          </select>
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-primary w-100" title="Filter"><i class="bi bi-filter"></i></button>
+          {% if q or selected_bulan or selected_tahun or selected_akun or sort_by != 'date-desc' %}
+          <a href="{% url 'jurnal_list' %}" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
 
+  <div class="card table-card">
+    <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle" id="jurnalTable">
+        <table class="table table-hover align-middle mb-0" id="jurnalTable">
           <thead class="thead-std">
             <tr>
-              <th style="width: 100px" class="sortable" data-sort="date">Tanggal <i class="bi bi-arrow-down-up"></i></th>
-              <th class="sortable" data-sort="uraian">Uraian</th>
+              <th style="width: 120px">Tanggal</th>
+              <th>Uraian</th>
               <th>Akun Debit</th>
               <th>Akun Kredit</th>
-              <th class="text-end sortable" data-sort="nominal">Nominal <i class="bi bi-arrow-down-up"></i></th>
+              <th class="text-end" style="width: 180px">Nominal</th>
               <th class="text-center" style="width: 120px">Aksi</th>
             </tr>
           </thead>
           <tbody id="jurnalBody">
-            {% for jurnal in jurnals %}
-            <tr data-date="{{ jurnal.tanggal|date:'Y-m-d' }}" data-nominal="{{ jurnal.nominal }}">
+            {% for jurnal in page_obj %}
+            <tr>
               <td>{{ jurnal.tanggal|date:"d/m/Y" }}</td>
               <td>{{ jurnal.uraian }}</td>
               <td><span class="badge bg-success bg-opacity-10 text-success">{{ jurnal.akun_debit.kode }} - {{ jurnal.akun_debit.nama }}</span></td>
@@ -53,20 +90,20 @@
               <td class="text-end fw-bold">Rp {{ jurnal.nominal|intcomma }}</td>
               <td class="text-center">
                 <div class="btn-group btn-group-sm">
-                  <a href="{% url 'jurnal_edit' jurnal.pk %}" class="btn btn-outline-primary" title="Edit">
+                  <a href="{% url 'jurnal_edit' jurnal.pk %}" class="btn btn-sm btn-outline-primary" title="Edit">
                     <i class="bi bi-pencil"></i>
                   </a>
-                  <a href="{% url 'jurnal_delete' jurnal.pk %}" class="btn btn-outline-danger" onclick="return confirm('Yakin hapus data ini?');" title="Hapus">
+                  <a href="{% url 'jurnal_delete' jurnal.pk %}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Yakin hapus data ini?');" title="Hapus">
                     <i class="bi bi-trash"></i>
                   </a>
                 </div>
               </td>
             </tr>
             {% empty %}
-            <tr id="emptyRow">
+            <tr>
               <td colspan="6" class="empty-state">
                 <i class="bi bi-journal-text"></i>
-                <p>Belum ada data jurnal.</p>
+                <p>Belum ada data jurnal yang sesuai dengan filter.</p>
               </td>
             </tr>
             {% endfor %}
@@ -75,6 +112,8 @@
       </div>
     </div>
   </div>
+
+  {% include 'finance/includes/pagination.html' %}
 </div>
 
 <!-- Modal Tambah -->
@@ -96,123 +135,7 @@
   </div>
 </div>
 
-<script>
-  // Fungsi Cari/Filter
-  function filterTable() {
-    const input = document.getElementById('searchInput').value.toLowerCase();
-    const rows = document.querySelectorAll('#jurnalBody tr:not(#emptyRow)');
-    let visibleCount = 0;
 
-    rows.forEach((row) => {
-      const text = row.textContent.toLowerCase();
-      if (text.includes(input)) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    document.getElementById('totalCount').textContent = visibleCount;
-  }
-
-  // Variabel untuk track sorting state
-  let currentSort = { column: 'date', direction: 'desc' };
-
-  // Fungsi Sorting dari Dropdown
-  function sortTable() {
-    const sortValue = document.getElementById('sortSelect').value;
-    const [column, direction] = sortValue.split('-');
-    currentSort = { column, direction };
-    doSort();
-  }
-
-  // Fungsi Sorting dari Klik Header
-  function sortByColumn(column) {
-    // Toggle direction jika kolom sama
-    if (currentSort.column === column) {
-      currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-    } else {
-      currentSort.column = column;
-      currentSort.direction = 'desc'; // Default desc untuk kolom baru
-    }
-
-    // Update dropdown
-    const selectValue = `${column}-${currentSort.direction}`;
-    const selectEl = document.getElementById('sortSelect');
-    if (selectEl.querySelector(`option[value="${selectValue}"]`)) {
-      selectEl.value = selectValue;
-    }
-
-    doSort();
-    updateSortIndicators();
-  }
-
-  // Eksekusi sorting
-  function doSort() {
-    const tbody = document.getElementById('jurnalBody');
-    const rows = Array.from(tbody.querySelectorAll('tr:not(#emptyRow)'));
-
-    rows.sort((a, b) => {
-      let valA, valB;
-
-      if (currentSort.column === 'date') {
-        valA = new Date(a.dataset.date);
-        valB = new Date(b.dataset.date);
-      } else if (currentSort.column === 'nominal') {
-        valA = parseInt(a.dataset.nominal) || 0;
-        valB = parseInt(b.dataset.nominal) || 0;
-      } else {
-        return 0;
-      }
-
-      if (currentSort.direction === 'asc') {
-        return valA - valB;
-      } else {
-        return valB - valA;
-      }
-    });
-
-    rows.forEach((row) => tbody.appendChild(row));
-  }
-
-  // Update icon panah di header
-  function updateSortIndicators() {
-    document.querySelectorAll('.sortable').forEach((th) => {
-      const icon = th.querySelector('i');
-      const column = th.dataset.sort;
-
-      if (column === currentSort.column) {
-        if (currentSort.direction === 'asc') {
-          icon.className = 'bi bi-arrow-up';
-        } else {
-          icon.className = 'bi bi-arrow-down';
-        }
-        th.classList.add('sorting-active');
-      } else {
-        icon.className = 'bi bi-arrow-down-up';
-        th.classList.remove('sorting-active');
-      }
-    });
-  }
-
-  // Event listener untuk klik header
-  document.addEventListener('DOMContentLoaded', function () {
-    // Pasang event listener ke header sortable
-    document.querySelectorAll('.sortable').forEach((th) => {
-      th.addEventListener('click', function () {
-        const column = this.dataset.sort;
-        if (column) {
-          sortByColumn(column);
-        }
-      });
-    });
-
-    // Sort default
-    sortTable();
-    updateSortIndicators();
-  });
-</script>
 
 <style>
   .sortable {

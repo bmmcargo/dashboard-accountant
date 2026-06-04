@@ -441,14 +441,14 @@
         <a class="nav-link {% if request.path == '/operasional/' %}active{% endif %}" href="{% url 'dashboard_ops' %}">
           <i class="bi bi-truck"></i> Dashboard Operasional
         </a>
-        <a class="nav-link {% if 'inbound' in request.path %}active{% endif %}" href="{% url 'inbound_list' %}">
+        <a class="nav-link {% if 'ops/inbound' in request.path %}active{% endif %}" href="{% url 'ops_inbound_list' %}">
            <i class="bi bi-box-arrow-in-down"></i> Inbound (Barang Masuk)
            {% if badge_inbound %}<span class="sidebar-badge">{{ badge_inbound }}</span>{% endif %}
         </a>
-        <a class="nav-link {% if 'outbound' in request.path %}active{% endif %}" href="{% url 'outbound_list' %}"> 
+        <a class="nav-link {% if 'ops/outbound' in request.path %}active{% endif %}" href="{% url 'ops_outbound_list' %}"> 
            <i class="bi bi-box-arrow-up"></i> Outbound (Barang Keluar) 
         </a>
-        <a class="nav-link {% if 'manifest' in request.path %}active{% endif %}" href="{% url 'manifest_list' %}">
+        <a class="nav-link {% if 'ops/manifest' in request.path %}active{% endif %}" href="{% url 'ops_manifest_list' %}">
            <i class="bi bi-clipboard-check"></i> Manifest
            {% if badge_manifest %}<span class="sidebar-badge">{{ badge_manifest }}</span>{% endif %}
         </a>

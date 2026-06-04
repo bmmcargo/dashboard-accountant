@@ -5,16 +5,24 @@
     <h3><i class="bi bi-box-arrow-in-down"></i>Barang Masuk (Inbound)</h3>
     <p>Daftar semua barang yang diterima di gudang.</p>
   </div>
-  <a href="{% url 'ops_inbound_create' %}" class="btn btn-action-add">
-    <i class="bi bi-plus-lg me-1"></i> Tambah Barang Masuk
-  </a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'export_ops_inbound' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-outline-success">
+      <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
+    </a>
+    <a href="{% url 'export_ops_inbound_pdf' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-outline-danger" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+    </a>
+    <a href="{% url 'ops_inbound_create' %}" class="btn btn-action-add">
+      <i class="bi bi-plus-lg me-1"></i> Tambah Barang Masuk
+    </a>
+  </div>
 </div>
 
 <!-- Search & Filter -->
 <div class="card filter-card">
   <div class="card-body py-3">
     <form method="get" class="row g-2 align-items-center">
-      <div class="col-md-5">
+      <div class="col-md-4">
         <input type="text" name="q" class="form-control" placeholder="Cari resi, pengirim, penerima, asal, tujuan..." value="{{ search }}">
       </div>
       <div class="col-md-2">
@@ -42,21 +50,24 @@
           {% endfor %}
         </select>
       </div>
-      <div class="col-md-3 d-flex gap-2">
+      <div class="col-md-2">
+        <select name="status" class="form-select">
+          <option value="">-- Status --</option>
+          <option value="DITERIMA" {% if selected_status == 'DITERIMA' %}selected{% endif %}>Diterima di Gudang</option>
+          <option value="PROSES" {% if selected_status == 'PROSES' %}selected{% endif %}>Sedang Diproses</option>
+          <option value="SIAP_KIRIM" {% if selected_status == 'SIAP_KIRIM' %}selected{% endif %}>Siap Kirim</option>
+          <option value="DIKIRIM" {% if selected_status == 'DIKIRIM' %}selected{% endif %}>Sudah Dikirim</option>
+          <option value="LEGACY" {% if selected_status == 'LEGACY' %}selected{% endif %}>Data Riwayat (Lama)</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-flex gap-2">
         <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-filter me-1"></i> Filter</button>
-        {% if search or selected_bulan or selected_tahun %}
-        <a href="{% url 'ops_inbound_list' %}" class="btn btn-outline-secondary px-3">Reset</a>
+        {% if search or selected_bulan or selected_tahun or selected_status %}
+        <a href="{% url 'ops_inbound_list' %}" class="btn btn-outline-secondary px-2">Reset</a>
         {% endif %}
       </div>
     </form>
-    <div class="mt-2 d-flex justify-content-end gap-2">
-      <a href="{% url 'export_ops_inbound' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-success btn-sm">
-        <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
-      </a>
-      <a href="{% url 'export_ops_inbound_pdf' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-danger btn-sm" target="_blank">
-        <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
-      </a>
-    </div>
+
   </div>
 </div>
 
@@ -79,7 +90,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for item in items %}
+          {% for item in page_obj %}
           <tr>
             <td><strong>{{ item.nomor_resi }}</strong></td>
             <td>{{ item.tanggal|date:"d M Y" }}</td>
@@ -93,7 +104,10 @@
                 {{ item.status_display }}
               </span>
             </td>
-            <td class="text-center">
+            <td class="text-center text-nowrap">
+              <a href="{% url 'invoice_inbound' item.pk %}?source={{ item.source }}" class="btn btn-sm btn-outline-info" title="Cetak Invoice" target="_blank">
+                <i class="bi bi-printer"></i>
+              </a>
               {% if item.source == 'new' %}
               <a href="{% url 'ops_inbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
                 <i class="bi bi-pencil"></i>
@@ -101,8 +115,6 @@
               <a href="{% url 'ops_inbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data ini?')">
                 <i class="bi bi-trash"></i>
               </a>
-              {% else %}
-              <span class="text-muted small">Read-only</span>
               {% endif %}
             </td>
           </tr>
@@ -119,4 +131,6 @@
     </div>
   </div>
 </div>
+
+{% include 'finance/includes/pagination.html' %}
 {% endblock %}

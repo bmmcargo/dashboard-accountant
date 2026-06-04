@@ -24,7 +24,7 @@ def owner_required(view_func):
             return view_func(request, *args, **kwargs)
 
         # Cek apakah user masuk group 'Owner'
-        if user.groups.filter(name='Owner').exists():
+        if user.groups.filter(name__in=['Owner', 'owner', 'finance', 'Finance']).exists():
             return view_func(request, *args, **kwargs)
 
         # Jika bukan Owner → Tolak akses
@@ -37,12 +37,12 @@ def is_owner(user):
     """Helper: Cek apakah user adalah Owner atau Superuser."""
     if user.is_superuser:
         return True
-    return user.groups.filter(name='Owner').exists()
+    return user.groups.filter(name__in=['Owner', 'owner', 'finance', 'Finance']).exists()
 
 
 def is_admin_operasional(user):
     """Helper: Cek apakah user adalah Admin Operasional."""
-    return user.groups.filter(name='Admin Operasional').exists()
+    return user.groups.filter(name__in=['Admin Operasional', 'admin_ops', 'ops', 'Admin', 'admin']).exists()
 
 
 def admin_or_owner_required(view_func):
@@ -58,7 +58,7 @@ def admin_or_owner_required(view_func):
         if user.is_superuser:
             return view_func(request, *args, **kwargs)
 
-        if user.groups.filter(name__in=['Owner', 'Admin Operasional']).exists():
+        if user.groups.filter(name__in=['Owner', 'owner', 'finance', 'Finance', 'Admin Operasional', 'admin_ops', 'ops', 'Admin', 'admin']).exists():
             return view_func(request, *args, **kwargs)
 
         return render(request, 'finance/403.html', status=403)
@@ -71,8 +71,8 @@ def get_user_role(user):
     Helper: Return role string untuk template context.
     Digunakan oleh context processor dan template sidebar.
     """
-    if user.is_superuser or user.groups.filter(name='Owner').exists():
+    if user.is_superuser or user.groups.filter(name__in=['Owner', 'owner', 'finance', 'Finance']).exists():
         return 'owner'
-    elif user.groups.filter(name='Admin Operasional').exists():
+    elif user.groups.filter(name__in=['Admin Operasional', 'admin_ops', 'ops', 'Admin', 'admin']).exists():
         return 'admin_ops'
     return 'unknown'

@@ -140,7 +140,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for item in manifests %}
+                        {% for item in page_obj %}
                         <tr>
                             <td class="text-center">{{ forloop.counter }}</td>
                             <td class="text-center"><span class="badge-status badge-status-secondary">{{ item.kategori }}</span></td>
@@ -198,6 +198,7 @@
             </div>
         </div>
     </div>
+    {% include 'finance/includes/pagination.html' %}
 </div>
 
 <!-- Modal Konfirmasi Delete -->

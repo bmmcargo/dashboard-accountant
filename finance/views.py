@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .decorators import owner_required
+from .decorators import owner_required, admin_or_owner_required
 from django.db.models import Sum, Q, F, Value, DecimalField
 from django.db.models.functions import Coalesce
 from django.contrib import messages
@@ -78,12 +78,50 @@ def dashboard(request):
     # Recent Jurnal
     recent_jurnal = Jurnal.objects.all().order_by('-tanggal', '-created_at')[:5]
     
+    # Tren Bulanan (Last 6 Months) untuk Grafik Analytics
+    from datetime import date
+    import calendar
+    import json
+    
+    today = timezone.now().date()
+    months_data = []
+    bulan_names = {
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'Mei', 6: 'Jun',
+        7: 'Jul', 8: 'Ags', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des'
+    }
+    
+    for i in range(5, -1, -1):
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+            
+        start_dt = date(y, m, 1)
+        last_day = calendar.monthrange(y, m)[1]
+        end_dt = date(y, m, last_day)
+        
+        rev = 0
+        for a in Akun.objects.filter(kategori='REVENUE'):
+            rev += get_saldo_akun(a, start_dt, end_dt)
+            
+        exp = 0
+        for a in Akun.objects.filter(kategori='EXPENSE'):
+            exp += get_saldo_akun(a, start_dt, end_dt)
+            
+        months_data.append({
+            'label': f"{bulan_names.get(m, '')} {y}",
+            'pendapatan': float(rev),
+            'beban': float(exp)
+        })
+        
     context = {
         'total_aset': total_aset,
         'total_pendapatan': total_pendapatan,
         'total_beban': total_beban,
         'laba_bersih': laba_bersih,
         'recent_jurnal': recent_jurnal,
+        'trends_json': json.dumps(months_data),
     }
     return render(request, 'finance/dashboard.html', context)
 
@@ -92,6 +130,46 @@ def dashboard(request):
 def jurnal_list(request):
     jurnals = Jurnal.objects.all().order_by('-tanggal', '-created_at')
     
+    # Pencarian
+    q = request.GET.get('q', '').strip()
+    if q:
+        jurnals = jurnals.filter(
+            Q(uraian__icontains=q) |
+            Q(akun_debit__nama__icontains=q) |
+            Q(akun_debit__kode__icontains=q) |
+            Q(akun_kredit__nama__icontains=q) |
+            Q(akun_kredit__kode__icontains=q)
+        )
+        
+    # Filter Bulan & Tahun
+    bulan = request.GET.get('bulan', '').strip()
+    if bulan:
+        jurnals = jurnals.filter(tanggal__month=int(bulan))
+        
+    tahun = request.GET.get('tahun', '').strip()
+    if tahun:
+        jurnals = jurnals.filter(tanggal__year=int(tahun))
+        
+    # Filter Akun
+    akun_id = request.GET.get('akun', '').strip()
+    if akun_id:
+        jurnals = jurnals.filter(Q(akun_debit_id=akun_id) | Q(akun_kredit_id=akun_id))
+        
+    # Sorting
+    sort_by = request.GET.get('sort', 'date-desc')
+    if sort_by == 'date-asc':
+        jurnals = jurnals.order_by('tanggal', 'created_at')
+    elif sort_by == 'nominal-desc':
+        jurnals = jurnals.order_by('-nominal', '-tanggal')
+    elif sort_by == 'nominal-asc':
+        jurnals = jurnals.order_by('nominal', 'tanggal')
+    else:
+        jurnals = jurnals.order_by('-tanggal', '-created_at')
+
+    # All accounts for dropdown filter
+    all_akuns = Akun.objects.all().order_by('kode')
+    
+    # Save/POST handling
     if request.method == 'POST':
         form = JurnalForm(request.POST)
         if form.is_valid():
@@ -101,7 +179,21 @@ def jurnal_list(request):
     else:
         form = JurnalForm()
         
-    return render(request, 'finance/akuntansi/jurnal_list.html', {'jurnals': jurnals, 'form': form})
+    # Pagination
+    page_obj = _paginate(request, jurnals, per_page=20)
+    years = range(timezone.now().year - 5, timezone.now().year + 2)
+        
+    return render(request, 'finance/akuntansi/jurnal_list.html', {
+        'page_obj': page_obj,
+        'form': form,
+        'all_akuns': all_akuns,
+        'q': q,
+        'selected_bulan': bulan,
+        'selected_tahun': tahun,
+        'selected_akun': akun_id,
+        'sort_by': sort_by,
+        'years': years,
+    })
 
 @login_required
 @owner_required
@@ -407,6 +499,7 @@ def akun_delete(request, pk):
 # --- INBOUND & OUTBOUND VIEWS ---
 
 @login_required
+@owner_required
 def inbound_list(request):
     inbound_data = InboundTransaction.objects.all().order_by('-tanggal_masuk_stt')
     
@@ -432,11 +525,14 @@ def inbound_list(request):
     total_kilo = inbound_data.aggregate(Sum('kilo'))['kilo__sum'] or 0
     total_biaya = inbound_data.aggregate(Sum('total_biaya'))['total_biaya__sum'] or 0
     
+    # Pagination
+    page_obj = _paginate(request, inbound_data, per_page=20)
+    
     # Metadata untuk filter UI
     years = range(timezone.now().year - 5, timezone.now().year + 2)
     
     context = {
-        'inbounds': inbound_data,
+        'page_obj': page_obj,
         'total_kilo': total_kilo,
         'total_biaya': total_biaya,
         'q': q,
@@ -447,6 +543,7 @@ def inbound_list(request):
     return render(request, 'finance/inbound/inbound_list.html', context)
 
 @login_required
+@owner_required
 def outbound_list(request):
     outbound_data = OutboundTransaction.objects.all().order_by('-tanggal')
     
@@ -475,10 +572,12 @@ def outbound_list(request):
                          (outbound_data.aggregate(Sum('vendor2_biaya'))['vendor2_biaya__sum'] or 0)
     total_profit = outbound_data.aggregate(Sum('profit'))['profit__sum'] or 0
     
+    # Pagination
+    page_obj = _paginate(request, outbound_data, per_page=20)
     years = range(timezone.now().year - 5, timezone.now().year + 2)
 
     context = {
-        'outbounds': outbound_data,
+        'page_obj': page_obj,
         'total_pendapatan': total_pendapatan,
         'total_biaya_vendor': total_biaya_vendor,
         'total_profit': total_profit,
@@ -570,6 +669,7 @@ def outbound_delete(request, pk):
 from .models import Manifest
 
 @login_required
+@owner_required
 def manifest_list(request):
     # Urutkan berdasarkan tanggal kirim secara Ascending (Kronologis)
     manifest_data = Manifest.objects.all().order_by('tanggal_kirim')
@@ -610,10 +710,12 @@ def manifest_list(request):
     
     # Kategori list untuk filter
     kategori_list = Manifest.KATEGORI_CHOICES
+    # Pagination
+    page_obj = _paginate(request, manifest_data, per_page=20)
     years = range(timezone.now().year - 5, timezone.now().year + 2)
 
     context = {
-        'manifests': manifest_data,
+        'page_obj': page_obj,
         'total_hutang': total_hutang,
         'total_lunas': total_lunas,
         'kategori_list': kategori_list,
@@ -788,9 +890,14 @@ def kas_harian_delete(request, pk):
     return redirect(f'/kas-harian/?bulan={bulan}&tahun={tahun}')
 
 @login_required
-@owner_required
+@admin_or_owner_required
 def invoice_inbound(request, pk):
-    inbound = get_object_or_404(InboundTransaction, pk=pk)
+    source = request.GET.get('source', 'legacy')
+    if source == 'new':
+        ops_inbound = get_object_or_404(OpsInbound, pk=pk)
+        inbound = get_object_or_404(InboundTransaction, no_resi=ops_inbound.nomor_resi)
+    else:
+        inbound = get_object_or_404(InboundTransaction, pk=pk)
     return render(request, 'finance/inbound/invoice_inbound.html', {'inbound': inbound})
 
 @login_required
@@ -1239,7 +1346,7 @@ def tagihan_delete(request, pk):
 
 
 
-from .decorators import owner_required
+from .decorators import owner_required, admin_or_owner_required
 # ============================================================
 # VIEWS OPERASIONAL (UNTUK ADMIN & OWNER)
 from .models import OpsInbound, OpsOutbound, OpsManifest
@@ -1320,6 +1427,7 @@ def ops_inbound_list(request):
     search = request.GET.get('q', '')
     bulan = request.GET.get('bulan')
     tahun = request.GET.get('tahun')
+    status = request.GET.get('status', '').strip()
 
     # Data Baru
     items_new = OpsInbound.objects.all()
@@ -1327,8 +1435,13 @@ def ops_inbound_list(request):
         items_new = items_new.filter(
             Q(nomor_resi__icontains=search) | Q(pengirim__icontains=search) | Q(penerima__icontains=search)
         )
-    if bulan: items_new = items_new.filter(tanggal__month=bulan)
-    if tahun: items_new = items_new.filter(tanggal__year=tahun)
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+    if status:
+        if status == 'LEGACY':
+            items_new = items_new.none()
+        else:
+            items_new = items_new.filter(status=status)
 
     # Data Lama
     items_legacy = InboundTransaction.objects.all()
@@ -1336,8 +1449,13 @@ def ops_inbound_list(request):
         items_legacy = items_legacy.filter(
             Q(no_resi__icontains=search) | Q(vendor__icontains=search) | Q(tujuan__icontains=search)
         )
-    if bulan: items_legacy = items_legacy.filter(tanggal_masuk_stt__month=bulan)
-    if tahun: items_legacy = items_legacy.filter(tanggal_masuk_stt__year=tahun)
+    if bulan: items_legacy = items_legacy.filter(tanggal_masuk_stt__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal_masuk_stt__year=int(tahun))
+    if status:
+        if status == 'LEGACY':
+            pass
+        else:
+            items_legacy = items_legacy.none()
 
     # Normalisasi
     merged = []
@@ -1356,9 +1474,12 @@ def ops_inbound_list(request):
     
     merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
     
+    # Pagination
+    page_obj = _paginate(request, merged, per_page=20)
     years = range(timezone.now().year - 5, timezone.now().year + 2)
+    
     return render(request, 'finance/inbound_list.html', {
-        'items': merged, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
+        'page_obj': page_obj, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'selected_status': status, 'years': years
     })
 
 @login_required
@@ -1409,39 +1530,54 @@ def ops_manifest_list(request):
     search = request.GET.get('q', '')
     bulan = request.GET.get('bulan')
     tahun = request.GET.get('tahun')
+    status = request.GET.get('status', '').strip()
 
     # Data Baru
     items_new = OpsManifest.objects.all()
     if search:
         items_new = items_new.filter(Q(nomor_manifest__icontains=search) | Q(armada__icontains=search))
-    if bulan: items_new = items_new.filter(tanggal__month=bulan)
-    if tahun: items_new = items_new.filter(tanggal__year=tahun)
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+    if status:
+        if status == 'LEGACY':
+            items_new = items_new.none()
+        else:
+            items_new = items_new.filter(status=status)
 
     # Data Lama
     items_legacy = Manifest.objects.all()
     if search:
         items_legacy = items_legacy.filter(Q(no_resi__icontains=search) | Q(pengirim__icontains=search))
-    if bulan: items_legacy = items_legacy.filter(tanggal_kirim__month=bulan)
-    if tahun: items_legacy = items_legacy.filter(tanggal_kirim__year=tahun)
+    if bulan: items_legacy = items_legacy.filter(tanggal_kirim__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal_kirim__year=int(tahun))
+    if status:
+        if status == 'LEGACY':
+            pass
+        else:
+            items_legacy = items_legacy.none()
 
     merged = []
     for item in items_new:
         merged.append({
             'source': 'new', 'pk': item.pk, 'nomor_manifest': item.nomor_manifest, 'tanggal': item.tanggal,
             'armada': item.armada, 'rute': item.rute, 'jumlah': item.jumlah_barang, 'berat': item.total_berat,
-            'status_display': item.get_status_display()
+            'status': item.status, 'status_display': item.get_status_display()
         })
     for item in items_legacy:
         merged.append({
             'source': 'legacy', 'pk': item.pk, 'nomor_manifest': item.no_resi, 'tanggal': item.tanggal_kirim,
             'armada': item.penerima, 'rute': item.tujuan, 'jumlah': item.koli, 'berat': item.kg,
-            'status_display': 'Data Riwayat (Lama)'
+            'status': 'LEGACY', 'status_display': 'Data Riwayat (Lama)'
         })
 
     merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+    
+    # Pagination
+    page_obj = _paginate(request, merged, per_page=20)
     years = range(timezone.now().year - 5, timezone.now().year + 2)
+    
     return render(request, 'finance/manifest_list.html', {
-        'items': merged, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
+        'page_obj': page_obj, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'selected_status': status, 'years': years
     })
 
 @login_required
@@ -1508,15 +1644,15 @@ def ops_outbound_list(request):
     items_new = OpsOutbound.objects.select_related('inbound', 'manifest').all()
     if search:
         items_new = items_new.filter(Q(inbound__nomor_resi__icontains=search) | Q(manifest__nomor_manifest__icontains=search))
-    if bulan: items_new = items_new.filter(tanggal__month=bulan)
-    if tahun: items_new = items_new.filter(tanggal__year=tahun)
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
 
     # Data Lama
     items_legacy = OutboundTransaction.objects.all()
     if search:
         items_legacy = items_legacy.filter(Q(no_resi_bmm__icontains=search) | Q(pengirim__icontains=search))
-    if bulan: items_legacy = items_legacy.filter(tanggal__month=bulan)
-    if tahun: items_legacy = items_legacy.filter(tanggal__year=tahun)
+    if bulan: items_legacy = items_legacy.filter(tanggal__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal__year=int(tahun))
 
     merged = []
     for item in items_new:
@@ -1531,9 +1667,13 @@ def ops_outbound_list(request):
         })
 
     merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+    
+    # Pagination
+    page_obj = _paginate(request, merged, per_page=20)
     years = range(timezone.now().year - 5, timezone.now().year + 2)
+    
     return render(request, 'finance/outbound_list.html', {
-        'items': merged, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
+        'page_obj': page_obj, 'search': search, 'selected_bulan': bulan, 'selected_tahun': tahun, 'years': years
     })
 
 @login_required
