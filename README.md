@@ -62,7 +62,7 @@ Sistem informasi akuntansi berbasis web ini dikembangkan untuk menjawab seluruh 
 ## 3. Tujuan Penelitian
 
 1. Membangun sistem informasi akuntansi berbasis web menggunakan framework Django yang terintegrasi dengan modul operasional logistik
-2. Mengimplementasikan mekanisme *immutable audit trail* menggunakan pendekatan *append-only log* dengan *hash-chain verification* untuk menjamin integritas data keuangan
+2. Mengimplementasikan mekanisme *immutable audit trail* menggunakan pendekatan *append-only log* dan *thread-local user tracking* untuk menjamin integritas data keuangan
 3. Mengimplementasikan RBAC dengan dua level akses (Owner/Finance dan Admin Operasional) menggunakan Django Groups dan custom decorators
 4. Menyediakan fitur export laporan keuangan ke format PDF dan Excel yang dapat diunduh per periode
 
@@ -88,7 +88,7 @@ Audit trail adalah catatan kronologis yang mendokumentasikan setiap perubahan da
 - Mendukung proses audit internal dan eksternal
 - Memenuhi regulasi tata kelola keuangan perusahaan
 
-**Konsep Immutability** dalam audit trail mengacu pada sifat data yang tidak dapat diubah atau dihapus setelah tercatat. Pendekatan yang digunakan dalam sistem ini adalah **append-only log** — log hanya bisa ditambahkan, tidak bisa diedit atau dihapus melalui antarmuka sistem. Konsep ini terinspirasi dari prinsip blockchain di mana setiap entri bersifat permanen dan terverifikasi.
+**Konsep Immutability** dalam audit trail mengacu pada sifat data yang tidak dapat diubah atau dihapus setelah tercatat. Pendekatan yang digunakan dalam sistem ini adalah **append-only log** — log hanya bisa ditambahkan, tidak bisa diedit atau dihapus melalui antarmuka sistem. Konsep ini menjamin bahwa setiap data historis tetap utuh dan akurat demi kepatuhan terhadap prinsip akuntabilitas.
 
 ### 4.3 Role-Based Access Control (RBAC)
 
@@ -218,7 +218,7 @@ graph TD
 
 ### 6.2 Entity Relationship Diagram (ERD)
 
-Sistem menggunakan **15 tabel** utama dalam database relasional:
+Sistem menggunakan **16 tabel** utama dalam database relasional (termasuk model bawaan Django User dan Group):
 
 ```mermaid
 erDiagram
@@ -245,27 +245,27 @@ erDiagram
         int id PK
         date tanggal
         string uraian "Keterangan transaksi"
-        FK akun_debit "Referensi ke Akun"
-        FK akun_kredit "Referensi ke Akun"
+        string akun_debit FK "Referensi ke Akun"
+        string akun_kredit FK "Referensi ke Akun"
         decimal nominal "Jumlah Rupiah"
         datetime created_at
     }
 
     InboundTransaction {
         int id PK
-        string no_resi UK "Nomor resi unik"
+        string no_resi "Nomor resi (unik)"
         date tanggal_masuk_stt
         string vendor
         string tujuan
         int koli
         decimal kilo
         decimal total_biaya
-        FK invoice "Relasi ke InvoiceTagihan"
+        int invoice FK "Relasi ke InvoiceTagihan"
     }
 
     OutboundTransaction {
         int id PK
-        string no_resi_bmm UK
+        string no_resi_bmm "Nomor resi BMM (unik)"
         date tanggal
         string pengirim
         string penerima
@@ -303,7 +303,7 @@ erDiagram
 
     Cashbon {
         int id PK
-        FK karyawan
+        int karyawan FK "Relasi ke Karyawan"
         date tanggal
         decimal nominal
         string keterangan
@@ -311,7 +311,7 @@ erDiagram
 
     Penggajian {
         int id PK
-        FK karyawan
+        int karyawan FK "Relasi ke Karyawan"
         int bulan
         int tahun
         decimal gaji_pokok
@@ -323,7 +323,7 @@ erDiagram
 
     OpsInbound {
         int id PK
-        string nomor_resi UK
+        string nomor_resi "Nomor resi (unik)"
         date tanggal
         string pengirim
         string penerima
@@ -335,7 +335,7 @@ erDiagram
 
     OpsManifest {
         int id PK
-        string nomor_manifest UK
+        string nomor_manifest "Nomor manifest (unik)"
         date tanggal
         string armada
         string rute
@@ -346,26 +346,14 @@ erDiagram
 
     OpsOutbound {
         int id PK
-        FK inbound "OneToOne ke OpsInbound"
-        FK manifest "FK ke OpsManifest"
+        int inbound FK "OneToOne ke OpsInbound"
+        int manifest FK "FK ke OpsManifest"
         date tanggal
-    }
-
-    AuditLog {
-        int id PK
-        FK user "SET_NULL on delete"
-        string model_name
-        string object_id
-        string object_repr
-        string action "CREATE/UPDATE/DELETE"
-        json changes "Detail diff"
-        ip_address ip_address
-        datetime timestamp "auto_now_add, indexed"
     }
 
     InvoiceTagihan {
         int id PK
-        string no_invoice UK
+        string no_invoice "Nomor invoice (unik)"
         string customer
         date tanggal
         decimal total
@@ -377,6 +365,18 @@ erDiagram
         date tanggal
         string keterangan
         decimal nilai
+    }
+
+    AuditLog {
+        int id PK
+        int user FK "SET_NULL on delete"
+        string model_name
+        string object_id
+        string object_repr
+        string action "CREATE/UPDATE/DELETE"
+        json changes "Detail diff"
+        string ip_address
+        datetime timestamp "auto_now_add, indexed"
     }
 ```
 
@@ -1112,11 +1112,11 @@ dashboard-accountant/
 14. openpyxl Documentation. (2024). *openpyxl: A Python library to read/write Excel 2010 xlsx/xlsm files*. https://openpyxl.readthedocs.io/ — Library Excel Python.
 15. PythonAnywhere Documentation. (2024). *PythonAnywhere: Host, run, and code Python in the cloud*. https://help.pythonanywhere.com/ — Platform hosting.
 
-### Referensi Konsep Blockchain & Immutability
+### Referensi Konsep Immutability & Audit Trail Database
 
-16. Nakamoto, S. (2008). *Bitcoin: A Peer-to-Peer Electronic Cash System*. — Konsep awal blockchain dan immutable ledger.
-17. Dai, F., Shi, Y., Meng, N., Wei, L., & Ye, Z. (2017). *From Bitcoin to Cybersecurity: A Comparative Study of Blockchain Application and Security Issues*. IEEE Systems, Man, and Cybernetics. — Analisis penerapan prinsip blockchain di luar cryptocurrency.
-18. Rauchs, M., et al. (2018). *Distributed Ledger Technology Systems: A Conceptual Framework*. Cambridge Centre for Alternative Finance. — Framework konseptual DLT termasuk append-only log.
+16. Schneier, B., & Kelsey, J. (1999). *Secure Audit Logs on Untrusted Machines*. ACM Transactions on Information and System Security (TISSEC), 2(2), 116-147. — Pendekatan teoretis untuk audit log yang aman dan bersifat append-only.
+17. Snodgrass, R. T., Yao, S. S., & Collberg, C. (2004). *Tamper Detection in Relations with Hashed Cryptographic Signatures*. ACM Transactions on Database Systems (TODS), 29(1), 150-207. — Metode pendeteksian manipulasi data pada database relasional menggunakan signature dan hashing.
+18. Bishop, M. (2003). *Computer Security: Art and Science*. Addison-Wesley. — Konsep dasar keamanan informasi termasuk akuntabilitas data melalui sistem audit trail.
 
 ---
 
