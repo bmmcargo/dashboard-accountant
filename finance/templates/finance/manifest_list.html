@@ -49,6 +49,11 @@
         {% endif %}
       </div>
     </form>
+    <div class="mt-2 d-flex justify-content-end">
+      <a href="{% url 'export_ops_manifest' %}{% if selected_bulan or selected_tahun %}?{% if selected_bulan %}bulan={{ selected_bulan }}{% endif %}{% if selected_bulan and selected_tahun %}&{% endif %}{% if selected_tahun %}tahun={{ selected_tahun }}{% endif %}{% endif %}" class="btn btn-success btn-sm">
+        <i class="bi bi-file-earmark-excel me-1"></i> Download Excel
+      </a>
+    </div>
   </div>
 </div>
 

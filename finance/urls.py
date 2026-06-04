@@ -84,6 +84,11 @@ urlpatterns = [
     path('ops/outbound/edit/<int:pk>/', views.ops_outbound_edit, name='ops_outbound_edit'),
     path('ops/outbound/hapus/<int:pk>/', views.ops_outbound_delete, name='ops_outbound_delete'),
 
+    # --- EXPORT DATA OPERASIONAL ---
+    path('ops/export/inbound/', views.export_ops_inbound_excel, name='export_ops_inbound'),
+    path('ops/export/manifest/', views.export_ops_manifest_excel, name='export_ops_manifest'),
+    path('ops/export/outbound/', views.export_ops_outbound_excel, name='export_ops_outbound'),
+
     # Manajemen User
     path('manajemen-user/', views.user_management_list, name='user_management_list'),
     path('manajemen-user/tambah/', views.user_management_create, name='user_management_create'),

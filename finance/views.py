@@ -1578,6 +1578,344 @@ def ops_outbound_delete(request, pk):
 
 
 # ============================================================
+# EXPORT DATA OPERASIONAL KE EXCEL
+# ============================================================
+
+BULAN_NAMES_OPS = {
+    1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April',
+    5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus',
+    9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember'
+}
+
+@login_required
+def export_ops_inbound_excel(request):
+    """Ekspor Data Inbound (Barang Masuk) ke file Excel (.xlsx) — mendukung filter bulan/tahun."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from django.utils import timezone
+    from .models import OpsInbound, InboundTransaction
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsInbound.objects.all()
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+
+    # Data Lama
+    items_legacy = InboundTransaction.objects.all()
+    if bulan: items_legacy = items_legacy.filter(tanggal_masuk_stt__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal_masuk_stt__year=int(tahun))
+
+    # Merge & sort
+    merged = []
+    for item in items_new:
+        merged.append({
+            'nomor_resi': item.nomor_resi, 'tanggal': item.tanggal,
+            'pengirim': item.pengirim, 'penerima': item.penerima, 'asal': item.asal,
+            'tujuan': item.tujuan, 'berat': item.berat, 'status': item.get_status_display(),
+            'source': 'Baru'
+        })
+    for item in items_legacy:
+        merged.append({
+            'nomor_resi': item.no_resi, 'tanggal': item.tanggal_masuk_stt,
+            'pengirim': item.vendor or '-', 'penerima': '-', 'asal': '-',
+            'tujuan': item.tujuan or '-', 'berat': item.kilo, 'status': 'Data Riwayat (Lama)',
+            'source': 'Legacy'
+        })
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+
+    # Build Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Inbound"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="0D6EFD", end_color="0D6EFD", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    # Judul
+    periode_text = ""
+    if bulan:
+        periode_text += f" Bulan {BULAN_NAMES_OPS.get(int(bulan), '')}"
+    if tahun:
+        periode_text += f" {tahun}"
+    if not periode_text:
+        periode_text = " Semua Periode"
+
+    ws.merge_cells('A1:I1')
+    title_cell = ws['A1']
+    title_cell.value = f"DATA BARANG MASUK (INBOUND) —{periode_text}"
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = Alignment(horizontal='center')
+
+    # Header
+    headers = ['No', 'No. Resi', 'Tanggal', 'Pengirim', 'Penerima', 'Asal', 'Tujuan', 'Berat (Kg)', 'Status']
+    for col_idx, h in enumerate(headers, 1):
+        cell = ws.cell(row=3, column=col_idx, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+        cell.border = thin_border
+
+    # Data rows
+    for row_idx, item in enumerate(merged, 1):
+        row = row_idx + 3
+        ws.cell(row=row, column=1, value=row_idx).border = thin_border
+        ws.cell(row=row, column=2, value=item['nomor_resi']).border = thin_border
+        tgl_cell = ws.cell(row=row, column=3, value=item['tanggal'])
+        tgl_cell.border = thin_border
+        tgl_cell.number_format = 'DD/MM/YYYY'
+        ws.cell(row=row, column=4, value=item['pengirim']).border = thin_border
+        ws.cell(row=row, column=5, value=item['penerima']).border = thin_border
+        ws.cell(row=row, column=6, value=item['asal']).border = thin_border
+        ws.cell(row=row, column=7, value=item['tujuan']).border = thin_border
+        berat_cell = ws.cell(row=row, column=8, value=float(item['berat']) if item['berat'] else 0)
+        berat_cell.border = thin_border
+        berat_cell.number_format = '#,##0.00'
+        ws.cell(row=row, column=9, value=item['status']).border = thin_border
+
+    # Auto-width
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = min(max_length + 4, 40)
+
+    # Footer
+    footer_row = len(merged) + 5
+    ws.cell(row=footer_row, column=1, value=f"Total Data: {len(merged)} resi").font = Font(bold=True)
+
+    # Response
+    filename = f"Inbound_{BULAN_NAMES_OPS.get(int(bulan), 'All') if bulan else 'All'}_{tahun or 'All'}.xlsx"
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def export_ops_manifest_excel(request):
+    """Ekspor Data Manifest ke file Excel (.xlsx) — mendukung filter bulan/tahun."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from django.utils import timezone
+    from .models import OpsManifest, Manifest
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsManifest.objects.all()
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+
+    # Data Lama
+    items_legacy = Manifest.objects.all()
+    if bulan: items_legacy = items_legacy.filter(tanggal_kirim__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal_kirim__year=int(tahun))
+
+    merged = []
+    for item in items_new:
+        merged.append({
+            'nomor_manifest': item.nomor_manifest, 'tanggal': item.tanggal,
+            'armada': item.armada, 'rute': item.rute,
+            'jumlah': item.jumlah_barang, 'berat': item.total_berat,
+            'status': item.get_status_display(), 'source': 'Baru'
+        })
+    for item in items_legacy:
+        merged.append({
+            'nomor_manifest': item.no_resi, 'tanggal': item.tanggal_kirim,
+            'armada': item.penerima or '-', 'rute': item.tujuan or '-',
+            'jumlah': item.koli, 'berat': float(item.kg),
+            'status': 'Data Riwayat (Lama)', 'source': 'Legacy'
+        })
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Manifest"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="198754", end_color="198754", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    periode_text = ""
+    if bulan:
+        periode_text += f" Bulan {BULAN_NAMES_OPS.get(int(bulan), '')}"
+    if tahun:
+        periode_text += f" {tahun}"
+    if not periode_text:
+        periode_text = " Semua Periode"
+
+    ws.merge_cells('A1:H1')
+    title_cell = ws['A1']
+    title_cell.value = f"DATA MANIFEST PENGIRIMAN —{periode_text}"
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = Alignment(horizontal='center')
+
+    headers = ['No', 'No. Manifest', 'Tanggal', 'Armada', 'Rute', 'Jml Barang', 'Total Berat (Kg)', 'Status']
+    for col_idx, h in enumerate(headers, 1):
+        cell = ws.cell(row=3, column=col_idx, value=h)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+        cell.border = thin_border
+
+    for row_idx, item in enumerate(merged, 1):
+        row = row_idx + 3
+        ws.cell(row=row, column=1, value=row_idx).border = thin_border
+        ws.cell(row=row, column=2, value=item['nomor_manifest']).border = thin_border
+        tgl_cell = ws.cell(row=row, column=3, value=item['tanggal'])
+        tgl_cell.border = thin_border
+        tgl_cell.number_format = 'DD/MM/YYYY'
+        ws.cell(row=row, column=4, value=item['armada']).border = thin_border
+        ws.cell(row=row, column=5, value=item['rute']).border = thin_border
+        ws.cell(row=row, column=6, value=item['jumlah']).border = thin_border
+        berat_cell = ws.cell(row=row, column=7, value=float(item['berat']) if item['berat'] else 0)
+        berat_cell.border = thin_border
+        berat_cell.number_format = '#,##0.00'
+        ws.cell(row=row, column=8, value=item['status']).border = thin_border
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = min(max_length + 4, 40)
+
+    footer_row = len(merged) + 5
+    ws.cell(row=footer_row, column=1, value=f"Total Data: {len(merged)} manifest").font = Font(bold=True)
+
+    filename = f"Manifest_{BULAN_NAMES_OPS.get(int(bulan), 'All') if bulan else 'All'}_{tahun or 'All'}.xlsx"
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def export_ops_outbound_excel(request):
+    """Ekspor Data Outbound (Barang Keluar) ke file Excel (.xlsx) — mendukung filter bulan/tahun."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from django.utils import timezone
+    from .models import OpsOutbound, OutboundTransaction
+
+    bulan = request.GET.get('bulan')
+    tahun = request.GET.get('tahun')
+
+    # Data Baru
+    items_new = OpsOutbound.objects.select_related('inbound', 'manifest').all()
+    if bulan: items_new = items_new.filter(tanggal__month=int(bulan))
+    if tahun: items_new = items_new.filter(tanggal__year=int(tahun))
+
+    # Data Lama
+    items_legacy = OutboundTransaction.objects.all()
+    if bulan: items_legacy = items_legacy.filter(tanggal__month=int(bulan))
+    if tahun: items_legacy = items_legacy.filter(tanggal__year=int(tahun))
+
+    merged = []
+    for item in items_new:
+        merged.append({
+            'nomor_resi': item.inbound.nomor_resi, 'tanggal': item.tanggal,
+            'pengirim': item.inbound.pengirim, 'penerima': item.inbound.penerima,
+            'nomor_manifest': item.manifest.nomor_manifest, 'rute': item.manifest.rute,
+            'berat': float(item.inbound.berat), 'catatan': item.catatan, 'source': 'Baru'
+        })
+    for item in items_legacy:
+        merged.append({
+            'nomor_resi': item.no_resi_bmm, 'tanggal': item.tanggal,
+            'pengirim': item.pengirim or '-', 'penerima': item.penerima or '-',
+            'nomor_manifest': '-', 'rute': '-',
+            'berat': item.kg or '-', 'catatan': item.keterangan or '-', 'source': 'Legacy'
+        })
+    merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Outbound"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="FFC107", end_color="FFC107", fill_type="solid")
+    header_font_dark = Font(bold=True, color="000000", size=11)
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    periode_text = ""
+    if bulan:
+        periode_text += f" Bulan {BULAN_NAMES_OPS.get(int(bulan), '')}"
+    if tahun:
+        periode_text += f" {tahun}"
+    if not periode_text:
+        periode_text = " Semua Periode"
+
+    ws.merge_cells('A1:I1')
+    title_cell = ws['A1']
+    title_cell.value = f"DATA BARANG KELUAR (OUTBOUND) —{periode_text}"
+    title_cell.font = Font(bold=True, size=14)
+    title_cell.alignment = Alignment(horizontal='center')
+
+    headers = ['No', 'No. Resi Inbound', 'Tanggal Keluar', 'Pengirim', 'Penerima', 'No. Manifest', 'Rute', 'Berat (Kg)', 'Catatan']
+    for col_idx, h in enumerate(headers, 1):
+        cell = ws.cell(row=3, column=col_idx, value=h)
+        cell.font = header_font_dark
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+        cell.border = thin_border
+
+    for row_idx, item in enumerate(merged, 1):
+        row = row_idx + 3
+        ws.cell(row=row, column=1, value=row_idx).border = thin_border
+        ws.cell(row=row, column=2, value=item['nomor_resi']).border = thin_border
+        tgl_cell = ws.cell(row=row, column=3, value=item['tanggal'])
+        tgl_cell.border = thin_border
+        tgl_cell.number_format = 'DD/MM/YYYY'
+        ws.cell(row=row, column=4, value=item['pengirim']).border = thin_border
+        ws.cell(row=row, column=5, value=item['penerima']).border = thin_border
+        ws.cell(row=row, column=6, value=item['nomor_manifest']).border = thin_border
+        ws.cell(row=row, column=7, value=item['rute']).border = thin_border
+        try:
+            berat_val = float(item['berat'])
+        except (ValueError, TypeError):
+            berat_val = item['berat']
+        berat_cell = ws.cell(row=row, column=8, value=berat_val)
+        berat_cell.border = thin_border
+        if isinstance(berat_val, float):
+            berat_cell.number_format = '#,##0.00'
+        ws.cell(row=row, column=9, value=item['catatan'] or '-').border = thin_border
+
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            if cell.value:
+                max_length = max(max_length, len(str(cell.value)))
+        ws.column_dimensions[col_letter].width = min(max_length + 4, 40)
+
+    footer_row = len(merged) + 5
+    ws.cell(row=footer_row, column=1, value=f"Total Data: {len(merged)} barang keluar").font = Font(bold=True)
+
+    filename = f"Outbound_{BULAN_NAMES_OPS.get(int(bulan), 'All') if bulan else 'All'}_{tahun or 'All'}.xlsx"
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    wb.save(response)
+    return response
+
+
+# ============================================================
 # MANAJEMEN USER (Custom UI for Owner)
 # ============================================================
 from django.contrib.auth.models import User, Group
