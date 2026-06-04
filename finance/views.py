@@ -9,6 +9,7 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from decimal import Decimal
 from io import BytesIO
+from openpyxl.utils import get_column_letter
 
 from .models import Akun, Jurnal, InboundTransaction, OutboundTransaction, Manifest, KasHarian, InvoiceTagihan
 from .forms import JurnalForm
@@ -1822,7 +1823,7 @@ def export_ops_inbound_excel(request):
     # Auto-width
     for col in ws.columns:
         max_length = 0
-        col_letter = col[0].column_letter
+        col_letter = get_column_letter(col[0].column)
         for cell in col:
             if cell.value:
                 max_length = max(max_length, len(str(cell.value)))
@@ -1928,7 +1929,7 @@ def export_ops_manifest_excel(request):
 
     for col in ws.columns:
         max_length = 0
-        col_letter = col[0].column_letter
+        col_letter = get_column_letter(col[0].column)
         for cell in col:
             if cell.value:
                 max_length = max(max_length, len(str(cell.value)))
@@ -2039,7 +2040,7 @@ def export_ops_outbound_excel(request):
 
     for col in ws.columns:
         max_length = 0
-        col_letter = col[0].column_letter
+        col_letter = get_column_letter(col[0].column)
         for cell in col:
             if cell.value:
                 max_length = max(max_length, len(str(cell.value)))

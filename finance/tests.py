@@ -116,3 +116,24 @@ class ExportPDFTestCase(TestCase):
         self.assertEqual(response_filtered.status_code, 200)
         self.assertEqual(response_filtered['Content-Type'], 'application/pdf')
 
+    def test_export_inbound_excel_authenticated(self):
+        self.client.force_login(self.user)
+        url = reverse('export_ops_inbound')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    def test_export_manifest_excel_authenticated(self):
+        self.client.force_login(self.user)
+        url = reverse('export_ops_manifest')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    def test_export_outbound_excel_authenticated(self):
+        self.client.force_login(self.user)
+        url = reverse('export_ops_outbound')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
