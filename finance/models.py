@@ -893,6 +893,7 @@ class AuditLog(models.Model):
         verbose_name = "Audit Log"
         verbose_name_plural = "Audit Logs"
         indexes = [
+            models.Index(fields=['block_index']),
             models.Index(fields=['-timestamp']),
             models.Index(fields=['model_name', '-timestamp']),
             models.Index(fields=['user', '-timestamp']),

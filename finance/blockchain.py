@@ -1,31 +1,41 @@
 import hashlib
+import hmac
 import json
-from django.utils.timezone import localtime
+from django.conf import settings
 
 def generate_hash(data_string):
-    """Generate SHA-256 hash dari string."""
+    """Generate SHA-256 hash dari string (dipakai untuk certificate backup)."""
     return hashlib.sha256(data_string.encode('utf-8')).hexdigest()
 
 def calculate_block_hash(audit_log):
     """
-    Hitung hash block berdasarkan data-data di dalam audit_log:
-    block_index, previous_hash, timestamp, user_id, action, model_name, object_id, changes
+    Hitung HMAC-SHA256 block hash menggunakan Django SECRET_KEY sebagai kunci.
+    HMAC memastikan hash hanya bisa diverifikasi oleh server yang tahu SECRET_KEY,
+    sehingga attacker dengan akses DB tidak bisa merekalkukasi ulang chain.
     """
-    # Pastikan data changes deterministik (terurut)
     changes_str = json.dumps(audit_log.changes, sort_keys=True)
-    
-    # Format timestamp yang konsisten
     time_str = audit_log.timestamp.isoformat() if audit_log.timestamp else ""
     user_id = str(audit_log.user_id) if audit_log.user_id else "None"
-    
-    raw_data = f"{audit_log.block_index}|{audit_log.previous_hash}|{time_str}|{user_id}|{audit_log.action}|{audit_log.model_name}|{audit_log.object_id}|{changes_str}"
-    
-    return generate_hash(raw_data)
+
+    raw_data = (
+        f"{audit_log.block_index}|{audit_log.previous_hash}|{time_str}|"
+        f"{user_id}|{audit_log.action}|{audit_log.model_name}|"
+        f"{audit_log.object_id}|{changes_str}"
+    )
+
+    return hmac.new(
+        settings.SECRET_KEY.encode('utf-8'),
+        raw_data.encode('utf-8'),
+        hashlib.sha256
+    ).hexdigest()
 
 def verify_blockchain_integrity():
     """
     Memeriksa seluruh rantai blok dalam tabel AuditLog dari awal sampai akhir.
     Mengembalikan dict status integritas.
+
+    Kompleksitas O(N) — untuk deployment produksi dengan > 50.000 blok,
+    pertimbangkan implementasi periodic checkpointing.
     """
     from .models import AuditLog
     

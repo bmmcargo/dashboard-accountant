@@ -90,8 +90,10 @@ Audit trail adalah catatan kronologis yang mendokumentasikan setiap perubahan da
 
 ### 4.3 Blockchain sebagai Immutable Ledger
 
-Blockchain pada dasarnya adalah struktur data *append-only* berupa daftar blok (catatan) yang terus bertambah, yang dihubungkan dan diamankan menggunakan kriptografi (Nakamoto, 2008). Konsep Immutability dalam sistem ini diimplementasikan menggunakan pendekatan **Cryptographic Hash Chain**. 
-Setiap log aktivitas (blok) memuat *hash* kriptografi dari blok sebelumnya menggunakan algoritma SHA-256. Hal ini menjamin bahwa jika ada satu data di masa lalu yang dimanipulasi (langsung pada tingkat *database*), maka seluruh blok yang bergantung padanya akan menjadi tidak valid (*tamper-evident*).
+Blockchain pada dasarnya adalah struktur data *append-only* berupa daftar blok (catatan) yang terus bertambah, yang dihubungkan dan diamankan menggunakan kriptografi (Nakamoto, 2008). Konsep Immutability dalam sistem ini diimplementasikan menggunakan pendekatan **Keyed Cryptographic Hash Chain**.
+Setiap log aktivitas (blok) memuat *hash* kriptografi dari blok sebelumnya. Berbeda dengan hash publik biasa, sistem ini menggunakan **HMAC-SHA256** dengan `SECRET_KEY` server sebagai kunci rahasia. Penggunaan HMAC memastikan bahwa hanya server yang memegang `SECRET_KEY` yang dapat menghasilkan dan memverifikasi hash yang sah — sehingga pihak yang memiliki akses langsung ke *database* sekalipun tidak dapat merekalkulasi ulang rantai hash yang valid tanpa mengetahui kunci tersebut. Hal ini menjamin bahwa jika ada satu data di masa lalu yang dimanipulasi (langsung pada tingkat *database*), maka seluruh blok yang bergantung padanya akan menjadi tidak valid (*tamper-evident*).
+
+> **Catatan keterbatasan (penting):** Sistem ini bersifat **tamper-evident**, bukan **tamper-proof**. Keamanan rantai bergantung pada asumsi *trusted server environment* — yakni kerahasiaan `SECRET_KEY` dan proteksi akses ke server tetap terjaga. Berbeda dengan blockchain terdistribusi (mis. Bitcoin) yang menggunakan konsensus *proof-of-work* lintas node, sistem *single-node* ini tidak mencegah manipulasi secara mutlak, melainkan menjamin **setiap manipulasi pasti terdeteksi** saat verifikasi integritas dilakukan oleh pihak berwenang.
 
 ### 4.4 Role-Based Access Control (RBAC)
 
@@ -372,8 +374,8 @@ erDiagram
 
     AuditLog {
         int id PK
-        int block_index "Nomor urut blok"
-        string block_hash "Hash SHA-256 blok"
+        int block_index "Nomor urut blok (indexed)"
+        string block_hash "Hash HMAC-SHA256 blok"
         string previous_hash "Hash blok sebelumnya"
         int user FK "SET_NULL on delete"
         string model_name
@@ -410,7 +412,7 @@ graph TB
     subgraph "Data Layer & Blockchain"
         SQLite["SQLite 3 Database"]
         Static["Static Files (WhiteNoise)"]
-        HashChain["SHA-256 Hash Chain Logic"]
+        HashChain["HMAC-SHA256 Hash Chain Logic"]
     end
 
     subgraph "Export Engine"
@@ -458,7 +460,7 @@ sequenceDiagram
     Signal->>Jurnal: Auto-create Jurnal DP (jika ada)
     Note over Jurnal: Debit: Biaya Pengiriman<br/>Kredit: Kas
     Model->>Signal: post_save (Audit)
-    Signal->>AuditLog: Generate prev_hash & SHA-256 block_hash
+    Signal->>AuditLog: Generate prev_hash & HMAC-SHA256 block_hash
     Signal->>AuditLog: Catat aksi CREATE (Blockchain Block)
     Note over AuditLog: user, action, timestamp,<br/>block_hash, previous_hash
 ```
@@ -564,7 +566,7 @@ def create_or_update_jurnal_manifest(sender, instance, created, **kwargs):
 
 ### 7.3 Implementasi Immutable Audit Trail (Blockchain Hash Chain)
 
-Audit trail adalah komponen krusial untuk akuntabilitas data keuangan. Sistem ini mengimplementasikan **Cryptographic Hash Chain** sebagai bentuk sederhana dari teknologi *Blockchain*, mencatat setiap perubahan data secara otomatis menjadi sebuah blok yang terhubung.
+Audit trail adalah komponen krusial untuk akuntabilitas data keuangan. Sistem ini mengimplementasikan **Keyed Cryptographic Hash Chain** (menggunakan **HMAC-SHA256**) sebagai bentuk sederhana dari teknologi *Blockchain*, mencatat setiap perubahan data secara otomatis menjadi sebuah blok yang terhubung dan ditandatangani secara kriptografis dengan `SECRET_KEY` server.
 
 #### Arsitektur Audit Trail Blockchain
 
@@ -580,7 +582,7 @@ graph TB
         PRE["pre_save Signal"]
         POST["post_save Signal"]
         DEL["post_delete Signal"]
-        HASH["SHA-256 Hashing Engine"]
+        HASH["HMAC-SHA256 Hashing Engine"]
     end
 
     subgraph "Audit Log Ledger"
@@ -648,8 +650,8 @@ def audit_post_save(sender, instance, created, **kwargs):
 
 ```python
 class AuditLog(models.Model):
-    block_index   = models.IntegerField(default=1)           # Nomor urut blok
-    block_hash    = models.CharField(max_length=64)          # Hash SHA-256
+    block_index   = models.IntegerField(default=1)           # Nomor urut blok (indexed)
+    block_hash    = models.CharField(max_length=64)          # Hash HMAC-SHA256
     previous_hash = models.CharField(max_length=64)          # Hash blok sebelumnya
     user          = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
     model_name    = models.CharField(max_length=100)       
@@ -667,12 +669,14 @@ class AuditLog(models.Model):
 
 #### Sifat Immutability (Tamper-Evident)
 
-Audit log bersifat **immutable** (tidak dapat dimanipulasi) karena:
+Audit log bersifat **tamper-evident** (setiap manipulasi pasti terdeteksi) karena:
 
-1. **Cryptographic Hash Chain** — Setiap log (*block*) dikunci dengan `block_hash` yang dihitung menggunakan SHA-256 dari seluruh atribut data dan `previous_hash`. Jika satu data historis diubah paksa melalui *database query*, seluruh rantai hash setelahnya akan rusak. Sistem memiliki fungsi verifikasi untuk mendeteksi *tampering*.
+1. **Keyed Hash Chain (HMAC-SHA256)** — Setiap log (*block*) dikunci dengan `block_hash` yang dihitung menggunakan HMAC-SHA256 (kunci = `SECRET_KEY` server) dari seluruh atribut data dan `previous_hash`. Karena hash memerlukan kunci rahasia, pihak yang memiliki akses *database* tetap tidak dapat memalsukan rantai hash yang valid. Jika satu data historis diubah paksa melalui *database query*, seluruh rantai hash setelahnya akan rusak. Sistem memiliki fungsi `verify_blockchain_integrity()` untuk mendeteksi *tampering*.
 2. **Append-only** — Entri baru hanya ditambahkan, tidak pernah di-update atau di-delete melalui antarmuka sistem.
 3. **`auto_now_add=True`** — Timestamp di-generate secara otomatis oleh *database*.
-4. **Sertifikat Hash Bulanan** — Export log bulanan dilengkapi dengan SHA-256 *hash certificate*.
+4. **Sertifikat Hash Backup** — Export ledger dilengkapi dengan SHA-256 *hash certificate* untuk membuktikan keaslian berkas backup pada saat diunduh.
+
+> **Asumsi keamanan:** Properti tamper-evident ini berlaku dalam *trusted server environment*. Keamanan bergantung pada kerahasiaan `SECRET_KEY` dan proteksi akses server, bukan pada konsensus terdistribusi sebagaimana blockchain publik.
 
 #### Model yang Diaudit (15 Model)
 
@@ -961,7 +965,7 @@ Berdasarkan hasil pengembangan dan pengujian, dapat disimpulkan:
 
 1. **Sistem informasi akuntansi berbasis web** telah berhasil dibangun menggunakan Django 6.0 dan Bootstrap 5, mengintegrasikan modul operasional logistik (Inbound, Outbound, Manifest) dengan modul keuangan (Jurnal, Laporan, Penggajian) dalam satu platform terintegrasi.
 
-2. **Immutable audit trail menggunakan teknologi Blockchain (Hash Chain)** telah diimplementasikan dengan mencatat setiap log aktivitas sebagai blok yang saling terhubung melalui kriptografi SHA-256. Hal ini meminimalisir manipulasi data secara langsung di basis data (*tamper-evident*). Data log historis yang ada sebelum implementasi diakumulasi ke dalam genesis block.
+2. **Immutable audit trail menggunakan teknologi Blockchain (Hash Chain)** telah diimplementasikan dengan mencatat setiap log aktivitas sebagai blok yang saling terhubung melalui kriptografi **HMAC-SHA256** berbasis `SECRET_KEY` server. Pendekatan *keyed hashing* ini memastikan sistem bersifat **tamper-evident** — setiap manipulasi data langsung di basis data pasti terdeteksi saat verifikasi integritas, bahkan oleh pihak yang memiliki akses *database* (selama `SECRET_KEY` terjaga). Data log historis yang ada sebelum implementasi diakumulasi ke dalam genesis block.
 
 3. **Role-Based Access Control** telah diimplementasikan dengan dua role (Owner dan Admin Operasional) menggunakan Django Groups dan custom decorators, memastikan pemisahan tugas (*Separation of Duties*) antara staf operasional dan staf keuangan.
 

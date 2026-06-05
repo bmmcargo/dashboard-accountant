@@ -7,8 +7,10 @@ from datetime import date
 from finance.models import (
     OpsInbound, InboundTransaction,
     OpsManifest, Manifest,
-    OpsOutbound, OutboundTransaction
+    OpsOutbound, OutboundTransaction,
+    AuditLog,
 )
+from finance.blockchain import calculate_block_hash, verify_blockchain_integrity
 
 class ExportPDFTestCase(TestCase):
     def setUp(self):
@@ -136,4 +138,47 @@ class ExportPDFTestCase(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+class BlockchainIntegrityTest(TestCase):
+    """
+    Test suite untuk memverifikasi logika kriptografi blockchain audit trail.
+    Memastikan hash deterministik dan deteksi tamper bekerja dengan benar.
+    """
+
+    def _make_log(self, index=1, prev_hash=None):
+        """Helper: buat AuditLog blockchain entry secara manual (tanpa signal)."""
+        if prev_hash is None:
+            prev_hash = "0" * 64
+        log = AuditLog.objects.create(
+            block_index=index,
+            previous_hash=prev_hash,
+            model_name="TestModel",
+            object_id="1",
+            object_repr="TestModel #1",
+            action="CREATE",
+            changes={"field": "value"},
+        )
+        log.block_hash = calculate_block_hash(log)
+        log.save(update_fields=['block_hash'])
+        return log
+
+    def test_hash_is_deterministic(self):
+        """Memanggil calculate_block_hash dua kali pada objek yang sama harus menghasilkan hash identik."""
+        log = self._make_log()
+        hash1 = calculate_block_hash(log)
+        hash2 = calculate_block_hash(log)
+        self.assertEqual(hash1, hash2)
+        self.assertEqual(len(hash1), 64)
+
+    def test_verify_detects_tampering(self):
+        """verify_blockchain_integrity() harus mendeteksi data yang diubah langsung ke DB."""
+        log = self._make_log(index=1)
+
+        # Tamper langsung lewat UPDATE (bypass signal & hash recalculation)
+        AuditLog.objects.filter(pk=log.pk).update(action='DELETE')
+
+        result = verify_blockchain_integrity()
+        self.assertFalse(result['is_valid'])
+        self.assertEqual(result['broken_block'], log.id)
 
