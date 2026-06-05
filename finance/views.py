@@ -2579,3 +2579,58 @@ def export_laporan_pdf(request):
     response.write(pdf)
     return response
 
+
+# ============================================================
+# BLOCKCHAIN EXPLORER & VERIFICATION
+# ============================================================
+from .blockchain import verify_blockchain_integrity
+from django.http import JsonResponse
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+import zipfile
+import io
+
+@login_required
+@owner_required
+def blockchain_explorer(request):
+    """Menampilkan halaman Blockchain Explorer (Khusus Owner)."""
+    logs = AuditLog.objects.all().order_by('-block_index')
+    page_obj = _paginate(request, logs, per_page=15)
+    
+    context = {
+        'logs': page_obj,
+        'page_obj': page_obj,
+    }
+    return render(request, 'finance/blockchain_explorer.html', context)
+
+@login_required
+@owner_required
+def verify_blockchain(request):
+    """API endpoint untuk memverifikasi chain."""
+    result = verify_blockchain_integrity()
+    return JsonResponse(result)
+
+@login_required
+@owner_required
+def backup_blockchain(request):
+    """Export seluruh blockchain ke JSON dengan Hash Certificate."""
+    from .blockchain import generate_hash
+    
+    logs = AuditLog.objects.all().order_by('block_index').values(
+        'block_index', 'block_hash', 'previous_hash', 'action', 'model_name',
+        'object_id', 'object_repr', 'changes', 'timestamp'
+    )
+    
+    logs_data = list(logs)
+    json_str = json.dumps(logs_data, cls=DjangoJSONEncoder, indent=2)
+    cert_hash = generate_hash(json_str)
+    
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        zip_file.writestr("blockchain_backup.json", json_str)
+        zip_file.writestr("hash_certificate.txt", f"Blockchain Backup Certificate\n---------------------------\nSHA-256: {cert_hash}\n\nSertifikat ini membuktikan keaslian backup data audit trail CV Borneo Mega Mandiri.")
+        
+    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="blockchain_backup_{timezone.now().strftime("%Y%m%d_%H%M%S")}.zip"'
+    return response
+

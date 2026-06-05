@@ -97,8 +97,11 @@ urlpatterns = [
     path('manajemen-user/tambah/', views.user_management_create, name='user_management_create'),
     path('manajemen-user/hapus/<int:pk>/', views.user_management_delete, name='user_management_delete'),
 
-    # --- AUDIT LOG (Khusus Owner) ---
+    # --- AUDIT LOG & BLOCKCHAIN (Khusus Owner) ---
     path('audit-log/', views.audit_log_list, name='audit_log'),
+    path('audit-log/blockchain/', views.blockchain_explorer, name='blockchain_explorer'),
+    path('audit-log/verify/', views.verify_blockchain, name='verify_blockchain'),
+    path('audit-log/backup/', views.backup_blockchain, name='backup_blockchain'),
 
     # --- EKSPOR LAPORAN (Khusus Owner) ---
     path('laporan/export/excel/', views.export_laporan_excel, name='export_excel'),

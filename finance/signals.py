@@ -52,21 +52,48 @@ def _get_all_fields(instance):
 
 
 def _create_log(action, instance, changes=None):
-    """Helper untuk membuat entry AuditLog."""
+    """Helper untuk membuat entry AuditLog dengan Blockchain Hash Chain."""
     user = get_current_user()
     # Skip jika user belum login (misal saat migrate/loaddata)
     if user is None or not hasattr(user, 'pk') or user.is_anonymous:
         user = None
 
-    AuditLog.objects.create(
-        user=user,
-        model_name=instance.__class__.__name__,
-        object_id=str(instance.pk),
-        object_repr=str(instance)[:255],
-        action=action,
-        changes=changes or {},
-        ip_address=get_current_ip(),
-    )
+    from django.db import transaction
+    from .blockchain import calculate_block_hash
+    
+    with transaction.atomic():
+        # Lock tabel AuditLog untuk mencegah race condition (agar index & hash tidak tabrakan)
+        # select_for_update() hanya berjalan kalau ada objek. Kalau kosong tidak bisa.
+        last_block = AuditLog.objects.select_for_update().order_by('-block_index', '-id').first()
+        
+        if last_block:
+            new_index = last_block.block_index + 1
+            # pastikan last_block punya block_hash, jika belum ada kasih default
+            prev_hash = last_block.block_hash if last_block.block_hash else "0" * 64
+        else:
+            new_index = 1
+            prev_hash = "0" * 64
+
+        log = AuditLog(
+            block_index=new_index,
+            previous_hash=prev_hash,
+            user=user,
+            model_name=instance.__class__.__name__,
+            object_id=str(instance.pk),
+            object_repr=str(instance)[:255],
+            action=action,
+            changes=changes or {},
+            ip_address=get_current_ip(),
+        )
+        
+        # Simpan log ke DB untuk men-generate `timestamp` (auto_now_add) dan `id`
+        log.save()
+        
+        # Setelah ada timestamp, hitung hash
+        log.block_hash = calculate_block_hash(log)
+        
+        # Update ulang hash
+        log.save(update_fields=['block_hash'])
 
 
 # ============================================================

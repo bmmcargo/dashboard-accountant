@@ -504,7 +504,8 @@
         <a class="nav-link {% if 'manajemen-user' in request.path %}active{% endif %}" href="{% url 'user_management_list' %}"> <i class="bi bi-person-gear"></i> Manajemen User </a>
 
         <div class="nav-section-title">Monitoring</div>
-        <a class="nav-link {% if 'audit-log' in request.path %}active{% endif %}" href="{% url 'audit_log' %}"> <i class="bi bi-clock-history"></i> Riwayat Aktivitas </a>
+        <a class="nav-link {% if request.path == '/audit-log/' %}active{% endif %}" href="{% url 'audit_log' %}"> <i class="bi bi-clock-history"></i> Riwayat Aktivitas </a>
+        <a class="nav-link {% if 'blockchain' in request.path %}active{% endif %}" href="{% url 'blockchain_explorer' %}"> <i class="bi bi-link-45deg"></i> Blockchain Explorer </a>
         
         {% endif %}
       </nav>

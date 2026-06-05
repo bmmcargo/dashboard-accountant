@@ -1,0 +1,166 @@
+{% extends "finance/base.html" %}
+
+{% block title %}Blockchain Explorer - BMM Cargo{% end block %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-link-45deg me-2 text-primary"></i>Blockchain Explorer</h2>
+    <div>
+        <button id="btnVerify" class="btn btn-outline-success">
+            <i class="bi bi-check-circle me-1"></i> Verifikasi Integritas Chain
+        </button>
+        <a href="{% url 'backup_blockchain' %}" class="btn btn-primary">
+            <i class="bi bi-cloud-download me-1"></i> Export & Backup (JSON)
+        </a>
+    </div>
+</div>
+
+<div id="verifyAlert" class="alert d-none" role="alert">
+    <!-- Diisi via AJAX -->
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Daftar Block (Log Audit)</h5>
+                <small class="text-muted">Menampilkan dari yang terbaru. Chain dibangun dari bawah ke atas.</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Block #</th>
+                                <th>Timestamp</th>
+                                <th>Aksi & Model</th>
+                                <th>User</th>
+                                <th>Hash Block Saat Ini</th>
+                                <th>Hash Block Sebelumnya</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td><span class="badge bg-secondary">Block {{ log.block_index }}</span></td>
+                                <td>{{ log.timestamp|date:"d M Y, H:i" }}</td>
+                                <td>
+                                    <span class="badge {% if log.action == 'CREATE' %}bg-success{% elif log.action == 'UPDATE' %}bg-warning text-dark{% else %}bg-danger{% endif %} me-1">
+                                        {{ log.action }}
+                                    </span>
+                                    <br>
+                                    <small>{{ log.model_name }}</small>
+                                </td>
+                                <td>{{ log.user.username|default:"System" }}</td>
+                                <td>
+                                    <code class="text-primary" title="{{ log.block_hash }}">
+                                        {{ log.block_hash|truncatechars:16 }}
+                                    </code>
+                                </td>
+                                <td>
+                                    <code class="text-muted" title="{{ log.previous_hash }}">
+                                        {{ log.previous_hash|truncatechars:16 }}
+                                    </code>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalDetail{{ log.id }}">
+                                        Detail
+                                    </button>
+                                </td>
+                            </tr>
+
+                            <!-- Modal Detail -->
+                            <div class="modal fade" id="modalDetail{{ log.id }}" tabindex="-1">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Detail Block #{{ log.block_index }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    <strong>Model:</strong> {{ log.model_name }}<br>
+                                                    <strong>ID Objek:</strong> {{ log.object_id }}<br>
+                                                    <strong>Representasi:</strong> {{ log.object_repr }}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <strong>Aksi:</strong> {{ log.action }}<br>
+                                                    <strong>User:</strong> {{ log.user.username|default:"System" }}<br>
+                                                    <strong>IP:</strong> {{ log.ip_address|default:"-" }}
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Block Hash (SHA-256):</strong><br>
+                                                <code class="d-block bg-light p-2">{{ log.block_hash }}</code>
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Previous Hash (SHA-256):</strong><br>
+                                                <code class="d-block bg-light p-2">{{ log.previous_hash }}</code>
+                                            </div>
+                                            <div class="mb-3">
+                                                <strong>Payload Data (JSON):</strong>
+                                                <pre class="bg-dark text-light p-3 rounded mt-2" style="max-height: 250px; overflow-y: auto;">{{ log.changes|pprint }}</pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">Belum ada blok yang tercatat.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            {% if page_obj.has_other_pages %}
+            <div class="card-footer bg-white border-top-0">
+                {% include "finance/includes/pagination.html" %}
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.getElementById('btnVerify').addEventListener('click', function() {
+    const btn = this;
+    const alertBox = document.getElementById('verifyAlert');
+    
+    // Set loading state
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Memverifikasi...';
+    btn.disabled = true;
+    
+    fetch('{% url "verify_blockchain" %}')
+        .then(response => response.json())
+        .then(data => {
+            alertBox.classList.remove('d-none', 'alert-success', 'alert-danger');
+            
+            if (data.is_valid) {
+                alertBox.classList.add('alert-success');
+                alertBox.innerHTML = `<strong><i class="bi bi-shield-check me-2"></i>Valid!</strong> ${data.message} (${data.total_blocks} blok tervalidasi).`;
+            } else {
+                alertBox.classList.add('alert-danger');
+                alertBox.innerHTML = `<strong><i class="bi bi-shield-x me-2"></i>Manipulasi Terdeteksi!</strong> ${data.message}`;
+            }
+        })
+        .catch(error => {
+            alertBox.classList.remove('d-none', 'alert-success');
+            alertBox.classList.add('alert-danger');
+            alertBox.innerHTML = `<strong><i class="bi bi-exclamation-triangle me-2"></i>Error Sistem:</strong> Gagal menghubungi server verifikasi.`;
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+});
+</script>
+{% endblock %}
+{% endblock %}

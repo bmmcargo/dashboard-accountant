@@ -874,6 +874,12 @@ class AuditLog(models.Model):
         'auth.User', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='audit_logs', verbose_name="User"
     )
+    # --- Blockchain Fields ---
+    block_index = models.IntegerField(default=1, verbose_name="Nomor Block")
+    block_hash = models.CharField(max_length=64, blank=True, null=True, verbose_name="Hash Block")
+    previous_hash = models.CharField(max_length=64, default="0"*64, verbose_name="Hash Sebelumnya")
+    # -------------------------
+    
     model_name = models.CharField(max_length=100, verbose_name="Nama Model")
     object_id = models.CharField(max_length=50, verbose_name="ID Objek")
     object_repr = models.CharField(max_length=255, verbose_name="Representasi Objek")

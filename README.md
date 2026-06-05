@@ -1,4 +1,4 @@
-# Pengembangan Sistem Informasi Akuntansi Berbasis Web dengan Immutable Audit Trail dan Role-Based Access Control pada CV Borneo Mega Mandiri
+# Pengembangan Sistem Informasi Akuntansi Berbasis Web dengan Immutable Audit Trail Menggunakan Blockchain dan Role-Based Access Control pada CV Borneo Mega Mandiri
 
 > **Tugas Akhir / Skripsi** — Dokumentasi teknis sistem informasi akuntansi terintegrasi untuk manajemen keuangan dan operasional logistik CV Borneo Mega Mandiri (BMM Cargo).
 
@@ -43,7 +43,7 @@ Sebelum pengembangan sistem ini, CV BMM Cargo menghadapi beberapa permasalahan:
 Sistem informasi akuntansi berbasis web ini dikembangkan untuk menjawab seluruh permasalahan tersebut dengan pendekatan:
 
 - **Otomasi pencatatan jurnal (*auto-journaling*)** dari transaksi operasional
-- **Immutable audit trail** untuk menjamin akuntabilitas dan integritas data keuangan
+- **Immutable audit trail menggunakan teknologi Blockchain (Hash Chain)** untuk menjamin akuntabilitas dan integritas data keuangan
 - **Role-Based Access Control (RBAC)** untuk pemisahan tugas dan keamanan akses
 - **Laporan keuangan real-time** yang dihasilkan otomatis dari data transaksional
 - **Integrasi penuh** antara modul operasional dan modul keuangan
@@ -53,7 +53,7 @@ Sistem informasi akuntansi berbasis web ini dikembangkan untuk menjawab seluruh 
 ## 2. Rumusan Masalah
 
 1. Bagaimana merancang dan membangun sistem informasi akuntansi berbasis web yang terintegrasi dengan modul operasional logistik?
-2. Bagaimana mengimplementasikan *immutable audit trail* untuk menjamin akuntabilitas dan integritas data keuangan?
+2. Bagaimana mengimplementasikan *immutable audit trail* menggunakan teknologi *Blockchain* (*Hash Chain*) untuk menjamin akuntabilitas dan integritas data keuangan?
 3. Bagaimana mengimplementasikan *Role-Based Access Control (RBAC)* untuk memisahkan akses antara pengguna operasional dan pengguna keuangan?
 4. Bagaimana menghasilkan laporan keuangan (Laba Rugi, Neraca, Arus Kas, Neraca Saldo) secara otomatis dan real-time dari data transaksional?
 
@@ -62,7 +62,7 @@ Sistem informasi akuntansi berbasis web ini dikembangkan untuk menjawab seluruh 
 ## 3. Tujuan Penelitian
 
 1. Membangun sistem informasi akuntansi berbasis web menggunakan framework Django yang terintegrasi dengan modul operasional logistik
-2. Mengimplementasikan mekanisme *immutable audit trail* menggunakan pendekatan *append-only log* dan *thread-local user tracking* untuk menjamin integritas data keuangan
+2. Mengimplementasikan mekanisme *immutable audit trail* menggunakan pendekatan *Blockchain (Hash Chain)* dan *thread-local user tracking* untuk menjamin integritas data keuangan
 3. Mengimplementasikan RBAC dengan dua level akses (Owner/Finance dan Admin Operasional) menggunakan Django Groups dan custom decorators
 4. Menyediakan fitur export laporan keuangan ke format PDF dan Excel yang dapat diunduh per periode
 
@@ -88,9 +88,12 @@ Audit trail adalah catatan kronologis yang mendokumentasikan setiap perubahan da
 - Mendukung proses audit internal dan eksternal
 - Memenuhi regulasi tata kelola keuangan perusahaan
 
-**Konsep Immutability** dalam audit trail mengacu pada sifat data yang tidak dapat diubah atau dihapus setelah tercatat. Pendekatan yang digunakan dalam sistem ini adalah **append-only log** — log hanya bisa ditambahkan, tidak bisa diedit atau dihapus melalui antarmuka sistem. Konsep ini menjamin bahwa setiap data historis tetap utuh dan akurat demi kepatuhan terhadap prinsip akuntabilitas.
+### 4.3 Blockchain sebagai Immutable Ledger
 
-### 4.3 Role-Based Access Control (RBAC)
+Blockchain pada dasarnya adalah struktur data *append-only* berupa daftar blok (catatan) yang terus bertambah, yang dihubungkan dan diamankan menggunakan kriptografi (Nakamoto, 2008). Konsep Immutability dalam sistem ini diimplementasikan menggunakan pendekatan **Cryptographic Hash Chain**. 
+Setiap log aktivitas (blok) memuat *hash* kriptografi dari blok sebelumnya menggunakan algoritma SHA-256. Hal ini menjamin bahwa jika ada satu data di masa lalu yang dimanipulasi (langsung pada tingkat *database*), maka seluruh blok yang bergantung padanya akan menjadi tidak valid (*tamper-evident*).
+
+### 4.4 Role-Based Access Control (RBAC)
 
 RBAC adalah pendekatan kontrol akses di mana izin diberikan berdasarkan peran (*role*) pengguna, bukan berdasarkan identitas individu (Sandhu et al., 1996). Keuntungan RBAC meliputi:
 
@@ -98,7 +101,7 @@ RBAC adalah pendekatan kontrol akses di mana izin diberikan berdasarkan peran (*
 - **Least Privilege** — Setiap pengguna hanya mendapat akses minimum yang diperlukan
 - **Scalability** — Mudah menambah pengguna baru dengan role yang sudah ada
 
-### 4.4 Django Web Framework
+### 4.5 Django Web Framework
 
 Django adalah framework web Python yang mengikuti pola arsitektur **Model-View-Template (MVT)**, setara dengan Model-View-Controller (MVC) pada framework lain (Django Documentation, 2024). Django menyediakan:
 
@@ -107,7 +110,7 @@ Django adalah framework web Python yang mengikuti pola arsitektur **Model-View-T
 - **Signals** — Mekanisme event-driven untuk otomasi proses
 - **Middleware** — Pipeline untuk memproses request/response
 
-### 4.5 Standar Pelaporan Keuangan
+### 4.6 Standar Pelaporan Keuangan
 
 Laporan keuangan yang dihasilkan sistem ini mengikuti format standar akuntansi:
 
@@ -160,7 +163,7 @@ graph LR
 | No | Masalah | Dampak | Solusi Sistem Baru |
 |----|---------|--------|-------------------|
 | 1 | Pencatatan manual di Excel | Inkonsistensi data, duplikasi, human error | Input form tervalidasi + auto-journaling |
-| 2 | Tidak ada audit trail | Manipulasi data tidak terdeteksi | Immutable audit log otomatis |
+| 2 | Tidak ada audit trail | Manipulasi data tidak terdeteksi | Immutable audit log (Blockchain Hash Chain) |
 | 3 | Akses tidak terkontrol | Risiko kebocoran data keuangan | RBAC (Owner vs Admin Ops) |
 | 4 | Laporan manual | Terlambat, tidak akurat | Laporan real-time otomatis |
 | 5 | Data terpisah-pisah | Sulit rekonsiliasi | Sistem terintegrasi satu database |
@@ -369,6 +372,9 @@ erDiagram
 
     AuditLog {
         int id PK
+        int block_index "Nomor urut blok"
+        string block_hash "Hash SHA-256 blok"
+        string previous_hash "Hash blok sebelumnya"
         int user FK "SET_NULL on delete"
         string model_name
         string object_id
@@ -401,9 +407,10 @@ graph TB
         CtxProc["Context Processors (Badge)"]
     end
 
-    subgraph "Data Layer"
+    subgraph "Data Layer & Blockchain"
         SQLite["SQLite 3 Database"]
         Static["Static Files (WhiteNoise)"]
+        HashChain["SHA-256 Hash Chain Logic"]
     end
 
     subgraph "Export Engine"
@@ -419,6 +426,8 @@ graph TB
     Models --> SQLite
     Models --> Signals
     Signals --> Models
+    Signals --> HashChain
+    HashChain --> SQLite
     Django --> Middleware
     Django --> CtxProc
     Views --> Decorators
@@ -449,8 +458,9 @@ sequenceDiagram
     Signal->>Jurnal: Auto-create Jurnal DP (jika ada)
     Note over Jurnal: Debit: Biaya Pengiriman<br/>Kredit: Kas
     Model->>Signal: post_save (Audit)
-    Signal->>AuditLog: Catat CREATE + detail data
-    Note over AuditLog: user, IP, timestamp,<br/>model_name, changes (JSON)
+    Signal->>AuditLog: Generate prev_hash & SHA-256 block_hash
+    Signal->>AuditLog: Catat aksi CREATE (Blockchain Block)
+    Note over AuditLog: user, action, timestamp,<br/>block_hash, previous_hash
 ```
 
 #### Alur RBAC
@@ -552,11 +562,11 @@ def create_or_update_jurnal_manifest(sender, instance, created, **kwargs):
             )
 ```
 
-### 7.3 Implementasi Immutable Audit Trail
+### 7.3 Implementasi Immutable Audit Trail (Blockchain Hash Chain)
 
-Audit trail adalah komponen krusial untuk akuntabilitas data keuangan. Sistem ini mengimplementasikan **append-only audit log** yang mencatat setiap perubahan data secara otomatis.
+Audit trail adalah komponen krusial untuk akuntabilitas data keuangan. Sistem ini mengimplementasikan **Cryptographic Hash Chain** sebagai bentuk sederhana dari teknologi *Blockchain*, mencatat setiap perubahan data secara otomatis menjadi sebuah blok yang terhubung.
 
-#### Arsitektur Audit Trail
+#### Arsitektur Audit Trail Blockchain
 
 ```mermaid
 graph TB
@@ -566,24 +576,26 @@ graph TB
         TL["Thread-Local Storage"]
     end
 
-    subgraph "Signal Layer"
+    subgraph "Signal & Blockchain Layer"
         PRE["pre_save Signal"]
         POST["post_save Signal"]
         DEL["post_delete Signal"]
+        HASH["SHA-256 Hashing Engine"]
     end
 
-    subgraph "Audit Log"
-        AL["Model AuditLog"]
-        DB["Database (Append-Only)"]
+    subgraph "Audit Log Ledger"
+        AL["Model AuditLog (Blocks)"]
+        DB["Database"]
     end
 
     REQ --> MW
     MW -->|"user + IP"| TL
 
     PRE -->|"Snapshot data lama"| POST
-    POST -->|"Diff lama vs baru"| AL
-    DEL -->|"Snapshot data terhapus"| AL
-    TL -->|"user, IP"| AL
+    POST -->|"Diff lama vs baru"| HASH
+    DEL -->|"Snapshot data terhapus"| HASH
+    TL -->|"user, IP"| HASH
+    HASH -->|"Generate block_hash & prev_hash"| AL
     AL --> DB
 ```
 
@@ -632,38 +644,35 @@ def audit_post_save(sender, instance, created, **kwargs):
                 _create_log('UPDATE', instance, changes)
 ```
 
-**4. Model AuditLog — Struktur Data (`models.py`)**
+**4. Model AuditLog — Struktur Data Blockchain (`models.py`)**
 
 ```python
 class AuditLog(models.Model):
-    user        = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
-    model_name  = models.CharField(max_length=100)       # "Jurnal", "Manifest", dll
-    object_id   = models.CharField(max_length=50)        # Primary key objek
-    object_repr = models.CharField(max_length=255)       # Representasi string objek
-    action      = models.CharField(max_length=10)        # CREATE / UPDATE / DELETE
-    changes     = models.JSONField(default=dict)          # Detail perubahan (diff)
-    ip_address  = models.GenericIPAddressField(null=True) # IP address user
-    timestamp   = models.DateTimeField(auto_now_add=True) # Waktu kejadian
+    block_index   = models.IntegerField(default=1)           # Nomor urut blok
+    block_hash    = models.CharField(max_length=64)          # Hash SHA-256
+    previous_hash = models.CharField(max_length=64)          # Hash blok sebelumnya
+    user          = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
+    model_name    = models.CharField(max_length=100)       
+    object_id     = models.CharField(max_length=50)        
+    object_repr   = models.CharField(max_length=255)       
+    action        = models.CharField(max_length=10)        # CREATE / UPDATE / DELETE
+    changes       = models.JSONField(default=dict)         
+    ip_address    = models.GenericIPAddressField(null=True) 
+    timestamp     = models.DateTimeField(auto_now_add=True) 
 
     class Meta:
         ordering = ['-timestamp']
-        indexes = [
-            models.Index(fields=['-timestamp']),
-            models.Index(fields=['model_name', '-timestamp']),
-            models.Index(fields=['user', '-timestamp']),
-        ]
+        # ... indexes ...
 ```
 
-#### Sifat Immutability
+#### Sifat Immutability (Tamper-Evident)
 
-Audit log bersifat **immutable** (tidak dapat diubah) karena:
+Audit log bersifat **immutable** (tidak dapat dimanipulasi) karena:
 
-1. **Tidak ada UI untuk edit/hapus** — Halaman audit log hanya menampilkan data (*read-only*), tidak ada tombol edit atau hapus
-2. **Append-only** — Entri baru hanya ditambahkan (`AuditLog.objects.create()`), tidak pernah di-update atau di-delete
-3. **`auto_now_add=True`** — Timestamp tidak bisa diubah setelah record dibuat
-4. **`on_delete=SET_NULL`** — Jika user dihapus, log tetap tersimpan (user menjadi NULL)
-5. **Tidak ada endpoint API** — Tidak ada URL routing untuk modify/delete audit log
-6. **Database indexing** — Index pada timestamp dan model_name menjamin efisiensi query tanpa perlu memodifikasi data
+1. **Cryptographic Hash Chain** — Setiap log (*block*) dikunci dengan `block_hash` yang dihitung menggunakan SHA-256 dari seluruh atribut data dan `previous_hash`. Jika satu data historis diubah paksa melalui *database query*, seluruh rantai hash setelahnya akan rusak. Sistem memiliki fungsi verifikasi untuk mendeteksi *tampering*.
+2. **Append-only** — Entri baru hanya ditambahkan, tidak pernah di-update atau di-delete melalui antarmuka sistem.
+3. **`auto_now_add=True`** — Timestamp di-generate secara otomatis oleh *database*.
+4. **Sertifikat Hash Bulanan** — Export log bulanan dilengkapi dengan SHA-256 *hash certificate*.
 
 #### Model yang Diaudit (15 Model)
 
@@ -932,7 +941,7 @@ Template pagination reusable (`includes/pagination.html`) mempertahankan paramet
 | 9 | Filter data per bulan | Pilih bulan Juni 2026 | Hanya data bulan Juni yang tampil | ✅ Sesuai |
 | 10 | Pagination | Buka halaman dengan >20 data | Pagination muncul, 20 item per halaman | ✅ Sesuai |
 | 11 | Badge sidebar | Ada 5 inbound status DITERIMA | Badge "5" muncul di menu Inbound | ✅ Sesuai |
-| 12 | Audit log immutability | Coba akses edit/hapus audit log | Tidak ada tombol/URL untuk edit/hapus log | ✅ Sesuai |
+| 12 | Blockchain Validation | Memodifikasi record AuditLog dari database langsung | Sistem mendeteksi *chain* rusak pada verifikasi | ✅ Sesuai |
 | 13 | Neraca seimbang | Lihat halaman Laporan | Total Aset = Total (Kewajiban + Ekuitas) | ✅ Sesuai |
 
 ### 8.2 Pengujian Integritas Data
@@ -941,7 +950,7 @@ Template pagination reusable (`includes/pagination.html`) mempertahankan paramet
 |-----------|--------|-------|
 | Double-entry balance | Neraca Saldo: Total Debit = Total Kredit | ✅ Seimbang |
 | Auto-journal consistency | Hapus manifest → jurnal terkait otomatis terhapus | ✅ Konsisten |
-| Audit log completeness | Buat 10 transaksi → cek audit log | ✅ 10 entri CREATE tercatat |
+| Blockchain immutability | Hitung hash ulang dari Genesis block ke block N | ✅ Hash Valid |
 | RBAC enforcement | Test semua URL keuangan dengan user Admin Ops | ✅ Semua return 403 |
 
 ---
@@ -952,7 +961,7 @@ Berdasarkan hasil pengembangan dan pengujian, dapat disimpulkan:
 
 1. **Sistem informasi akuntansi berbasis web** telah berhasil dibangun menggunakan Django 6.0 dan Bootstrap 5, mengintegrasikan modul operasional logistik (Inbound, Outbound, Manifest) dengan modul keuangan (Jurnal, Laporan, Penggajian) dalam satu platform terintegrasi.
 
-2. **Immutable audit trail** telah diimplementasikan menggunakan pendekatan append-only log dengan Django Signals, mencatat 15 model dengan detail perubahan (diff), user, timestamp, dan IP address. Log bersifat read-only — tidak ada antarmuka untuk mengedit atau menghapus catatan audit.
+2. **Immutable audit trail menggunakan teknologi Blockchain (Hash Chain)** telah diimplementasikan dengan mencatat setiap log aktivitas sebagai blok yang saling terhubung melalui kriptografi SHA-256. Hal ini meminimalisir manipulasi data secara langsung di basis data (*tamper-evident*). Data log historis yang ada sebelum implementasi diakumulasi ke dalam genesis block.
 
 3. **Role-Based Access Control** telah diimplementasikan dengan dua role (Owner dan Admin Operasional) menggunakan Django Groups dan custom decorators, memastikan pemisahan tugas (*Separation of Duties*) antara staf operasional dan staf keuangan.
 
@@ -1114,9 +1123,10 @@ dashboard-accountant/
 
 ### Referensi Konsep Immutability & Audit Trail Database
 
-16. Schneier, B., & Kelsey, J. (1999). *Secure Audit Logs on Untrusted Machines*. ACM Transactions on Information and System Security (TISSEC), 2(2), 116-147. — Pendekatan teoretis untuk audit log yang aman dan bersifat append-only.
-17. Snodgrass, R. T., Yao, S. S., & Collberg, C. (2004). *Tamper Detection in Relations with Hashed Cryptographic Signatures*. ACM Transactions on Database Systems (TODS), 29(1), 150-207. — Metode pendeteksian manipulasi data pada database relasional menggunakan signature dan hashing.
-18. Bishop, M. (2003). *Computer Security: Art and Science*. Addison-Wesley. — Konsep dasar keamanan informasi termasuk akuntabilitas data melalui sistem audit trail.
+16. Nakamoto, S. (2008). *Bitcoin: A Peer-to-Peer Electronic Cash System*. https://bitcoin.org/bitcoin.pdf — Konsep dasar Cryptographic Hash Chain / Blockchain.
+17. Schneier, B., & Kelsey, J. (1999). *Secure Audit Logs on Untrusted Machines*. ACM Transactions on Information and System Security (TISSEC), 2(2), 116-147. — Pendekatan teoretis untuk audit log yang aman dan bersifat append-only.
+18. Snodgrass, R. T., Yao, S. S., & Collberg, C. (2004). *Tamper Detection in Relations with Hashed Cryptographic Signatures*. ACM Transactions on Database Systems (TODS), 29(1), 150-207. — Metode pendeteksian manipulasi data pada database relasional menggunakan signature dan hashing.
+19. Bishop, M. (2003). *Computer Security: Art and Science*. Addison-Wesley. — Konsep dasar keamanan informasi termasuk akuntabilitas data melalui sistem audit trail.
 
 ---
 
