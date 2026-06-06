@@ -891,6 +891,176 @@ def kas_harian_delete(request, pk):
     return redirect(f'/kas-harian/?bulan={bulan}&tahun={tahun}')
 
 @login_required
+@owner_required
+def kas_harian_export_excel(request):
+    """Ekspor data Kas Harian ke Excel dengan format rapi, filter bulan & tahun."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from django.db.models import Sum
+
+    today = date.today()
+    bulan = int(request.GET.get('bulan', today.month))
+    tahun = int(request.GET.get('tahun', today.year))
+
+    kas_data = KasHarian.objects.filter(
+        tanggal__year=tahun,
+        tanggal__month=bulan
+    ).order_by('tanggal', 'created_at')
+
+    total_debit = kas_data.aggregate(Sum('debit'))['debit__sum'] or 0
+    total_kredit = kas_data.aggregate(Sum('kredit'))['kredit__sum'] or 0
+    saldo_akhir = total_debit - total_kredit
+
+    running_saldo = 0
+    kas_list = []
+    for kas in kas_data:
+        running_saldo += kas.debit - kas.kredit
+        kas_list.append({
+            'tanggal': kas.tanggal,
+            'keterangan': kas.keterangan,
+            'debit': kas.debit,
+            'kredit': kas.kredit,
+            'saldo': running_saldo,
+        })
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = f"Kas {NAMA_BULAN[bulan]} {tahun}"
+
+    # Styles
+    thin = Side(style='thin', color='CCCCCC')
+    thin_border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    header_fill = PatternFill(start_color="0D6EFD", end_color="0D6EFD", fill_type="solid")
+    total_fill = PatternFill(start_color="E8F0FE", end_color="E8F0FE", fill_type="solid")
+    debit_fill = PatternFill(start_color="D4EDDA", end_color="D4EDDA", fill_type="solid")
+    kredit_fill = PatternFill(start_color="F8D7DA", end_color="F8D7DA", fill_type="solid")
+
+    # Baris 1: Judul utama
+    ws.merge_cells('A1:F1')
+    c = ws['A1']
+    c.value = "CV BORNEO MEGA MANDIRI"
+    c.font = Font(bold=True, size=14, color="1A1A2E")
+    c.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[1].height = 22
+
+    # Baris 2: Sub judul
+    ws.merge_cells('A2:F2')
+    c = ws['A2']
+    c.value = f"LAPORAN KAS HARIAN — {NAMA_BULAN[bulan].upper()} {tahun}"
+    c.font = Font(bold=True, size=12, color="0D6EFD")
+    c.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[2].height = 18
+
+    # Baris 3: Tanggal cetak
+    ws.merge_cells('A3:F3')
+    c = ws['A3']
+    c.value = f"Dicetak pada: {today.strftime('%d %B %Y')}"
+    c.font = Font(size=9, italic=True, color="888888")
+    c.alignment = Alignment(horizontal='center')
+    ws.row_dimensions[3].height = 14
+
+    # Baris 4: kosong
+    ws.row_dimensions[4].height = 8
+
+    # Baris 5: Header tabel
+    headers = ['No', 'Tanggal', 'Keterangan', 'Debit (Masuk)', 'Kredit (Keluar)', 'Saldo']
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=5, column=col, value=h)
+        cell.font = Font(bold=True, color="FFFFFF", size=10)
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        cell.border = thin_border
+    ws.row_dimensions[5].height = 20
+
+    # Data rows
+    for i, kas in enumerate(kas_list, 1):
+        row = i + 5
+        ws.cell(row=row, column=1, value=i).alignment = Alignment(horizontal='center')
+        ws.cell(row=row, column=2, value=kas['tanggal'].strftime('%d %b %Y')).alignment = Alignment(horizontal='center')
+        ws.cell(row=row, column=3, value=kas['keterangan'])
+
+        # Debit
+        d_cell = ws.cell(row=row, column=4, value=float(kas['debit']) if kas['debit'] else None)
+        d_cell.number_format = '#,##0'
+        d_cell.alignment = Alignment(horizontal='right')
+        if kas['debit'] and kas['debit'] > 0:
+            d_cell.fill = debit_fill
+            d_cell.font = Font(bold=True, color="155724")
+
+        # Kredit
+        k_cell = ws.cell(row=row, column=5, value=float(kas['kredit']) if kas['kredit'] else None)
+        k_cell.number_format = '#,##0'
+        k_cell.alignment = Alignment(horizontal='right')
+        if kas['kredit'] and kas['kredit'] > 0:
+            k_cell.fill = kredit_fill
+            k_cell.font = Font(bold=True, color="721C24")
+
+        # Saldo
+        s_cell = ws.cell(row=row, column=6, value=float(kas['saldo']))
+        s_cell.number_format = '#,##0'
+        s_cell.alignment = Alignment(horizontal='right')
+        s_cell.font = Font(bold=True, color="084298" if kas['saldo'] >= 0 else "842029")
+
+        for col in range(1, 7):
+            ws.cell(row=row, column=col).border = thin_border
+        ws.row_dimensions[row].height = 16
+
+    # Baris Total
+    total_row = len(kas_list) + 6
+    ws.cell(row=total_row, column=1, value='').border = thin_border
+    ws.cell(row=total_row, column=2, value='').border = thin_border
+    t_label = ws.cell(row=total_row, column=3, value='TOTAL')
+    t_label.font = Font(bold=True, size=10)
+    t_label.alignment = Alignment(horizontal='right')
+    t_label.fill = total_fill
+    t_label.border = thin_border
+
+    t_debit = ws.cell(row=total_row, column=4, value=float(total_debit))
+    t_debit.number_format = '#,##0'
+    t_debit.font = Font(bold=True, color="155724")
+    t_debit.fill = total_fill
+    t_debit.alignment = Alignment(horizontal='right')
+    t_debit.border = thin_border
+
+    t_kredit = ws.cell(row=total_row, column=5, value=float(total_kredit))
+    t_kredit.number_format = '#,##0'
+    t_kredit.font = Font(bold=True, color="721C24")
+    t_kredit.fill = total_fill
+    t_kredit.alignment = Alignment(horizontal='right')
+    t_kredit.border = thin_border
+
+    t_saldo = ws.cell(row=total_row, column=6, value=float(saldo_akhir))
+    t_saldo.number_format = '#,##0'
+    t_saldo.font = Font(bold=True, color="084298" if saldo_akhir >= 0 else "842029")
+    t_saldo.fill = total_fill
+    t_saldo.alignment = Alignment(horizontal='right')
+    t_saldo.border = thin_border
+    ws.row_dimensions[total_row].height = 20
+
+    # Lebar kolom
+    col_widths = [6, 14, 40, 18, 18, 18]
+    for i, w in enumerate(col_widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    # Freeze header
+    ws.freeze_panes = 'A6'
+
+    # Response
+    from io import BytesIO
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    filename = f"Kas_Harian_{NAMA_BULAN[bulan]}_{tahun}.xlsx"
+    response = HttpResponse(
+        buffer,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
 @admin_or_owner_required
 def invoice_inbound(request, pk):
     source = request.GET.get('source', 'legacy')
@@ -2583,7 +2753,7 @@ def export_laporan_pdf(request):
 # ============================================================
 # BLOCKCHAIN EXPLORER & VERIFICATION
 # ============================================================
-from .blockchain import verify_blockchain_integrity
+from .blockchain import verify_blockchain_integrity, get_tampered_block_ids
 from django.http import JsonResponse
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -2596,10 +2766,13 @@ def blockchain_explorer(request):
     """Menampilkan halaman Blockchain Explorer (Khusus Owner)."""
     logs = AuditLog.objects.all().order_by('-block_index')
     page_obj = _paginate(request, logs, per_page=15)
-    
+    tampered_ids = get_tampered_block_ids()
+
     context = {
         'logs': page_obj,
         'page_obj': page_obj,
+        'tampered_ids': tampered_ids,
+        'tampered_count': len(tampered_ids),
     }
     return render(request, 'finance/blockchain_explorer.html', context)
 

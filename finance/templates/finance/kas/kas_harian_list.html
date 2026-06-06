@@ -3,34 +3,53 @@
 
 {% block content %}
 <div class="container-fluid px-4">
-  
+
   <div class="page-header mt-3">
     <div>
-      <h3><i class="bi bi-wallet2"></i>Kas Harian</h3>
-      <p>Catatan kas harian per bulan (standalone).</p>
+      <h3><i class="bi bi-wallet2 me-2"></i>Kas Harian</h3>
+      <p class="text-muted mb-0">Catatan kas harian per bulan — navigasi menggunakan tab bulan di bawah.</p>
     </div>
-    <div class="d-flex gap-2 align-items-center">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
       <!-- Dropdown Tahun -->
-      <select class="form-select border-0 bg-light fw-bold text-dark px-3 py-2" style="width: auto; border-radius: 8px;" onchange="window.location.href='?bulan={{ bulan }}&tahun=' + this.value">
+      <select class="form-select form-select-sm border fw-semibold text-dark"
+              style="width: auto; border-radius: 8px; min-width: 130px;"
+              onchange="window.location.href='?bulan={{ bulan }}&tahun=' + this.value">
         {% for t in tahun_list %}
-        <option value="{{ t }}" {% if t == tahun %}selected{% endif %}>Tahun {{ t }}</option>
+        <option value="{{ t }}" {% if t == tahun %}selected{% endif %}>📅 Tahun {{ t }}</option>
         {% endfor %}
       </select>
-      <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-action-add text-nowrap">
-        <i class="bi bi-plus-lg me-1"></i> Tambah Data Kas
+
+      <!-- Tombol Download Excel -->
+      <a href="{% url 'kas_harian_export_excel' %}?bulan={{ bulan }}&tahun={{ tahun }}"
+         class="btn btn-sm btn-success text-nowrap d-flex align-items-center gap-1"
+         style="border-radius: 8px; padding: 8px 16px; font-weight: 600;">
+        <i class="bi bi-file-earmark-excel-fill"></i>
+        <span>Download Excel</span>
+      </a>
+
+      <!-- Tombol Tambah -->
+      <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}"
+         class="btn btn-primary text-nowrap d-flex align-items-center gap-1"
+         style="border-radius: 8px; padding: 8px 18px; font-weight: 600; box-shadow: 0 2px 8px rgba(13,110,253,0.3);">
+        <i class="bi bi-plus-circle-fill fs-6"></i>
+        <span>Tambah Data Baru</span>
       </a>
     </div>
   </div>
 
-  <!-- Navigasi Bulan (Tab Sheet) -->
-  <div class="card filter-card">
-    <div class="card-body py-2">
-      <div class="d-flex flex-wrap gap-1" style="overflow-x: auto;">
+  <!-- Navigasi Bulan (Tab Pill) -->
+  <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-body py-3 px-3">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <i class="bi bi-calendar3 text-primary"></i>
+        <span class="fw-semibold text-muted small text-uppercase" style="letter-spacing: 0.5px;">Pilih Bulan</span>
+      </div>
+      <div class="d-flex flex-nowrap gap-2" style="overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin;">
         {% for b_num, b_name in bulan_list %}
-        <a href="?bulan={{ b_num }}&tahun={{ tahun }}" 
-           class="btn btn-sm {% if b_num == bulan %}btn-primary{% else %}btn-outline-secondary{% endif %} border-0 px-3 py-2 fw-medium"
-           style="min-width: 90px; border-radius: 6px;">
-          {{ b_name }}
+        <a href="?bulan={{ b_num }}&tahun={{ tahun }}"
+           class="btn btn-sm text-nowrap {% if b_num == bulan %}btn-primary shadow-sm{% else %}btn-light text-secondary border{% endif %}"
+           style="min-width: 85px; border-radius: 20px; font-weight: {% if b_num == bulan %}700{% else %}500{% endif %}; font-size: 0.82rem; transition: all 0.15s;">
+          {% if b_num == bulan %}<i class="bi bi-check2 me-1"></i>{% endif %}{{ b_name }}
         </a>
         {% endfor %}
       </div>
@@ -82,9 +101,12 @@
 
   <!-- Header Bulan Aktif & Tabel -->
   <div class="card table-card">
-    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
+    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
       <h6 class="mb-0 fw-bold text-dark">
-        <i class="bi bi-calendar3 me-2 text-primary"></i>Kas Harian - {{ nama_bulan }} {{ tahun }}
+        <i class="bi bi-table me-2 text-primary"></i>Kas Harian — {{ nama_bulan }} {{ tahun }}
+        <span class="badge bg-primary-subtle text-primary ms-2" style="font-size: 0.75rem; border-radius: 6px;">
+          {{ kas_list|length }} transaksi
+        </span>
       </h6>
     </div>
     <div class="card-body p-0">
@@ -132,8 +154,10 @@
                 <div class="empty-state">
                   <i class="bi bi-inbox"></i>
                   <p>Belum ada data kas untuk bulan {{ nama_bulan }} {{ tahun }}</p>
-                  <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-action-add btn-lg mt-3 px-4 py-2 shadow" style="border-radius: 10px; font-size: 0.95rem; font-weight: 600;">
-                    <i class="bi bi-plus-lg me-2"></i> Tambah Data Kas Pertama
+                  <a href="{% url 'kas_harian_create' %}?bulan={{ bulan }}&tahun={{ tahun }}"
+                     class="btn btn-primary mt-3 px-4 py-2"
+                     style="border-radius: 10px; font-size: 0.92rem; font-weight: 600; box-shadow: 0 2px 8px rgba(13,110,253,0.3);">
+                    <i class="bi bi-plus-circle-fill me-2"></i>Tambah Data Kas Pertama
                   </a>
                 </div>
               </td>

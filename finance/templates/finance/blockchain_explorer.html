@@ -26,8 +26,19 @@
 
 <!-- Tabel daftar block -->
 <div class="card table-card">
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-        <h6 class="mb-0 fw-bold"><i class="bi bi-boxes me-2 text-primary"></i>Daftar Block (Ledger Audit)</h6>
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <h6 class="mb-0 fw-bold"><i class="bi bi-boxes me-2 text-primary"></i>Daftar Block (Ledger Audit)</h6>
+            {% if tampered_count > 0 %}
+            <span class="badge bg-danger d-flex align-items-center gap-1" style="font-size: 0.78rem; border-radius: 6px; padding: 5px 10px;">
+                <i class="bi bi-shield-x"></i> {{ tampered_count }} Blok Terdeteksi Manipulasi
+            </span>
+            {% else %}
+            <span class="badge bg-success d-flex align-items-center gap-1" style="font-size: 0.78rem; border-radius: 6px; padding: 5px 10px;">
+                <i class="bi bi-shield-check"></i> Chain Valid
+            </span>
+            {% endif %}
+        </div>
         <small class="text-muted">Urut dari blok terbaru. Chain dibangun dari Genesis (Block 1) ke atas.</small>
     </div>
     <div class="card-body">
@@ -46,11 +57,22 @@
                 </thead>
                 <tbody>
                     {% for log in logs %}
+                    {% if log.id in tampered_ids %}
+                    <tr style="background-color: #fff5f5; border-left: 4px solid #dc3545;">
+                    {% else %}
                     <tr>
+                    {% endif %}
                         <td>
                             <span class="badge-status badge-status-primary">
                                 <i class="bi bi-box"></i> {{ log.block_index }}
                             </span>
+                            {% if log.id in tampered_ids %}
+                            <div class="mt-1">
+                                <span class="badge bg-danger d-inline-flex align-items-center gap-1" style="font-size: 0.68rem; border-radius: 4px;">
+                                    <i class="bi bi-shield-x"></i> MANIPULASI
+                                </span>
+                            </div>
+                            {% endif %}
                         </td>
                         <td class="text-nowrap">{{ log.timestamp|date:"d M Y, H:i" }}</td>
                         <td>
@@ -65,9 +87,16 @@
                         </td>
                         <td>{{ log.user.username|default:"System" }}</td>
                         <td>
+                            {% if log.id in tampered_ids %}
+                            <code class="text-danger fw-bold" title="{{ log.block_hash }}">
+                                {{ log.block_hash|truncatechars:18 }}
+                            </code>
+                            <i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="Hash tidak valid"></i>
+                            {% else %}
                             <code class="text-primary" title="{{ log.block_hash }}">
                                 {{ log.block_hash|truncatechars:18 }}
                             </code>
+                            {% endif %}
                         </td>
                         <td>
                             <code class="text-muted" title="{{ log.previous_hash }}">
@@ -75,7 +104,9 @@
                             </code>
                         </td>
                         <td class="text-center">
-                            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#modalDetail{{ log.id }}">
+                            <button class="btn btn-sm {% if log.id in tampered_ids %}btn-danger{% else %}btn-outline-info{% endif %}"
+                                    data-bs-toggle="modal" data-bs-target="#modalDetail{{ log.id }}"
+                                    title="{% if log.id in tampered_ids %}Lihat Detail — Manipulasi Terdeteksi{% else %}Lihat Detail{% endif %}">
                                 <i class="bi bi-eye"></i>
                             </button>
                         </td>
@@ -106,14 +137,27 @@
 {% for log in logs %}
 <div class="modal fade" id="modalDetail{{ log.id }}" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content {% if log.id in tampered_ids %}border border-danger{% endif %}">
+            <div class="modal-header {% if log.id in tampered_ids %}bg-danger text-white{% endif %}">
                 <h5 class="modal-title">
+                    {% if log.id in tampered_ids %}
+                    <i class="bi bi-shield-x me-2"></i>Block #{{ log.block_index }} — Manipulasi Terdeteksi
+                    {% else %}
                     <i class="bi bi-box me-2 text-primary"></i>Detail Block #{{ log.block_index }}
+                    {% endif %}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close {% if log.id in tampered_ids %}btn-close-white{% endif %}" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                {% if log.id in tampered_ids %}
+                <div class="alert alert-danger d-flex align-items-start gap-2 mb-3" style="border-radius: 8px;">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 flex-shrink-0"></i>
+                    <div>
+                        <strong>Integritas Block Gagal!</strong><br>
+                        <small>Hash yang tersimpan tidak cocok dengan kalkulasi ulang, atau chain linkage terputus. Data pada blok ini kemungkinan telah diubah secara langsung di database.</small>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <strong>Model:</strong> {{ log.model_name }}<br>

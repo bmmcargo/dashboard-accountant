@@ -40,6 +40,7 @@ urlpatterns = [
     path('kas-harian/tambah/', views.kas_harian_create, name='kas_harian_create'),
     path('kas-harian/edit/<int:pk>/', views.kas_harian_edit, name='kas_harian_edit'),
     path('kas-harian/delete/<int:pk>/', views.kas_harian_delete, name='kas_harian_delete'),
+    path('kas-harian/export/excel/', views.kas_harian_export_excel, name='kas_harian_export_excel'),
     
     
     # Tagihan Kolektif

@@ -82,6 +82,39 @@ def verify_blockchain_integrity():
         "message": "Blockchain is valid and verified."
     }
 
+def get_tampered_block_ids():
+    """
+    Scan seluruh chain dan kembalikan set berisi ID AuditLog yang terdeteksi manipulasi.
+    Berbeda dengan verify_blockchain_integrity(), fungsi ini TIDAK berhenti di blok pertama —
+    ia terus berjalan untuk menemukan SEMUA blok yang bermasalah.
+
+    Sebuah blok ditandai 'tampered' jika:
+    - block_hash tidak cocok dengan hasil kalkulasi ulang (data block diubah langsung di DB), ATAU
+    - previous_hash tidak cocok dengan block_hash blok sebelumnya (chain linkage putus).
+    """
+    from .models import AuditLog
+
+    logs = AuditLog.objects.all().order_by('block_index', 'timestamp')
+    tampered = set()
+    prev_hash_map = {}  # block_index -> actual stored block_hash
+
+    for log in logs:
+        # Cek 1: data integrity (apakah block_hash masih valid?)
+        recalculated = calculate_block_hash(log)
+        data_tampered = (log.block_hash != recalculated)
+
+        # Cek 2: chain linkage (apakah previous_hash menunjuk ke blok sebelumnya yang benar?)
+        expected_prev = prev_hash_map.get(log.block_index - 1, "0" * 64)
+        chain_broken = (log.previous_hash != expected_prev)
+
+        if data_tampered or chain_broken:
+            tampered.add(log.id)
+
+        prev_hash_map[log.block_index] = log.block_hash
+
+    return tampered
+
+
 def migrate_existing_logs_to_blockchain():
     """
     Fungsi utilitas untuk dijalankan sekali guna mengonversi
