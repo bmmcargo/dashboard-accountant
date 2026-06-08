@@ -115,6 +115,13 @@
               <a href="{% url 'ops_inbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data ini?')">
                 <i class="bi bi-trash"></i>
               </a>
+              {% else %}
+              <a href="{% url 'inbound_edit' item.pk %}" class="btn btn-sm btn-outline-warning" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'inbound_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Hapus" onclick="return confirm('Yakin hapus data ini?')">
+                <i class="bi bi-trash"></i>
+              </a>
               {% endif %}
             </td>
           </tr>

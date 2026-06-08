@@ -23,6 +23,8 @@ ENV/
 # IDE
 .vscode/
 .idea/
+.claude/
+diagram/
 
 # OS
 .DS_Store
@@ -35,3 +37,4 @@ Thumbs.db
 *.bib
 
 CLAUDE.md
+settings.local.json

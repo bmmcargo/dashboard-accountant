@@ -593,7 +593,7 @@ def outbound_list(request):
 from .forms import InboundForm, OutboundForm, ManifestForm
 
 @login_required
-@owner_required
+@admin_or_owner_required
 def inbound_create(request):
     if request.method == 'POST':
         form = InboundForm(request.POST)
@@ -606,7 +606,7 @@ def inbound_create(request):
     return render(request, 'finance/inbound/inbound_form.html', {'form': form, 'title': 'Tambah Data Inbound'})
 
 @login_required
-@owner_required
+@admin_or_owner_required
 def inbound_edit(request, pk):
     inbound = get_object_or_404(InboundTransaction, pk=pk)
     if request.method == 'POST':
