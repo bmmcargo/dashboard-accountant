@@ -37,6 +37,8 @@ Thumbs.db
 *.bib
 *.txt
 *.jpg
+Laporan/
+patch*.py
 
 CLAUDE.md
 settings.local.json
