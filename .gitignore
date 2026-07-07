@@ -39,6 +39,8 @@ Thumbs.db
 *.jpg
 Laporan/
 patch*.py
+fix_db.py
+inject_logo.py
 
 CLAUDE.md
 settings.local.json
