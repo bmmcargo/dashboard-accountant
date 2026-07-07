@@ -36,6 +36,7 @@ Thumbs.db
 *.docx
 *.bib
 *.txt
+*.jpg
 
 CLAUDE.md
 settings.local.json
