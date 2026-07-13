@@ -2807,3 +2807,110 @@ def backup_blockchain(request):
     response['Content-Disposition'] = f'attachment; filename="blockchain_backup_{timezone.now().strftime("%Y%m%d_%H%M%S")}.zip"'
     return response
 
+
+# ============================================================
+# PREDIKSI ARUS KAS — Machine Learning (Khusus Owner)
+# ============================================================
+
+@login_required
+@owner_required
+def prediksi_arus_kas(request):
+    """
+    Halaman dashboard prediksi AI — khusus Owner.
+    Menampilkan perbandingan Aktual vs Prediksi RF vs Moving Average.
+    """
+    import json as json_module
+    from finance.ml.prediction import get_prediction_data
+
+    data = get_prediction_data()
+
+    # Nama bulan Indonesia
+    bulan_names = {
+        1: 'Januari', 2: 'Februari', 3: 'Maret', 4: 'April',
+        5: 'Mei', 6: 'Juni', 7: 'Juli', 8: 'Agustus',
+        9: 'September', 10: 'Oktober', 11: 'November', 12: 'Desember',
+    }
+
+    # Determine next month label
+    today = timezone.now().date()
+    next_m = today.month + 1
+    next_y = today.year
+    if next_m > 12:
+        next_m = 1
+        next_y += 1
+    next_month_label = f"{bulan_names.get(next_m, '')} {next_y}"
+
+    context = {
+        'data': data,
+        'model_trained': data.get('model_trained', False),
+        'next_month_label': next_month_label,
+    }
+
+    if data.get('model_trained'):
+        context.update({
+            'next_month_rf': data['next_month_rf'],
+            'next_month_ma': data['next_month_ma'],
+            'rf_metrics': data['rf_metrics'],
+            'ma_metrics': data['ma_metrics'],
+            'feature_importance': data['feature_importance'][:5],
+            'model_info': data['model_info'],
+            'comparison_json': json_module.dumps(data['comparison_data']),
+            'feature_importance_json': json_module.dumps(data['feature_importance'][:10]),
+        })
+
+    return render(request, 'finance/dashboard_prediksi.html', context)
+
+
+@login_required
+@owner_required
+def api_prediksi_data(request):
+    """
+    API endpoint (JSON) untuk AJAX Chart.js.
+    Return data perbandingan aktual vs prediksi.
+    """
+    from django.http import JsonResponse
+    from finance.ml.prediction import get_prediction_data
+
+    data = get_prediction_data()
+
+    if not data.get('model_trained'):
+        return JsonResponse({'error': 'Model belum ditraining'}, status=400)
+
+    return JsonResponse({
+        'comparison_data': data['comparison_data'],
+        'rf_metrics': data['rf_metrics'],
+        'ma_metrics': data['ma_metrics'],
+        'next_month_rf': data['next_month_rf'],
+        'next_month_ma': data['next_month_ma'],
+    })
+
+
+@login_required
+@owner_required
+def retrain_model(request):
+    """
+    POST endpoint untuk re-training model dari halaman dashboard.
+    """
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        from finance.ml.model_training import full_training_pipeline
+        result = full_training_pipeline(verbose=False)
+
+        messages.success(request, '✅ Model berhasil di-training ulang!')
+        return JsonResponse({
+            'success': True,
+            'rf_metrics': result['rf_metrics'],
+            'ma_metrics': result['ma_metrics'],
+        })
+
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+    except Exception as e:
+        return JsonResponse({'error': f'Error: {str(e)}'}, status=500)
+
+

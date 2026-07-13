@@ -19,3 +19,9 @@ python-dotenv
 # Export & Reporting (NEW)
 openpyxl>=3.1.0
 weasyprint>=68.0
+
+# Machine Learning - Prediksi Arus Kas
+scikit-learn>=1.3
+pandas>=2.0
+numpy>=1.24
+joblib>=1.3

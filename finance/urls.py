@@ -110,4 +110,9 @@ urlpatterns = [
 
     # Redirect Login
     path('login-redirect/', views.custom_login_redirect, name='custom_login_redirect'),
+
+    # --- PREDIKSI AI (Khusus Owner) ---
+    path('prediksi/', views.prediksi_arus_kas, name='prediksi_arus_kas'),
+    path('api/prediksi-data/', views.api_prediksi_data, name='api_prediksi_data'),
+    path('prediksi/retrain/', views.retrain_model, name='retrain_model'),
 ]

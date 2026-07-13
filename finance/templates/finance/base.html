@@ -507,6 +507,9 @@
         <a class="nav-link {% if request.path == '/audit-log/' %}active{% endif %}" href="{% url 'audit_log' %}"> <i class="bi bi-clock-history"></i> Riwayat Aktivitas </a>
         <a class="nav-link {% if 'blockchain' in request.path %}active{% endif %}" href="{% url 'blockchain_explorer' %}"> <i class="bi bi-link-45deg"></i> Blockchain Explorer </a>
         
+        <div class="nav-section-title">Prediksi AI</div>
+        <a class="nav-link {% if 'prediksi' in request.path %}active{% endif %}" href="{% url 'prediksi_arus_kas' %}"> <i class="bi bi-robot"></i> Prediksi Arus Kas </a>
+
         {% endif %}
       </nav>
 
