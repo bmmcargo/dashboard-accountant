@@ -243,7 +243,7 @@ class OpsInboundForm(forms.ModelForm):
             'berat', 'status', 'vendor', 'tarif_per_kg', 'total_biaya', 'keterangan'
         ]
         widgets = {
-            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'tanggal': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'keterangan': forms.Textarea(attrs={'rows': 2}),
             'berat': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
@@ -268,7 +268,7 @@ class OpsManifestForm(forms.ModelForm):
         model = OpsManifest
         fields = ['nomor_manifest', 'tanggal', 'armada', 'rute', 'status', 'vendor_penerima', 'total_hutang', 'dp', 'catatan']
         widgets = {
-            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'tanggal': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'catatan': forms.Textarea(attrs={'rows': 2}),
         }
         labels = {
@@ -289,7 +289,7 @@ class OpsOutboundForm(forms.ModelForm):
         model = OpsOutbound
         fields = ['inbound', 'manifest', 'tanggal', 'catatan']
         widgets = {
-            'tanggal': forms.DateInput(attrs={'type': 'date'}),
+            'tanggal': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'catatan': forms.Textarea(attrs={'rows': 3}),
         }
         labels = {

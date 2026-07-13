@@ -2820,9 +2820,16 @@ def prediksi_arus_kas(request):
     Menampilkan perbandingan Aktual vs Prediksi RF vs Moving Average.
     """
     import json as json_module
-    from finance.ml.prediction import get_prediction_data
+    from finance.ml.prediction import get_prediction_data, predict_next_month
 
     data = get_prediction_data()
+    
+    # Ambil prediksi dinamis real-time (bukan cache)
+    if data.get('model_trained'):
+        dynamic_pred = predict_next_month()
+        if dynamic_pred:
+            data['next_month_rf'] = dynamic_pred['rf_prediction']
+            data['next_month_ma'] = dynamic_pred['ma_prediction']
 
     # Nama bulan Indonesia
     bulan_names = {

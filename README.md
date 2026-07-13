@@ -1,6 +1,6 @@
-# Pengembangan Sistem Informasi Akuntansi Berbasis Web dengan Immutable Audit Trail Menggunakan Blockchain dan Role-Based Access Control pada CV Borneo Mega Mandiri
+# Pengembangan Sistem Informasi Akuntansi Berbasis Web dengan Immutable Audit Trail Menggunakan Blockchain, Role-Based Access Control, dan Prediksi Arus Kas Berbasis Random Forest Regression pada CV Borneo Mega Mandiri
 
-> **Tugas Akhir / Skripsi** — Dokumentasi teknis sistem informasi akuntansi terintegrasi untuk manajemen keuangan dan operasional logistik CV Borneo Mega Mandiri (BMM Cargo).
+> **Tugas Akhir / Skripsi** — Dokumentasi teknis sistem informasi akuntansi terintegrasi untuk manajemen keuangan, operasional logistik, dan prediksi arus kas AI pada CV Borneo Mega Mandiri (BMM Cargo).
 
 **Live Production:** [https://bmmcargo.pythonanywhere.com/](https://bmmcargo.pythonanywhere.com/)
 
@@ -46,6 +46,7 @@ Sistem informasi akuntansi berbasis web ini dikembangkan untuk menjawab seluruh 
 - **Immutable audit trail menggunakan teknologi Blockchain (Hash Chain)** untuk menjamin akuntabilitas dan integritas data keuangan
 - **Role-Based Access Control (RBAC)** untuk pemisahan tugas dan keamanan akses
 - **Laporan keuangan real-time** yang dihasilkan otomatis dari data transaksional
+- **Prediksi Arus Kas (AI)** menggunakan algoritma Machine Learning *Random Forest Regression* untuk meramalkan tren keuangan bulan depan
 - **Integrasi penuh** antara modul operasional dan modul keuangan
 
 ---
@@ -64,7 +65,8 @@ Sistem informasi akuntansi berbasis web ini dikembangkan untuk menjawab seluruh 
 1. Membangun sistem informasi akuntansi berbasis web menggunakan framework Django yang terintegrasi dengan modul operasional logistik
 2. Mengimplementasikan mekanisme *immutable audit trail* menggunakan pendekatan *Blockchain (Hash Chain)* dan *thread-local user tracking* untuk menjamin integritas data keuangan
 3. Mengimplementasikan RBAC dengan dua level akses (Owner/Finance dan Admin Operasional) menggunakan Django Groups dan custom decorators
-4. Menyediakan fitur export laporan keuangan ke format PDF dan Excel yang dapat diunduh per periode
+4. Mengimplementasikan model kecerdasan buatan (*Random Forest Regression*) untuk memprediksi tren arus kas di periode mendatang
+5. Menyediakan fitur export laporan keuangan ke format PDF dan Excel yang dapat diunduh per periode
 
 ---
 
@@ -926,6 +928,17 @@ def _paginate(request, queryset, per_page=20):
 
 Template pagination reusable (`includes/pagination.html`) mempertahankan parameter filter saat pindah halaman.
 
+### 7.10 Implementasi Prediksi Arus Kas (Random Forest Regression)
+
+Sistem ini dilengkapi dengan kecerdasan buatan untuk memprediksi arus kas bersih (*Net Cash Flow*) perusahaan di bulan berikutnya. Fitur ini dirancang menggunakan algoritma **Random Forest Regression** dari library `scikit-learn`.
+
+#### Alur Machine Learning:
+1. **Data Extraction:** Mengekstrak rekapitulasi data per bulan dari database (total kas masuk, kas keluar, beban, manifest hutang, jumlah resi inbound, dll).
+2. **Feature Engineering:** Membuat variabel prediktor (fitur) baru seperti *rasio piutang terhadap hutang*, *rasio pendapatan terhadap beban*, *indikator bulan (seasonality)*, dan total pengeluaran operasional.
+3. **Training Model:** Model dilatih menggunakan data historis 2 tahun terakhir. Proses ini dieksekusi secara periodik melalui command `python manage.py train_cashflow_model`.
+4. **Benchmarking:** Sistem membandingkan akurasi Random Forest dengan metode konvensional *Moving Average*, lalu menggunakan model terbaik berdasarkan metrik evaluasi (R², MAE, RMSE).
+5. **Serialization:** Model yang terlatih disimpan dalam format `.joblib` agar dapat dipanggil secara instan di halaman Dashboard (tab Prediksi) tanpa membebani server dengan proses *training* berulang.
+
 ---
 
 ## 8. Pengujian Sistem
@@ -969,7 +982,9 @@ Berdasarkan hasil pengembangan dan pengujian, dapat disimpulkan:
 
 3. **Role-Based Access Control** telah diimplementasikan dengan dua role (Owner dan Admin Operasional) menggunakan Django Groups dan custom decorators, memastikan pemisahan tugas (*Separation of Duties*) antara staf operasional dan staf keuangan.
 
-4. **Laporan keuangan real-time** (Laba Rugi, Neraca, Arus Kas, Neraca Saldo) dihasilkan otomatis dari data transaksional dan dapat diexport ke format PDF dan Excel per periode.
+4. **Model Prediksi Arus Kas AI** berbasis algoritma *Random Forest Regression* telah terintegrasi di dalam Dashboard. Sistem mampu mengekstrak, merekayasa fitur keuangan, dan melatih model secara otomatis, yang terbukti memberikan akurasi prediksi yang lebih adaptif terhadap pola transaksi perusahaan dibandingkan metode *Moving Average* konvensional.
+
+5. **Laporan keuangan real-time** (Laba Rugi, Neraca, Arus Kas, Neraca Saldo) dihasilkan otomatis dari data transaksional dan dapat diexport ke format PDF dan Excel per periode.
 
 ---
 
@@ -979,6 +994,8 @@ Berdasarkan hasil pengembangan dan pengujian, dapat disimpulkan:
 |----------|-----------|-------|--------|
 | Bahasa | Python | 3.10+ | Bahasa pemrograman utama |
 | Framework | Django | 6.0 | Web framework (MVT pattern) |
+| Machine Learning | scikit-learn | latest | Algoritma Random Forest Regression |
+| Data Processing | Pandas & NumPy | latest | Manipulasi dataframe & rekayasa fitur |
 | Frontend | Bootstrap | 5.3 | UI framework responsif |
 | Typography | Inter | — | Google Fonts |
 | Icons | Bootstrap Icons | 1.10 | Ikon vektor |
@@ -1017,14 +1034,23 @@ python manage.py migrate
 python manage.py setup_groups      # Buat groups Owner & Admin Operasional
 python manage.py seed_accounts     # Seed Chart of Accounts standar BMM
 
-# 6. Buat superuser
+# 6. Generate Data Historis & Train Model AI (Wajib untuk fitur Prediksi)
+python manage.py seed_historical_data  # Membangun data simulasi 24 bulan terakhir
+python manage.py train_cashflow_model  # Melatih model Machine Learning
+
+# 7. Buat superuser
 python manage.py createsuperuser
 
-# 7. Jalankan server
+# 8. Jalankan server
 python manage.py runserver
 ```
 
 Akses di `http://127.0.0.1:8000/`.
+
+### Akun Pengujian (Test Accounts)
+Sistem ini memisahkan hak akses menjadi dua peran utama. Gunakan akun berikut untuk menguji *Role-Based Access Control* (RBAC):
+- **Akun Owner (Akses Penuh):** Username: `owner` | Password: `owner123`
+- **Akun Admin Ops (Akses Terbatas):** Username: `ops` | Password: `ops123`
 
 ### Chart of Accounts (CoA) Standar BMM
 
@@ -1091,10 +1117,8 @@ dashboard-accountant/
 │   └── management/commands/
 │       ├── setup_groups.py       # Buat groups Owner & Admin Ops
 │       ├── seed_accounts.py      # Seed Chart of Accounts BMM
-│       ├── import_data.py        # Import data dari Excel/CSV
-│       ├── import_excel.py       # Import Excel
-│       ├── import_from_excel.py  # Import legacy data
-│       └── import_kas_harian.py  # Import kas harian
+│       ├── seed_historical_data.py # Generate data simulasi
+│       └── train_cashflow_model.py # Melatih model Random Forest
 ├── DEPLOYMENT_GUIDE_PYTHONANYWHERE.md
 ├── PANDUAN_SETUP_CLIENT.md
 └── PANDUAN_USER_LOGIN.md

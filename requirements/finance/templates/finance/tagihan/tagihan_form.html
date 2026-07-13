@@ -1,0 +1,101 @@
+{% extends 'finance/base.html' %} {% load humanize %} {% block content %}
+<div class="container-fluid px-4">
+  <h1 class="mt-4 mb-4">Buat Tagihan Baru</h1>
+
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 bg-primary text-white">
+      <h6 class="m-0 fw-bold">Pilih Transaksi untuk Ditagihkan</h6>
+    </div>
+    <div class="card-body">
+      <form method="post" id="tagihanForm">
+        {% csrf_token %}
+
+        <div class="row mb-4">
+          <div class="col-md-6">
+            <label for="customerSelect" class="form-label fw-bold">Pilih Customer/Vendor</label>
+            <select name="customer" id="customerSelect" class="form-select" required onchange="filterInbounds()">
+              <option value="">-- Pilih Customer --</option>
+              {% for c in customers %}
+              <option value="{{ c }}">{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="jatuhTempo" class="form-label fw-bold">Tanggal Jatuh Tempo</label>
+            <input type="date" name="jatuh_tempo" id="jatuhTempo" class="form-control" />
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover">
+            <thead>
+              <tr class="table-light">
+                <th class="text-center" style="width: 50px"><input type="checkbox" id="checkAll" onclick="toggleAll(this)" /></th>
+                <th>Tanggal</th>
+                <th>No Resi</th>
+                <th>Tujuan</th>
+                <th>Customer</th>
+                <th class="text-end">Total (Rp)</th>
+              </tr>
+            </thead>
+            <tbody id="inboundTableBody">
+              {% for item in inbounds %}
+              <tr class="inbound-row" data-vendor="{{ item.vendor }}">
+                <td class="text-center">
+                  <input type="checkbox" name="inbound_ids" value="{{ item.pk }}" class="inbound-check" />
+                </td>
+                <td>{{ item.tanggal_masuk_stt|date:"d/m/Y" }}</td>
+                <td class="fw-bold">{{ item.no_resi }}</td>
+                <td>{{ item.tujuan }}</td>
+                <td><span class="badge bg-secondary">{{ item.vendor }}</span></td>
+                <td class="text-end fw-bold">{{ item.total_biaya|intcomma }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-3">Tidak ada transaksi yang belum ditagih.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 text-end">
+          <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-file-earmark-plus"></i> Generate Invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function filterInbounds() {
+    const selectedVendor = document.getElementById('customerSelect').value;
+    const rows = document.querySelectorAll('.inbound-row');
+    let hasVisible = false;
+
+    rows.forEach((row) => {
+      if (row.dataset.vendor === selectedVendor || selectedVendor === '') {
+        row.style.display = '';
+        hasVisible = true;
+      } else {
+        row.style.display = 'none';
+        // Uncheck hidden items to avoid accidental submission
+        row.querySelector('.inbound-check').checked = false;
+      }
+    });
+
+    // Uncheck 'check all' when filtering
+    document.getElementById('checkAll').checked = false;
+  }
+
+  function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('.inbound-row:not([style*="display: none"]) .inbound-check');
+    checkboxes.forEach((cb) => (cb.checked = source.checked));
+  }
+
+  // Run filter on load (hide all initially or show all? Show all is fine, but maybe safer to hide until selected)
+  // Optional: Trigger change to hide irrelevant items initially if needed.
+  // document.getElementById('customerSelect').value = "";
+  // filterInbounds();
+</script>
+{% endblock %}

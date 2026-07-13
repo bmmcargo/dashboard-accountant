@@ -10,13 +10,6 @@
       <h3><i class="bi bi-robot"></i>Prediksi Arus Kas AI</h3>
       <p>Analisis prediksi arus kas menggunakan Random Forest Regression vs Moving Average</p>
     </div>
-    {% if model_trained %}
-    <div>
-      <button class="btn btn-action-add" id="btnRetrain" onclick="retrainModel()">
-        <i class="bi bi-arrow-repeat me-1"></i> Re-Train Model
-      </button>
-    </div>
-    {% endif %}
   </div>
 
   {% if not model_trained %}

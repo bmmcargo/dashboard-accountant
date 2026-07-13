@@ -1,0 +1,102 @@
+{% extends 'finance/base.html' %} {% load humanize %} {% block content %}
+<div class="container-fluid px-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 mt-3 gap-3">
+    <div>
+      <h1 class="mb-0 h3"><i class="bi {{ icon }} text-primary"></i> {{ title }}</h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+          <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+      </nav>
+    </div>
+    <div class="w-20 w-md-auto d-flex justify-content-start justify-content-md-end">
+      <button class="btn btn-outline-primary w-100 w-md-auto" onclick="window.print()"><i class="bi bi-printer"></i> Cetak</button>
+    </div>
+  </div>
+
+  <!-- Summary Card -->
+  <div class="card shadow mb-4 border-left-primary">
+    <div class="card-body">
+      <div class="row no-gutters align-items-center">
+        <div class="col mr-2">
+          <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Saldo {{ type|title }}</div>
+          <div class="h3 mb-0 font-weight-bold text-gray-800">Rp {{ total|intcomma }}</div>
+        </div>
+        <div class="col-auto">
+          <i class="bi bi-wallet2 fs-2 text-gray-300"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabel Data -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3 bg-white">
+      <h6 class="m-0 fw-bold text-primary"><i class="bi bi-table me-2"></i>Rincian Transaksi {{ title }}</h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover table-striped mb-0" style="font-size: 0.9rem">
+          <thead class="table-light">
+            <tr>
+              <th>Tanggal</th>
+              <th>No Referensi</th>
+              <th>{% if type == 'piutang' %}Customer/Vendor{% else %}Kategori/Vendor{% endif %}</th>
+              <th>Keterangan</th>
+              <th class="text-end">Nominal (Rp)</th>
+              <th class="text-end">Saldo Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+            <tr>
+              <!-- Tanggal -->
+              <td class="text-nowrap">{% if type == 'piutang' %} {{ item.tanggal|date:"d/m/Y" }} {% else %} {{ item.tanggal_kirim|date:"d/m/Y" }} {% endif %}</td>
+
+              <!-- No Referensi -->
+              <td class="fw-bold text-primary">{% if type == 'piutang' %} {{ item.no_invoice }} {% else %} {{ item.no_resi|default:"-" }} {% endif %}</td>
+
+              <!-- Customer / Vendor -->
+              <td>{% if type == 'piutang' %} {{ item.customer|default:"-" }} {% else %} {{ item.kategori }} {% endif %}</td>
+
+              <!-- Keterangan -->
+              <td>{% if type == 'piutang' %} Invoice Tagihan {{ item.no_invoice }} {% else %} {{ item.keterangan|truncatechars:50|default:"-" }} {% endif %}</td>
+
+              <!-- Nominal -->
+              <td class="text-end fw-bold">{% if type == 'piutang' %} {{ item.total|intcomma }} {% else %} {{ item.total|intcomma }}{% endif %}</td>
+
+              <!-- Status / Saldo Link -->
+              <td class="text-center">
+                {% if type == 'piutang' %} {% if item.status == 'LUNAS' %}
+                <span class="badge bg-success">Lunas</span>
+                {% else %}
+                <span class="badge bg-danger">Belum</span>
+                {% endif %} {% else %}
+                <!-- Logic Hutang (Manifest) -->
+                {% if item.status_bayar %}
+                <span class="badge bg-success">Lunas</span>
+                {% else %}
+                <span class="badge bg-danger">Belum</span>
+                {% endif %} {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">Belum ada data transaksi.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light fw-bold">
+            <tr>
+              <td colspan="4" class="text-end">TOTAL</td>
+              <td class="text-end">{{ total|intcomma }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

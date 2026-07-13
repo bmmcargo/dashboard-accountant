@@ -1,0 +1,101 @@
+{% extends 'finance/base.html' %} {% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'kas_harian_list' %}?bulan={{ bulan }}&tahun={{ tahun }}">Kas Harian</a></li>
+          <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+      </nav>
+      <h2 class="fw-bold">{{ title }}</h2>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-primary text-white py-3">
+          <h5 class="mb-0"><i class="bi bi-cash-coin"></i> {{ title }}</h5>
+        </div>
+        <div class="card-body p-4">
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold">{{ form.tanggal.label }}</label>
+                {{ form.tanggal }} {% if form.tanggal.errors %}
+                <div class="text-danger small">{{ form.tanggal.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">{{ form.keterangan.label }}</label>
+              {{ form.keterangan }} {% if form.keterangan.errors %}
+              <div class="text-danger small">{{ form.keterangan.errors }}</div>
+              {% endif %}
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-success">{{ form.debit.label }}</label>
+                <div class="input-group">
+                  <span class="input-group-text">Rp</span>
+                  {{ form.debit }}
+                </div>
+                <small class="text-muted">Isi jika ada kas masuk</small>
+                {% if form.debit.errors %}
+                <div class="text-danger small">{{ form.debit.errors }}</div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-danger">{{ form.kredit.label }}</label>
+                <div class="input-group">
+                  <span class="input-group-text">Rp</span>
+                  {{ form.kredit }}
+                </div>
+                <small class="text-muted">Isi jika ada kas keluar</small>
+                {% if form.kredit.errors %}
+                <div class="text-danger small">{{ form.kredit.errors }}</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">{{ form.catatan.label }}</label>
+              {{ form.catatan }} {% if form.catatan.errors %}
+              <div class="text-danger small">{{ form.catatan.errors }}</div>
+              {% endif %}
+            </div>
+
+            <hr />
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Simpan</button>
+              <a href="{% url 'kas_harian_list' %}?bulan={{ bulan }}&tahun={{ tahun }}" class="btn btn-outline-secondary"> <i class="bi bi-x-lg"></i> Batal </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h6 class="mb-0"><i class="bi bi-info-circle"></i> Panduan</h6>
+        </div>
+        <div class="card-body">
+          <ul class="mb-0">
+            <li><strong>Debit:</strong> Kas masuk / penerimaan</li>
+            <li><strong>Kredit:</strong> Kas keluar / pengeluaran</li>
+            <li>Anda bisa mengisi salah satu atau keduanya</li>
+            <li>Saldo akan dihitung otomatis</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

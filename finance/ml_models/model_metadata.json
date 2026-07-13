@@ -1,90 +1,90 @@
 {
-  "trained_at": "2026-07-13T09:50:21.584647",
+  "trained_at": "2026-07-13T13:21:37.648071",
   "total_data_months": 54,
   "training_samples": 42,
   "testing_samples": 11,
-  "best_n_estimators": 300,
+  "best_n_estimators": 100,
   "rf_metrics": {
-    "mae": 1552406.1855227274,
-    "rmse": 1878531.2962090983,
-    "r2": -0.06664531750902158
+    "mae": 38609319.58636364,
+    "rmse": 56591855.77449221,
+    "r2": -0.568535428252176
   },
   "ma_metrics": {
-    "mae": 2213225.0909090913,
-    "rmse": 2534431.344161356,
-    "r2": -0.9415305279978485
+    "mae": 51681212.3939394,
+    "rmse": 61524751.63465031,
+    "r2": -0.8538995522635868
   },
   "feature_importance": [
     {
-      "feature": "total_gaji_netto",
-      "importance": 0.21501054764995736
-    },
-    {
-      "feature": "total_gaji_bruto",
-      "importance": 0.15012980622607475
-    },
-    {
-      "feature": "total_manifest_dp",
-      "importance": 0.11019832101217983
-    },
-    {
-      "feature": "jumlah_manifest",
-      "importance": 0.10142970420944834
-    },
-    {
-      "feature": "kas_keluar",
-      "importance": 0.061815364824489155
-    },
-    {
-      "feature": "total_cashbon",
-      "importance": 0.047224149632367096
+      "feature": "rasio_piutang_hutang",
+      "importance": 0.18839538295248287
     },
     {
       "feature": "kas_masuk",
-      "importance": 0.04113067208045044
+      "importance": 0.10486133922711591
     },
     {
-      "feature": "rasio_piutang_hutang",
-      "importance": 0.03867109854862663
+      "feature": "total_beban_jurnal",
+      "importance": 0.1034497325801849
     },
     {
-      "feature": "jumlah_inbound",
-      "importance": 0.034321273036400805
+      "feature": "jumlah_manifest",
+      "importance": 0.05730934388385276
+    },
+    {
+      "feature": "total_gaji_bruto",
+      "importance": 0.057024639459670505
     },
     {
       "feature": "arus_kas_bersih",
-      "importance": 0.024537173229437062
+      "importance": 0.051999038091756086
+    },
+    {
+      "feature": "total_inbound",
+      "importance": 0.05142757318105634
+    },
+    {
+      "feature": "kas_keluar",
+      "importance": 0.049451507602936054
+    },
+    {
+      "feature": "total_manifest_dp",
+      "importance": 0.04630001354092625
+    },
+    {
+      "feature": "total_manifest_hutang",
+      "importance": 0.04406193377961969
     }
   ],
   "tuning_results": [
     {
-      "mae": 1694619.5604090912,
-      "rmse": 1988848.9185151663,
-      "r2": -0.1956023187589322,
+      "mae": 40270355.68545455,
+      "rmse": 59070938.009250455,
+      "r2": -0.7089690423329806,
       "n_estimators": 50
     },
     {
-      "mae": 1585046.4109772728,
-      "rmse": 1919815.3258838449,
-      "r2": -0.11404329794652002,
+      "mae": 38609319.58636364,
+      "rmse": 56591855.77449221,
+      "r2": -0.568535428252176,
       "n_estimators": 100
     },
     {
-      "mae": 1574603.734590909,
-      "rmse": 1915013.9109549515,
-      "r2": -0.1084778717248358,
+      "mae": 39982613.63393939,
+      "rmse": 57700372.80560659,
+      "r2": -0.6305859635169089,
       "n_estimators": 150
     },
     {
-      "mae": 1556070.988284091,
-      "rmse": 1917694.4266163157,
-      "r2": -0.11158319831507946,
+      "mae": 39906137.04136364,
+      "rmse": 58093641.82013986,
+      "r2": -0.6528889130890514,
       "n_estimators": 200
     },
     {
-      "mae": 1552406.1855227274,
-      "rmse": 1878531.2962090983,
-      "r2": -0.06664531750902158,
+      "mae": 39839526.413939394,
+      "rmse": 58429527.00217115,
+      "r2": -0.6720574776827102,
       "n_estimators": 300
     }
   ],
@@ -316,7 +316,7 @@
     {
       "year": 2024,
       "month": 6,
-      "aktual": 1374351.0,
+      "aktual": 79786022.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -324,7 +324,7 @@
     {
       "year": 2024,
       "month": 7,
-      "aktual": -1610924.0,
+      "aktual": 117137508.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -332,7 +332,7 @@
     {
       "year": 2024,
       "month": 8,
-      "aktual": 6170375.0,
+      "aktual": 88380657.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -340,7 +340,7 @@
     {
       "year": 2024,
       "month": 9,
-      "aktual": 1689776.0,
+      "aktual": 173143412.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -348,7 +348,7 @@
     {
       "year": 2024,
       "month": 10,
-      "aktual": 2590870.0,
+      "aktual": 115214270.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -356,7 +356,7 @@
     {
       "year": 2024,
       "month": 11,
-      "aktual": -2064187.0,
+      "aktual": 127753769.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -364,7 +364,7 @@
     {
       "year": 2024,
       "month": 12,
-      "aktual": 1057503.0,
+      "aktual": 17968881.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -372,7 +372,7 @@
     {
       "year": 2025,
       "month": 1,
-      "aktual": 4405817.0,
+      "aktual": 83706441.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -380,7 +380,7 @@
     {
       "year": 2025,
       "month": 2,
-      "aktual": 1249721.0,
+      "aktual": 83889971.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -388,7 +388,7 @@
     {
       "year": 2025,
       "month": 3,
-      "aktual": 586021.0,
+      "aktual": 68815532.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -396,7 +396,7 @@
     {
       "year": 2025,
       "month": 4,
-      "aktual": 174435.0,
+      "aktual": 94083633.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -404,7 +404,7 @@
     {
       "year": 2025,
       "month": 5,
-      "aktual": 4569038.0,
+      "aktual": 96102513.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -412,7 +412,7 @@
     {
       "year": 2025,
       "month": 6,
-      "aktual": 1107133.0,
+      "aktual": 84031475.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -420,7 +420,7 @@
     {
       "year": 2025,
       "month": 7,
-      "aktual": 1730665.0,
+      "aktual": 123736910.0,
       "prediksi_rf": null,
       "prediksi_ma": null,
       "is_test": false
@@ -428,94 +428,94 @@
     {
       "year": 2025,
       "month": 8,
-      "aktual": 608116.0,
-      "prediksi_rf": 850026.17,
-      "prediksi_ma": 1950202.0,
+      "aktual": 121356615.0,
+      "prediksi_rf": 102147850.8,
+      "prediksi_ma": 91405873.66666667,
       "is_test": true
     },
     {
       "year": 2025,
       "month": 9,
-      "aktual": 3855467.0,
-      "prediksi_rf": 2846014.6266666665,
-      "prediksi_ma": 2468945.3333333335,
+      "aktual": 100492049.0,
+      "prediksi_rf": 93559467.57,
+      "prediksi_ma": 101290299.33333333,
       "is_test": true
     },
     {
       "year": 2025,
       "month": 10,
-      "aktual": 4127248.0,
-      "prediksi_rf": 937417.4833333333,
-      "prediksi_ma": 1148638.0,
+      "aktual": 68510819.0,
+      "prediksi_rf": 106179219.49,
+      "prediksi_ma": 109708333.33333333,
       "is_test": true
     },
     {
       "year": 2025,
       "month": 11,
-      "aktual": 5392202.0,
-      "prediksi_rf": 2286212.79,
-      "prediksi_ma": 2064749.3333333333,
+      "aktual": 113551059.0,
+      "prediksi_rf": 90842036.46,
+      "prediksi_ma": 115195191.33333333,
       "is_test": true
     },
     {
       "year": 2025,
       "month": 12,
       "aktual": 4293.0,
-      "prediksi_rf": 2189279.0366666666,
-      "prediksi_ma": 2863610.3333333335,
+      "prediksi_rf": 78282462.65,
+      "prediksi_ma": 96786494.33333333,
       "is_test": true
     },
     {
       "year": 2026,
       "month": 1,
       "aktual": -10400.0,
-      "prediksi_rf": 284825.64,
-      "prediksi_ma": 4458305.666666667,
+      "prediksi_rf": 119378119.51,
+      "prediksi_ma": 94184642.33333333,
       "is_test": true
     },
     {
       "year": 2026,
       "month": 2,
       "aktual": -86500.0,
-      "prediksi_rf": 472234.49333333335,
-      "prediksi_ma": 3174581.0,
+      "prediksi_rf": 109793138.51,
+      "prediksi_ma": 60688723.666666664,
       "is_test": true
     },
     {
       "year": 2026,
       "month": 3,
-      "aktual": 1983427.0,
-      "prediksi_rf": 142850.89333333334,
-      "prediksi_ma": 1795365.0,
+      "aktual": 62631178.0,
+      "prediksi_rf": 64608340.32,
+      "prediksi_ma": 37848317.333333336,
       "is_test": true
     },
     {
       "year": 2026,
       "month": 4,
-      "aktual": 777786.0,
-      "prediksi_rf": 1142485.0933333333,
+      "aktual": 88802405.0,
+      "prediksi_rf": 71941799.64,
       "prediksi_ma": -30869.0,
       "is_test": true
     },
     {
       "year": 2026,
       "month": 5,
-      "aktual": 3030940.0,
-      "prediksi_rf": 742026.2233333334,
-      "prediksi_ma": 628842.3333333334,
+      "aktual": 95917465.0,
+      "prediksi_rf": 95716045.54,
+      "prediksi_ma": 20844759.333333332,
       "is_test": true
     },
     {
       "year": 2026,
       "month": 6,
-      "aktual": 2214458.0,
-      "prediksi_rf": 218307.3759166667,
-      "prediksi_ma": 891571.0,
+      "aktual": 104910418.0,
+      "prediksi_rf": 116508649.98,
+      "prediksi_ma": 50449027.666666664,
       "is_test": true
     }
   ],
-  "next_month_prediction_rf": 218307.3759166667,
-  "next_month_prediction_ma": 1930717.6666666667,
+  "next_month_prediction_rf": 116508649.98,
+  "next_month_prediction_ma": 82450349.33333333,
   "feature_columns": [
     "kas_masuk",
     "kas_keluar",

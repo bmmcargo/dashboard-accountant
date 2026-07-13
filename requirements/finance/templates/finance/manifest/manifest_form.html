@@ -1,0 +1,116 @@
+{% extends 'finance/base.html' %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4"><i class="bi bi-file-earmark-text text-info"></i> {{ title }}</h1>
+    <ol class="breadcrumb mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'manifest_list' %}">Manifest</a></li>
+        <li class="breadcrumb-item active">{{ title }}</li>
+    </ol>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 bg-info text-white">
+            <h6 class="m-0 fw-bold">Form {{ title }}</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="id_kategori" class="form-label">Kategori/Rute *</label>
+                        <select name="kategori" id="id_kategori" class="form-select" required>
+                            {% for choice in form.kategori.field.choices %}
+                            <option value="{{ choice.0 }}" {% if form.kategori.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_tanggal_kirim" class="form-label">Tanggal Kirim</label>
+                        <input type="date" name="tanggal_kirim" id="id_tanggal_kirim" class="form-control"
+                               value="{{ form.tanggal_kirim.value|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_no_resi" class="form-label">No Resi *</label>
+                        <input type="text" name="no_resi" id="id_no_resi" class="form-control" required
+                               value="{{ form.no_resi.value|default:'' }}">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="id_pengirim" class="form-label">Pengirim</label>
+                        <input type="text" name="pengirim" id="id_pengirim" class="form-control"
+                               value="{{ form.pengirim.value|default:'' }}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="id_tujuan" class="form-label">Tujuan</label>
+                        <input type="text" name="tujuan" id="id_tujuan" class="form-control"
+                               value="{{ form.tujuan.value|default:'' }}">
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-2 mb-3">
+                        <label for="id_koli" class="form-label">Koli</label>
+                        <input type="number" name="koli" id="id_koli" class="form-control"
+                               value="{{ form.koli.value|default:0 }}">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="id_kg" class="form-label">Berat (Kg)</label>
+                        <input type="number" step="0.01" name="kg" id="id_kg" class="form-control"
+                               value="{{ form.kg.value|default:0 }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_penerima" class="form-label">Penerima</label>
+                        <input type="text" name="penerima" id="id_penerima" class="form-control"
+                               value="{{ form.penerima.value|default:'' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_tanggal_terima" class="form-label">Tanggal Terima</label>
+                        <input type="date" name="tanggal_terima" id="id_tanggal_terima" class="form-control"
+                               value="{{ form.tanggal_terima.value|date:'Y-m-d' }}">
+                    </div>
+                </div>
+                
+                <hr>
+                <h6 class="text-info mb-3"><i class="bi bi-cash-coin"></i> Detail Hutang</h6>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="id_tarif" class="form-label">Tarif (Rp)</label>
+                        <input type="number" name="tarif" id="id_tarif" class="form-control"
+                               value="{{ form.tarif.value|default:0 }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="id_total" class="form-label">Total Hutang (Rp)</label>
+                        <input type="number" name="total" id="id_total" class="form-control"
+                               value="{{ form.total.value|default:0 }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="form-check mt-2">
+                            <input type="checkbox" name="status_bayar" id="id_status_bayar" class="form-check-input"
+                                   {% if form.status_bayar.value %}checked{% endif %}>
+                            <label for="id_status_bayar" class="form-check-label">
+                                <strong class="text-success">Sudah Dibayar / Lunas</strong>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-save me-1"></i> Simpan
+                    </button>
+                    <a href="{% url 'manifest_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i> Batal
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

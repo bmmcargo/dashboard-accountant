@@ -195,8 +195,8 @@ class Command(BaseCommand):
         days = calendar.monthrange(year, month)[1]
         count = 0
 
-        base_masuk = 15_000_000 * multiplier
-        base_keluar = 12_000_000 * multiplier
+        base_masuk = 150_000_000 * multiplier
+        base_keluar = 30_000_000 * multiplier
 
         for day in range(1, days + 1):
             if random.random() > 0.85:
