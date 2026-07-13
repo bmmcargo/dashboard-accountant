@@ -1012,6 +1012,13 @@ Berdasarkan hasil pengembangan dan pengujian, dapat disimpulkan:
 
 ## 11. Instalasi & Deployment
 
+### Prasyarat Sistem (Prerequisites)
+Sebelum menjalankan proyek ini, pastikan komputer Anda telah terinstal **Python versi 3.10 hingga 3.12** (versi terbaru yang stabil direkomendasikan).
+Jika Anda belum menginstal Python, silakan unduh melalui tautan resmi berikut sesuai dengan Sistem Operasi (OS) Anda:
+- **Windows:** [Unduh Python untuk Windows](https://www.python.org/downloads/windows/) (⚠️ *Sangat Penting: Pastikan Anda mencentang kotak **"Add Python to PATH"** pada tampilan awal *installer* saat menginstal di Windows*).
+- **macOS:** [Unduh Python untuk macOS](https://www.python.org/downloads/macos/)
+- **Linux:** Python umumnya sudah terinstal bawaan. Untuk memastikan versi atau menginstal `venv`, gunakan *package manager* OS Anda (contoh untuk Ubuntu/Debian: `sudo apt install python3 python3-venv`).
+
 ### Instalasi Lokal
 
 ```bash
