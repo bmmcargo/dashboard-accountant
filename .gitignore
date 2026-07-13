@@ -41,6 +41,7 @@ Laporan/
 patch*.py
 fix_db.py
 inject_logo.py
-
+docs/*
+diagram/*
 CLAUDE.md
 settings.local.json
