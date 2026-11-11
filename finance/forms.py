@@ -239,11 +239,14 @@ class OpsInboundForm(forms.ModelForm):
     class Meta:
         model = OpsInbound
         fields = [
-            'nomor_resi', 'tanggal', 'pengirim', 'penerima', 'asal', 'tujuan', 
-            'berat', 'status', 'vendor', 'tarif_per_kg', 'total_biaya', 'keterangan'
+            'nomor_resi', 'tanggal', 'pengirim', 'penerima', 'asal', 'tujuan',
+            'berat', 'tanggal_dooring', 'tanggal_kembali', 'status',
+            'vendor', 'tarif_per_kg', 'total_biaya', 'keterangan'
         ]
         widgets = {
             'tanggal': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'tanggal_dooring': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
+            'tanggal_kembali': forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date'}),
             'keterangan': forms.Textarea(attrs={'rows': 2}),
             'berat': forms.NumberInput(attrs={'step': '0.01', 'min': '0'}),
         }
@@ -255,6 +258,8 @@ class OpsInboundForm(forms.ModelForm):
             'asal': 'Kota Asal',
             'tujuan': 'Kota Tujuan',
             'berat': 'Berat (Kg)',
+            'tanggal_dooring': 'Tanggal Dooring',
+            'tanggal_kembali': 'Tanggal Kembali (Retur)',
             'status': 'Status Barang',
             'vendor': 'Vendor (untuk Akuntansi)',
             'tarif_per_kg': 'Tarif per Kg (Rp)',

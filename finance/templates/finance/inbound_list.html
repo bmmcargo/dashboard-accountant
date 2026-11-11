@@ -85,6 +85,8 @@
             <th>Asal</th>
             <th>Tujuan</th>
             <th>Berat (Kg)</th>
+            <th>Tgl Dooring</th>
+            <th>Tgl Kembali</th>
             <th>Status</th>
             <th class="text-center">Aksi</th>
           </tr>
@@ -99,6 +101,8 @@
             <td>{{ item.asal }}</td>
             <td>{{ item.tujuan }}</td>
             <td>{{ item.berat }}</td>
+            <td class="text-nowrap text-center">{{ item.tanggal_dooring|date:"d/m/Y"|default:"-" }}</td>
+            <td class="text-nowrap text-center">{{ item.tanggal_kembali|date:"d/m/Y"|default:"-" }}</td>
             <td>
               <span class="badge-status {% if item.source == 'legacy' %}badge-status-secondary{% elif item.status_raw == 'DIKIRIM' %}badge-status-success{% else %}badge-status-primary{% endif %}">
                 {{ item.status_display }}

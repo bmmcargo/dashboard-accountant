@@ -1634,13 +1634,15 @@ def ops_inbound_list(request):
         merged.append({
             'source': 'new', 'pk': item.pk, 'nomor_resi': item.nomor_resi, 'tanggal': item.tanggal,
             'pengirim': item.pengirim, 'penerima': item.penerima, 'asal': item.asal, 'tujuan': item.tujuan,
-            'berat': item.berat, 'status_display': item.get_status_display(), 'status_raw': item.status
+            'berat': item.berat, 'status_display': item.get_status_display(), 'status_raw': item.status,
+            'tanggal_dooring': item.tanggal_dooring, 'tanggal_kembali': item.tanggal_kembali,
         })
     for item in items_legacy:
         merged.append({
             'source': 'legacy', 'pk': item.pk, 'nomor_resi': item.no_resi, 'tanggal': item.tanggal_masuk_stt,
             'pengirim': item.vendor, 'penerima': '-', 'asal': '-', 'tujuan': item.tujuan,
-            'berat': item.kilo, 'status_display': 'Data Riwayat (Lama)', 'status_raw': 'LEGACY'
+            'berat': item.kilo, 'status_display': 'Data Riwayat (Lama)', 'status_raw': 'LEGACY',
+            'tanggal_dooring': item.tanggal_dooring, 'tanggal_kembali': item.tanggal_kembali,
         })
     
     merged.sort(key=lambda x: x['tanggal'] if x['tanggal'] else timezone.now().date(), reverse=True)

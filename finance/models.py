@@ -670,6 +670,8 @@ class OpsInbound(models.Model):
     asal = models.CharField(max_length=100, help_text="Kota / lokasi asal")
     tujuan = models.CharField(max_length=100, help_text="Kota / lokasi tujuan")
     berat = models.DecimalField(max_digits=10, decimal_places=2, help_text="Berat dalam Kg")
+    tanggal_dooring = models.DateField(null=True, blank=True, help_text="Tanggal dooring / pengiriman ke tujuan")
+    tanggal_kembali = models.DateField(null=True, blank=True, help_text="Tanggal barang kembali (jika retur)")
     keterangan = models.TextField(blank=True, default='', help_text="Catatan tambahan (opsional)")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DITERIMA')
     
